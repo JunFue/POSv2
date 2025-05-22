@@ -8,4 +8,5 @@
   font-optical-sizing: auto;
   background: #252424;
   color: rgb(160, 158, 158);
+  user-select: none;
 }

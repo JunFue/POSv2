@@ -1,0 +1,26 @@
+[
+  {
+    "barcode": "55312-377",
+    "item": "Pasta (Fusilli)",
+    "price": 1.79,
+    "quantity": 59,
+    "total": 216,
+    "remove": null
+  },
+  {
+    "barcode": "53808-0868",
+    "item": "Dried Apricots",
+    "price": 3.79,
+    "quantity": 80,
+    "total": 102,
+    "remove": null
+  },
+  {
+    "barcode": "11822-0018",
+    "item": "Portable Bluetooth Speaker",
+    "price": 49.99,
+    "quantity": 75,
+    "total": 255,
+    "remove": null
+  }
+]
