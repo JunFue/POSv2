@@ -1,5 +1,5 @@
 import { DevTool } from "@hookform/devtools";
-import React, { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
 
 export const ItemRegForm = ({ items, setItems }) => {
@@ -13,12 +13,12 @@ export const ItemRegForm = ({ items, setItems }) => {
   const priceRef = useRef(null);
   const packagingRef = useRef(null);
   const categoryRef = useRef(null);
-  React.useEffect(() => {
+  useEffect(() => {
     if (nameRef.current) register("name").ref(nameRef.current);
     if (priceRef.current) register("price").ref(priceRef.current);
     if (packagingRef.current) register("packaging").ref(packagingRef.current);
     if (categoryRef.current) register("category").ref(categoryRef.current);
-  });
+  }, []);
 
   const addToCart = (data) => {
     const barcodeExists = items.some((item) => item.barcode === data.barcode);

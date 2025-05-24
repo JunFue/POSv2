@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
 import { POSContents } from "./POSContents";
 
-export function POS({ productData, setProductData }) {
+export function POS({ productData, setProductData, items, setItems }) {
   const [isOpen, setIsOpen] = useState(true);
   const [content, setContent] = useState(false);
   const [loadingAnimation, setLoadingAnimation] = useState(false);
@@ -50,6 +50,8 @@ export function POS({ productData, setProductData }) {
           <POSContents
             productData={productData}
             setProductData={setProductData}
+            items={items}
+            setItems={setItems}
           />
         ) : (
           <></>
