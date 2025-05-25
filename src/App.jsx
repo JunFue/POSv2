@@ -29,14 +29,14 @@ function App() {
 
   return (
     <>
-      <div className="flex flex-row w-screen h-screen border border-black gap-[0.3vw] p-[0.5vw]">
+      <div className="flex flex-row w-screen h-screen bg-[#FAF9F3]! gap-[0.3vw] p-[0.5vw] ">
         <POS
           productData={productData}
           setProductData={setProductData}
           items={items}
           setItems={setItems}
         />
-        <div className="flex flex-col gap-[0.3vw] flex-grow border border-amber-500 p-[0.2vw] basis-0">
+        <div className="flex flex-col gap-[0.3vw] flex-grow p-[0.2vw] rounded-2xl bg-[#d6d6d6] shadow-[inset_2px_2px_6px_#bfbfbf,inset_-2px_-2px_6px_#ffffff] basis-0 min-w-0">
           <Nav />
           <Routes>
             <Route index element={<Dashboard />}></Route>

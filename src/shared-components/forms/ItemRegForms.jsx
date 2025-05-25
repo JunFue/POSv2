@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 
 export const ItemRegForm = ({ items, setItems }) => {
   const form = useForm();
-  const { register, control, handleSubmit, formState, reset } = form;
+  const { register, handleSubmit, formState, reset } = form;
   const { errors } = formState;
 
   // Refs for focus control only
@@ -175,7 +175,6 @@ export const ItemRegForm = ({ items, setItems }) => {
           <button type="submit">Register</button>
         </div>
       </form>
-      <DevTool control={control} />
     </div>
   );
 };
