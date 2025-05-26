@@ -59,7 +59,7 @@ export function CartTable({ cartData, setCartData }) {
     getCoreRowModel: getCoreRowModel(),
   });
   return (
-    <div className="flex flex-col mt-[0.5vw]">
+    <div className="flex flex-col mt-[0.5vw] bg-[#e0e0e0] rounded-lg shadow-[inset_6px_6px_12px_#bebebe,inset_-6px_-6px_12px_#ffffff] p-4">
       <div className="w-full overflow-auto max-h-96">
         <table className="w-full text-left border-collapse table-auto text-[0.8vw]">
           <thead>

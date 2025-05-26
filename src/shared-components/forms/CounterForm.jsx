@@ -1,16 +1,20 @@
 import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
 import { useEffect, useRef, useState } from "react";
-import { DevTool } from "@hookform/devtools";
 
-export const CounterForm = ({ setCartData, items }) => {
+export const CounterForm = ({
+  setCartData,
+  items,
+  transactionNo,
+  cartData,
+}) => {
   const form = useForm({
     defaultValues: {
       cashierName: "",
       transactionTime: "",
       payment: "",
       costumerName: "",
-      transactionNo: "",
+      transactionNo: transactionNo,
       discount: "",
       barcode: "",
       availableStocks: "",
@@ -20,7 +24,7 @@ export const CounterForm = ({ setCartData, items }) => {
       grandTotal: "",
     },
   });
-  const { register, handleSubmit, setValue } = form;
+  const { register, handleSubmit, setValue, watch } = form;
 
   setValue("cashierName", "Junel Fuentes");
 
@@ -40,6 +44,12 @@ export const CounterForm = ({ setCartData, items }) => {
   const { ref: discountFormRef, ...discountRegisterProps } =
     register("discount");
 
+  const discount = watch("discount");
+  const payment = watch("payment");
+
+  // Ref for highlighted suggestion in flyout
+  const suggestionRef = useRef(null);
+
   useEffect(() => {
     costumerNameRef.current?.focus();
   }, []);
@@ -51,6 +61,30 @@ export const CounterForm = ({ setCartData, items }) => {
     }, 1000);
     return () => clearInterval(interval);
   }, [setValue]);
+
+  useEffect(() => {
+    setValue("transactionNo", transactionNo);
+  }, [transactionNo, setValue]);
+
+  useEffect(() => {
+    // Calculate grand total
+    const total = cartData.reduce((sum, item) => sum + item.total(), 0);
+    setValue("grandTotal", total.toFixed(2));
+
+    // Calculate change
+    const discountValue = parseFloat(discount) || 0;
+    const paymentValue = parseFloat(payment) || 0;
+    const changeValue = paymentValue + discountValue - total;
+    setValue("change", changeValue.toFixed(2));
+  }, [cartData, discount, payment, setValue]);
+
+  // Auto-scroll highlighted suggestion into view when index changes
+  useEffect(() => {
+    suggestionRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: "smooth",
+    });
+  }, [index]);
 
   function barcodeChange(e) {
     const input = e.target.value;
@@ -210,10 +244,10 @@ export const CounterForm = ({ setCartData, items }) => {
   }
 
   return (
-    <>
+    <div className="bg-[#e0e0e0] rounded-lg">
       <form
         onSubmit={handleSubmit(addToCart)}
-        className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-[0.5vw] [&>*]:text-[0.8vw]  [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:text-nowrap rounded-lg border border-gray-400 shadow-inner p-[0.3vw]"
+        className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-[0.5vw] [&>*]:text-[0.8vw] [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:text-nowrap p-[0.3vw]"
       >
         <label title="Cashier Name">Cashier Name:</label>
         <input
@@ -303,26 +337,19 @@ export const CounterForm = ({ setCartData, items }) => {
           autoComplete="off"
         />
 
-        {/* Suggestions display - structure and styling reverted to original */}
-        <div className="absolute z-1 top-[10vw] left-[7vw] border-0!">
-          {results.map(
-            (
-              item,
-              idx // Using item and idx for clarity in map
-            ) => (
-              <p
-                key={item.id || item.barcode || idx} // Using a more robust key
-                className={`text-[1vw] ${
-                  // Original classes
-                  index === idx ? "bg-[#0000FF]!" : "bg-[#87CEEB]!"
-                }`}
-                onClick={() => handleSelectSuggestion(item)} // Added click handler
-                style={{ cursor: "pointer" }} // Retaining cursor pointer for usability
-              >
-                {item.name} {/* Displaying item name as original */}
-              </p>
-            )
-          )}
+        {/* Redesigned suggestion flyout with auto-scroll */}
+        <div className="w-fit absolute z-1 top-[11vw] left-[9vw] bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto">
+          {results.map((item, idx) => (
+            <p
+              key={item.id || item.barcode || idx}
+              ref={index === idx ? suggestionRef : null}
+              className={`text-[1vw] ${index === idx ? "bg-gray-200" : ""}`}
+              onClick={() => handleSelectSuggestion(item)}
+              style={{ cursor: "pointer" }}
+            >
+              {item.name}
+            </p>
+          ))}
         </div>
 
         <label>Available Stocks:</label>
@@ -335,15 +362,14 @@ export const CounterForm = ({ setCartData, items }) => {
           autoComplete="off"
         />
 
-        <label>Change:</label>
+        <label>Grand Total:</label>
         <input
           className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
-          {...register("change")}
+          {...register("grandTotal")}
           type="text"
           readOnly
           autoComplete="off"
         />
-
         <label>Quantity:</label>
         <input
           className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
@@ -371,16 +397,21 @@ export const CounterForm = ({ setCartData, items }) => {
           readOnly
           autoComplete="off"
         />
-
-        <label>Grand Total:</label>
+        <label>Change:</label>
         <input
           className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
-          {...register("grandTotal")}
+          {...register("change")}
           type="text"
           readOnly
           autoComplete="off"
         />
       </form>
-    </>
+      <div
+        id="item-description"
+        className="text-center text-[1.2vw] border border-[#DDDDDD] shadow-inner rounded-sm bg-[#FAF9F3]"
+      >
+        NO PRODUCTS AVAILABLE
+      </div>
+    </div>
   );
 };
