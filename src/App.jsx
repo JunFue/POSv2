@@ -44,7 +44,7 @@ function App() {
               <Route path="cashout" element={<Cashout />}></Route>
               <Route path="transactions" element={<Transactions />}></Route>
               <Route
-                path="inventory"
+                path="inventory/*"
                 element={<Inventory items={items} setItems={setItems} />}
               ></Route>
             </Routes>
