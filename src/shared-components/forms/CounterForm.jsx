@@ -10,10 +10,16 @@ import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
 import { ItemRegData } from "../../context/ItemRegContext";
 import { generateTransactionNo } from "../../utils/transactionNumberGenerator";
+import { ItemSoldContext } from "../../context/ItemSoldContext";
+import { SuggestionList } from "./SuggestionList";
+import { StocksMgtContext } from "../../context/StocksManagement"; // New import
 
 // Wrap component with forwardRef
 export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
-  const { items } = useContext(ItemRegData);
+  const { items: regItems } = useContext(ItemRegData);
+  const { setItemSold } = useContext(ItemSoldContext);
+  const { stockRecords } = useContext(StocksMgtContext); // Get stocks data
+
   const form = useForm({
     defaultValues: {
       cashierName: "",
@@ -30,16 +36,17 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       grandTotal: "",
     },
   });
-  const { register, handleSubmit, setValue, watch } = form;
+  const { register, handleSubmit, setValue, watch, getValues } = form;
 
   // Set initial values
   setValue("cashierName", "Junel Fuentes");
 
-  // Expose a method to regenerate transactionNo
+  // Expose methods to parent
   useImperativeHandle(ref, () => ({
     regenerateTransactionNo: () => {
       setValue("transactionNo", generateTransactionNo());
     },
+    completeTransaction: () => done(),
   }));
 
   useEffect(() => {
@@ -65,9 +72,6 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
   const discount = watch("discount");
   const payment = watch("payment");
-
-  // Ref for highlighted suggestion in flyout
-  const suggestionRef = useRef(null);
 
   useEffect(() => {
     costumerNameRef.current?.focus();
@@ -95,19 +99,25 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
     setValue("change", changeValue.toFixed(2));
   }, [cartData, discount, payment, setValue]);
 
-  // Auto-scroll highlighted suggestion into view when index changes
-  useEffect(() => {
-    suggestionRef.current?.scrollIntoView({
-      block: "nearest",
-      behavior: "smooth",
-    });
-  }, [index]);
+  // Helper: compute net quantity for an item using stockRecords
+  const getNetQuantity = (itemName) => {
+    const filtered = stockRecords.filter(
+      (r) => r.item.toLowerCase() === itemName.toLowerCase()
+    );
+    const stockIn = filtered
+      .filter((r) => r.stockFlow === "Stock In")
+      .reduce((sum, r) => sum + r.quantity, 0);
+    const stockOut = filtered
+      .filter((r) => r.stockFlow === "Stock Out")
+      .reduce((sum, r) => sum + r.quantity, 0);
+    return filtered.length ? stockIn - stockOut : "N/A";
+  };
 
   function barcodeChange(e) {
     const input = e.target.value;
 
     if (input) {
-      const filteredResults = items.filter((item) =>
+      const filteredResults = regItems.filter((item) =>
         item.name.toLocaleLowerCase().startsWith(input.toLocaleLowerCase())
       );
       setResults(filteredResults);
@@ -125,12 +135,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           filteredResults[0].name.toLocaleLowerCase() ===
             input.toLocaleLowerCase()
         ) {
-          setValue(
-            "availableStocks",
-            filteredResults[0].stock !== undefined
-              ? filteredResults[0].stock
-              : "N/A"
-          );
+          // Set availableStocks using getNetQuantity instead of item.stock
+          setValue("availableStocks", getNetQuantity(filteredResults[0].name));
         } else {
           setValue("availableStocks", "");
         }
@@ -165,7 +171,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
         selectedItem = results[0];
       } else {
         const currentBarcodeValue = e.target.value;
-        const directMatch = items.find(
+        const directMatch = regItems.find(
           (item) => item.barcode === currentBarcodeValue
         );
         if (directMatch) {
@@ -178,10 +184,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           shouldValidate: true,
           shouldDirty: true,
         });
-        setValue(
-          "availableStocks",
-          selectedItem.stock !== undefined ? selectedItem.stock : "N/A"
-        );
+        // Use getNetQuantity for availableStocks instead of selectedItem.stock
+        setValue("availableStocks", getNetQuantity(selectedItem.name));
         quantityRef.current?.focus();
         setResults([]);
         setIndex(-1);
@@ -198,7 +202,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       shouldValidate: true,
       shouldDirty: true,
     });
-    setValue("availableStocks", item.stock !== undefined ? item.stock : "N/A");
+    // Update availableStocks based on current stock from stocks monitor
+    setValue("availableStocks", getNetQuantity(item.name));
     quantityRef.current?.focus();
     setResults([]);
     setIndex(-1);
@@ -209,7 +214,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       alert("Please enter barcode and quantity.");
       return;
     }
-    const currentItem = items.find((item) => item.barcode === data.barcode);
+    const currentItem = regItems.find((item) => item.barcode === data.barcode);
     if (!currentItem) {
       alert(`Item with barcode "${data.barcode}" not found.`);
       setValue("barcode", "");
@@ -257,8 +262,64 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
   }
 
   function done() {
+    // Retrieve form values
+    const transactionNo = getValues("transactionNo");
+    const cashierName = getValues("cashierName");
+    const costumerName = getValues("costumerName");
+    const transactionTime = getValues("transactionTime");
+    const paymentField = getValues("payment");
+    const discountField = getValues("discount");
+
+    // Compute cart total sum
+    const total = Array.isArray(cartData)
+      ? cartData.reduce((sum, item) => sum + item.total(), 0)
+      : 0;
+    const paymentValue = parseFloat(paymentField);
+    const discountValue = parseFloat(discountField) || 0;
+    const computedChange = (paymentValue || 0) + discountValue - total;
+
+    // Prevent transaction if payment is empty or change is negative
+    if (!paymentField) {
+      alert("Enter a payment amount");
+      return;
+    }
+    if (computedChange < 0) {
+      alert("Insufficient payment. Change is negative.");
+      return;
+    }
+
+    // Build sold items array from cartData
+    const soldItems = cartData.map((item) => {
+      const regItem = regItems.find((ri) => ri.barcode === item.barcode);
+      const classification = regItem ? regItem.category : "";
+      return {
+        barcode: item.barcode,
+        itemName: item.item,
+        price: item.price,
+        quantity: item.quantity,
+        totalPrice: (item.price * item.quantity).toFixed(2),
+        transactionDate: transactionTime,
+        transactionNo: transactionNo,
+        inCharge: cashierName,
+        costumer: costumerName,
+        classification,
+      };
+    });
+    setItemSold((prev) => [...prev, ...soldItems]);
     setCartData([]);
+
+    // Clear payment and discount fields after transaction
+    setValue("payment", "");
+    setValue("discount", "");
+    setValue("costumerName", "");
+    // Renew transaction number after successful transaction
+    setValue("transactionNo", generateTransactionNo());
   }
+
+  const barcodeValue = watch("barcode");
+  const matchedItem = regItems.find(
+    (item) => item.barcode === barcodeValue.trim()
+  );
 
   return (
     <div className="bg-[#e0e0e0] rounded-lg">
@@ -334,9 +395,6 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
             discountFormRef(e);
             discountRef.current = e;
           }}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") done();
-          }}
           autoComplete="off"
         />
 
@@ -353,21 +411,6 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           onKeyDown={barcodeKeyDown}
           autoComplete="off"
         />
-
-        {/* Redesigned suggestion flyout with auto-scroll */}
-        <div className="w-fit absolute z-1 top-[11vw] left-[9vw] bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto">
-          {results.map((item, idx) => (
-            <p
-              key={item.id || item.barcode || idx}
-              ref={index === idx ? suggestionRef : null}
-              className={`text-[1vw] ${index === idx ? "bg-gray-200" : ""}`}
-              onClick={() => handleSelectSuggestion(item)}
-              style={{ cursor: "pointer" }}
-            >
-              {item.name}
-            </p>
-          ))}
-        </div>
 
         <label>Available Stocks:</label>
         <input
@@ -423,11 +466,23 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           autoComplete="off"
         />
       </form>
+      <SuggestionList
+        suggestions={results}
+        highlightedIndex={index}
+        onSelect={handleSelectSuggestion}
+      />
       <div
         id="item-description"
         className="text-center text-[1.2vw] border border-[#DDDDDD] shadow-inner rounded-sm bg-[#FAF9F3]"
       >
-        NO PRODUCTS AVAILABLE
+        {barcodeValue && matchedItem ? (
+          <p>
+            {matchedItem.barcode} / {matchedItem.name} / {matchedItem.price} /{" "}
+            {matchedItem.category}
+          </p>
+        ) : (
+          "NO PRODUCTS AVAILABLE"
+        )}
       </div>
     </div>
   );

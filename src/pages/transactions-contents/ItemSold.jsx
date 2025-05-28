@@ -67,7 +67,7 @@ export function ItemSold() {
   });
   return (
     <div className="overflow-x-auto rounded-lg shadow">
-      <table className="min-w-full divide-y divide-gray-200 text-sm">
+      <table className="min-w-full divide-y divide-gray-200 text-[0.8vw]">
         <thead className="bg-gray-200">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -90,14 +90,24 @@ export function ItemSold() {
         <tbody className="bg-white divide-y divide-gray-200">
           {table.getRowModel().rows.map((row) => (
             <tr key={row.id} className="hover:bg-gray-50">
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className="border-b border-gray-300 px-4 py-2"
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
+              {row.getVisibleCells().map((cell) => {
+                const accessor = cell.column.columnDef.accessorKey;
+                const cellClass =
+                  "border-b border-gray-300 px-4 py-2" +
+                  ([
+                    "price",
+                    "quantity",
+                    "totalPrice",
+                    "classification",
+                  ].includes(accessor)
+                    ? " text-center"
+                    : "");
+                return (
+                  <td key={cell.id} className={cellClass}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                );
+              })}
             </tr>
           ))}
         </tbody>

@@ -4,8 +4,24 @@ import { CounterForm } from "../shared-components/forms/CounterForm";
 import { CartContext } from "../context/CartContext";
 
 export function POSContents() {
-  const { setCartData } = useContext(CartContext);
+  const { cartData, setCartData } = useContext(CartContext);
   const counterFormRef = useRef(null);
+
+  // Play click sound on pointer down (works for mouse and touch)
+  const playButtonSound = {
+    onPointerDown: () => {
+      try {
+        const audio = new Audio("/sounds/click.mp3");
+        audio.play().catch((err) => {
+          // For debugging: log why it failed
+          console.warn("Audio play failed:", err);
+        });
+      } catch (err) {
+        console.warn("Audio error:", err);
+      }
+    },
+  };
+
   return (
     <>
       <div>
@@ -25,40 +41,56 @@ export function POSContents() {
           </div>
         </div>
 
-        <CounterForm ref={counterFormRef}></CounterForm>
+        <CounterForm
+          cartData={cartData}
+          setCartData={setCartData}
+          ref={counterFormRef}
+        ></CounterForm>
 
         <div
           id="buttons-container"
-          className="grid grid-cols-6 h-[2.6vw] gap-[1vw] bg-white/30 backdrop-blur-md rounded-[0.4vw] shadow-inner p-[0.4vw] [&>*]:text-[0.75vw] [&>*]:px-[0.6vw] [&>*]:py-[0.2vw] [&>*]:whitespace-nowrap [&>*]:transition-all"
+          className="grid grid-cols-6 h-[2.6vw] gap-[1vw] [&>*]:text-[0.8vw] backdrop-blur-md rounded-[0.4vw] shadow-inner p-[0.4vw] [&>*]:whitespace-nowrap [&>*]:transition-all"
         >
           <button
-            className="bg-emerald-700 border-[none] outline-[none] font-bold text-[#fff]! rounded-[0.2vw] [transition:all_ease_0.1s] [box-shadow:0px_0.6vw_0px_0px_#50C878] active:translate-y-[0.6vw] active:[box-shadow:0px_0px_0px_0px_#a29bfe]"
+            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
             onClick={() => {
               setCartData([]);
               counterFormRef.current?.regenerateTransactionNo();
             }}
+            {...playButtonSound}
           >
             NEW COSTUMER
           </button>
-          <button className="bg-emerald-700 border-[none] outline-[none] font-bold text-[#fff]! rounded-[0.2vw] [transition:all_ease_0.1s] [box-shadow:0px_0.6vw_0px_0px_#50C878] active:translate-y-[0.6vw] active:[box-shadow:0px_0px_0px_0px_#a29bfe]">
+          <button
+            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+            {...playButtonSound}
+          >
             ADD TO CART
           </button>
           <button
-            className="bg-emerald-700 border-[none] outline-[none] font-bold text-[#fff]! rounded-[0.2vw] [transition:all_ease_0.1s] [box-shadow:0px_0.6vw_0px_0px_#50C878] active:translate-y-[0.6vw] active:[box-shadow:0px_0px_0px_0px_#a29bfe]"
-            onClick={() => setCartData([])}
+            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+            onClick={() => counterFormRef.current?.completeTransaction()}
+            {...playButtonSound}
           >
             DONE
           </button>
           <button
-            className="bg-emerald-700 border-[none] outline-[none] font-bold text-[#fff]! rounded-[0.2vw] [transition:all_ease_0.1s] [box-shadow:0px_0.6vw_0px_0px_#50C878] active:translate-y-[0.6vw] active:[box-shadow:0px_0px_0px_0px_#a29bfe]"
+            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
             onClick={() => setCartData([])}
+            {...playButtonSound}
           >
             CLEAR
           </button>
-          <button className="bg-emerald-700 border-[none] outline-[none] font-bold text-[#fff]! rounded-[0.2vw] [transition:all_ease_0.1s] [box-shadow:0px_0.6vw_0px_0px_#50C878] active:translate-y-[0.6vw] active:[box-shadow:0px_0px_0px_0px_#a29bfe]">
+          <button
+            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+            {...playButtonSound}
+          >
             SETTINGS
           </button>
-          <button className="bg-emerald-700 border-[none] outline-[none] font-bold text-[#fff]! rounded-[0.2vw] [transition:all_ease_0.1s] [box-shadow:0px_0.6vw_0px_0px_#50C878] active:translate-y-[0.6vw] active:[box-shadow:0px_0px_0px_0px_#a29bfe]">
+          <button
+            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+            {...playButtonSound}
+          >
             LOGIN
           </button>
         </div>
