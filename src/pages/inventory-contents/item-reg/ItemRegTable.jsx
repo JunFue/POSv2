@@ -3,8 +3,11 @@ import {
   useReactTable,
   flexRender,
 } from "@tanstack/react-table";
+import { useContext } from "react";
+import { ItemRegData } from "../../../context/ItemRegContext";
 
-export function ItemRegTable({ items, setItems }) {
+export function ItemRegTable() {
+  const { items, setItems } = useContext(ItemRegData);
   const columns = [
     {
       accessorKey: "barcode",

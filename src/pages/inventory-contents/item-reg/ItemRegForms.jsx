@@ -1,8 +1,11 @@
-import { DevTool } from "@hookform/devtools";
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
+import { useContext } from "react";
+import { ItemRegData } from "../../../context/ItemRegContext";
 
-export const ItemRegForm = ({ items, setItems }) => {
+export const ItemRegForm = () => {
+  const { items, setItems } = useContext(ItemRegData);
+  // Using useForm from react-hook-form to manage form state and validation
   const form = useForm();
   const { register, handleSubmit, formState, reset } = form; // control is still needed for DevTool
   const { errors } = formState;

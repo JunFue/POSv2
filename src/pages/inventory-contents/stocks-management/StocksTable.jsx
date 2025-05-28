@@ -3,8 +3,16 @@ import {
   useReactTable,
   flexRender,
 } from "@tanstack/react-table";
+import { useContext } from "react";
+import { StocksMgtContext } from "../../../context/StocksManagement";
 
-export function StocksTable({ records = [] }) {
+export function StocksTable() {
+  const stocksMgt = useContext(StocksMgtContext);
+  if (!stocksMgt) {
+    throw new Error("StocksTable must be used within a StocksMgtProvider");
+  }
+  const { stockRecords } = stocksMgt;
+
   const columns = [
     {
       accessorKey: "item",
@@ -39,14 +47,14 @@ export function StocksTable({ records = [] }) {
   ];
 
   const table = useReactTable({
-    data: records,
+    data: stockRecords,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
   return (
-    <div className="mt-4">
-      <table className="w-full border-collapse table-auto text-sm">
+    <div className="mt-4 overflow-x-auto max-w-full">
+      <table className="min-w-full border-collapse table-auto text-[0.8vw]">
         <thead>
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>

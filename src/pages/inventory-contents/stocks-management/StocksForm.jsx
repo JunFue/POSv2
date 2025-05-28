@@ -1,8 +1,16 @@
 import { useForm } from "react-hook-form";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useContext } from "react";
 import dayjs from "dayjs";
+import { ItemRegData } from "../../../context/ItemRegContext";
+// Updated import: use the actual context instead of the provider component.
+import { StocksMgtContext } from "../../../context/StocksManagement";
 
-export function StocksForm({ items = [], onRecord }) {
+export function StocksForm() {
+  // Updated: destructure only setStockRecords.
+  const { setStockRecords } = useContext(StocksMgtContext);
+
+  // Updated: destructure items from the provided context object.
+  const { items } = useContext(ItemRegData);
   const { register, handleSubmit, setValue, reset, setFocus } = useForm({
     defaultValues: {
       item: "",
@@ -27,16 +35,32 @@ export function StocksForm({ items = [], onRecord }) {
     });
   }, [index]);
 
+  // Updated: change onRecord to accept the new record and add it to stockRecords.
+  function onRecord(newRecord) {
+    setStockRecords((prev) => [...prev, newRecord]);
+  }
+
   const onSubmit = (data) => {
+    // Prevent submission if item field is empty
+    if (!data.item || data.item.trim() === "") {
+      alert("Item field is required.");
+      return;
+    }
+    // Prevent submission if quantity is empty or not a positive number
+    if (
+      !data.quantity ||
+      data.quantity === "" ||
+      isNaN(parseInt(data.quantity)) ||
+      parseInt(data.quantity) <= 0
+    ) {
+      alert("Quantity must be a positive number.");
+      return;
+    }
     const selectedItem = items.find(
       (item) => item.name.toLowerCase() === data.item.toLowerCase()
     );
     if (!selectedItem) {
       alert("Item not found in the inventory.");
-      return;
-    }
-    if (isNaN(data.quantity) || parseInt(data.quantity) <= 0) {
-      alert("Quantity must be a positive number.");
       return;
     }
     const newRecord = {
@@ -86,7 +110,7 @@ export function StocksForm({ items = [], onRecord }) {
         setIndex((prev) => (prev - 1 + results.length) % results.length);
       }
     } else if (e.key === "Enter") {
-      if (index >= 0 && index < results.length) {
+      if (results.length > 0 && index >= 0 && index < results.length) {
         e.preventDefault();
         setValue("item", results[index].name, {
           shouldValidate: true,
@@ -94,6 +118,10 @@ export function StocksForm({ items = [], onRecord }) {
         });
         setResults([]);
         setIndex(-1);
+      } else {
+        // Prevent form submission and move focus to the "stockFlow" field.
+        e.preventDefault();
+        setFocus("stockFlow");
       }
     }
   };
@@ -144,6 +172,12 @@ export function StocksForm({ items = [], onRecord }) {
         <select
           className="text-[1vw] h-[1.5vw] w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
           {...register("stockFlow")}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              setFocus("quantity");
+            }
+          }}
         >
           <option value="Stock In">Stock In</option>
           <option value="Stock Out">Stock Out</option>
@@ -157,6 +191,12 @@ export function StocksForm({ items = [], onRecord }) {
           {...register("quantity")}
           min={1}
           autoComplete="off"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              setFocus("notes");
+            }
+          }}
         />
       </div>
       <div>
