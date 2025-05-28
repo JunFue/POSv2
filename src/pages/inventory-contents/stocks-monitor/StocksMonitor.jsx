@@ -42,7 +42,7 @@ export function StocksMonitor() {
   };
 
   return (
-    <div className="mt-4 overflow-x-auto max-w-full">
+    <div className="mt-4 overflow-x-auto h-fit max-w-full">
       <table className="min-w-full border-collapse table-auto text-[0.8vw]">
         <thead>
           <tr>

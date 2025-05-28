@@ -3,8 +3,11 @@ import {
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { useContext } from "react";
+import { CartContext } from "../../context/CartContext";
 
-export function CartTable({ cartData, setCartData }) {
+export function CartTable() {
+  const { cartData, setCartData } = useContext(CartContext);
   const columns = [
     {
       accessorKey: "barcode",
@@ -29,7 +32,7 @@ export function CartTable({ cartData, setCartData }) {
     {
       accessorKey: "total",
       header: "Total",
-      cell: (props) => <p>{props.row.original.total()}</p>, // <--- Call the total method here
+      cell: (props) => <p>{props.row.original.total()}</p>,
     },
     {
       accessorKey: "remove",

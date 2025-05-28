@@ -1,20 +1,26 @@
+import React, {
+  useImperativeHandle,
+  forwardRef,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
-import { useEffect, useRef, useState } from "react";
+import { ItemRegData } from "../../context/ItemRegContext";
+import { generateTransactionNo } from "../../utils/transactionNumberGenerator";
 
-export const CounterForm = ({
-  setCartData,
-  items,
-  transactionNo,
-  cartData,
-}) => {
+// Wrap component with forwardRef
+export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
+  const { items } = useContext(ItemRegData);
   const form = useForm({
     defaultValues: {
       cashierName: "",
       transactionTime: "",
       payment: "",
       costumerName: "",
-      transactionNo: transactionNo,
+      transactionNo: "", // will be set on mount or via regenerateTransactionNo
       discount: "",
       barcode: "",
       availableStocks: "",
@@ -26,7 +32,20 @@ export const CounterForm = ({
   });
   const { register, handleSubmit, setValue, watch } = form;
 
+  // Set initial values
   setValue("cashierName", "Junel Fuentes");
+
+  // Expose a method to regenerate transactionNo
+  useImperativeHandle(ref, () => ({
+    regenerateTransactionNo: () => {
+      setValue("transactionNo", generateTransactionNo());
+    },
+  }));
+
+  useEffect(() => {
+    // Set initial transactionNo on mount
+    setValue("transactionNo", generateTransactionNo());
+  }, [setValue]);
 
   const [results, setResults] = useState([]);
   const [index, setIndex] = useState(-1);
@@ -63,12 +82,10 @@ export const CounterForm = ({
   }, [setValue]);
 
   useEffect(() => {
-    setValue("transactionNo", transactionNo);
-  }, [transactionNo, setValue]);
-
-  useEffect(() => {
-    // Calculate grand total
-    const total = cartData.reduce((sum, item) => sum + item.total(), 0);
+    // Calculate grand total safely
+    const total = Array.isArray(cartData)
+      ? cartData.reduce((sum, item) => sum + item.total(), 0)
+      : 0;
     setValue("grandTotal", total.toFixed(2));
 
     // Calculate change
@@ -240,7 +257,7 @@ export const CounterForm = ({
   }
 
   function done() {
-    setCartData("");
+    setCartData([]);
   }
 
   return (
@@ -414,4 +431,4 @@ export const CounterForm = ({
       </div>
     </div>
   );
-};
+});

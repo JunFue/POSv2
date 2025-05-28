@@ -7,7 +7,26 @@ export function Nav() {
     {
       path: "/transactions",
       label: "Transactions",
-      flyoutText: "View Transactions",
+      flyoutText: (
+        <>
+          <div>
+            <Link
+              to="/transactions/item-sold"
+              className="hover:text-emerald-700"
+            >
+              Items Sold
+            </Link>
+          </div>
+          <div>
+            <Link
+              to="/transactions/payments-made"
+              className="hover:text-emerald-700"
+            >
+              Payments Made
+            </Link>
+          </div>
+        </>
+      ),
     },
     {
       path: "/inventory",
@@ -17,7 +36,7 @@ export function Nav() {
           <div>
             <Link
               to="/inventory/item-registration"
-              className="hover:text-emerald-700!"
+              className="hover:text-emerald-700"
             >
               Item Registration
             </Link>
@@ -25,7 +44,7 @@ export function Nav() {
           <div>
             <Link
               to="/inventory/stocks-management"
-              className="hover:text-emerald-700!"
+              className="hover:text-emerald-700"
             >
               Stocks Management
             </Link>
@@ -33,7 +52,7 @@ export function Nav() {
           <div>
             <Link
               to="/inventory/stocks-monitor"
-              className="hover:text-emerald-700!"
+              className="hover:text-emerald-700"
             >
               Stocks Monitor
             </Link>
@@ -44,23 +63,16 @@ export function Nav() {
   ];
 
   return (
-    <nav className="relative grid grid-cols-[auto_auto_auto_auto] gap-[0.1vw] h-auto [&>*]:text-center [&>*]:text-[1.2vw]">
+    <nav className="flex items-center justify-around bg-gray-100 p-4 shadow-md text-base">
       {links.map((link) => (
-        <div key={link.path} className="group">
-          <Link to={link.path}>{link.label}</Link>
-          <div
-            className={`absolute top-full ${
-              link.label === "Dashboard"
-                ? "left-[1%]"
-                : link.label === "Cashout"
-                ? "left-[25%]"
-                : link.label === "Transactions"
-                ? "left-[50%]"
-                : link.label === "Inventory"
-                ? "left-[75%]"
-                : "left-0"
-            } w-[25%] bg-gray-200 text-black text-[1vw] p-[0.5vw] rounded shadow-md hidden group-hover:block`}
+        <div key={link.path} className="relative group">
+          <Link
+            to={link.path}
+            className="px-3 py-2 hover:text-emerald-700 transition-all"
           >
+            {link.label}
+          </Link>
+          <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 w-max bg-gray-200 text-black text-sm p-2 rounded shadow-lg hidden group-hover:block">
             {link.flyoutText}
           </div>
         </div>
