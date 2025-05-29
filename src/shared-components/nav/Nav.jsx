@@ -1,8 +1,25 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 export function Nav() {
   const links = [
-    { path: "/", label: "Dashboard", flyoutText: "Go to Dashboard" },
+    {
+      path: "/dashboard",
+      label: "Dashboard",
+      flyoutText: (
+        <>
+          <div>
+            <Link to="/dashboard" className="hover:text-emerald-700">
+              Summary
+            </Link>
+          </div>
+          <div>
+            <Link to="/dashboard/monthly" className="hover:text-emerald-700">
+              Monthly Table
+            </Link>
+          </div>
+        </>
+      ),
+    },
     { path: "/cashout", label: "Cashout", flyoutText: "Manage Cashout" },
     {
       path: "/transactions",

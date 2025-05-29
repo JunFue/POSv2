@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router";
 import { ItemRegForm } from "./inventory-contents/item-reg/ItemRegForms";
 import { ItemRegTable } from "./inventory-contents/item-reg/ItemRegTable";
 import { Stocks } from "./inventory-contents/stocks-management/Stocks";

@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router";
 import { ItemSold } from "./transactions-contents/ItemSold";
 import { Payments } from "./transactions-contents/Payments";
 

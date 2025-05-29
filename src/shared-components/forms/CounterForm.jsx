@@ -13,12 +13,14 @@ import { generateTransactionNo } from "../../utils/transactionNumberGenerator";
 import { ItemSoldContext } from "../../context/ItemSoldContext";
 import { SuggestionList } from "./SuggestionList";
 import { StocksMgtContext } from "../../context/StocksManagement"; // New import
+import { PaymentContext } from "../../context/PaymentContext";
 
 // Wrap component with forwardRef
 export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
   const { items: regItems } = useContext(ItemRegData);
   const { setItemSold } = useContext(ItemSoldContext);
   const { stockRecords } = useContext(StocksMgtContext); // Get stocks data
+  const { setPaymentData } = useContext(PaymentContext);
 
   const form = useForm({
     defaultValues: {
@@ -305,7 +307,20 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
         classification,
       };
     });
+    // Update payment data with transaction details
     setItemSold((prev) => [...prev, ...soldItems]);
+    const paymentDetails = soldItems.map((item) => ({
+      transactionDate: item.transactionDate,
+      transactionNumber: item.transactionNo,
+      costumerName: item.costumer,
+      amountToPay: item.totalPrice,
+      amountRendered: paymentValue.toFixed(2),
+      discount: discountValue.toFixed(2),
+      change: computedChange.toFixed(2),
+      inCharge: item.inCharge,
+    }));
+
+    setPaymentData((prev) => [...prev, ...paymentDetails]);
     setCartData([]);
 
     // Clear payment and discount fields after transaction

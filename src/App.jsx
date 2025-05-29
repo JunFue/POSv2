@@ -6,7 +6,7 @@ import { Dashboard } from "./pages/Dashboard";
 import { Cashout } from "./pages/Cashout";
 import { Inventory } from "./pages/Inventory";
 import { Transactions } from "./pages/Transactions";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router";
 import React from "react";
 import { AppProviders } from "./context/Provider.jsx";
 
@@ -19,7 +19,7 @@ function App() {
           <Nav />
           <div className="shadow-[inset_2px_2px_6px_#bfbfbf,inset_-2px_-2px_6px_#ffffff] overflow-y-scroll">
             <Routes>
-              <Route index element={<Dashboard />} />
+              <Route path="dashboard/*" element={<Dashboard />} />
               <Route path="cashout" element={<Cashout />} />
               <Route path="transactions/*" element={<Transactions />} />
               <Route path="inventory/*" element={<Inventory />} />

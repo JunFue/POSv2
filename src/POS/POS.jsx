@@ -41,7 +41,12 @@ export function POS() {
         </button>
 
         {loadingAnimation ? (
-          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-amber-500 m-auto"></div>
+          <div className="flex justify-center items-center h-24">
+            <div className="w-14 h-14 rounded-full bg-[#e0e0e0] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] flex items-center justify-center relative">
+              <div className="absolute w-14 h-14 rounded-full border-[6px] border-t-[#b0b0b0] border-b-[#ffffff] border-l-[#e0e0e0] border-r-[#e0e0e0] animate-spin"></div>
+              <div className="w-8 h-8 rounded-full bg-[#e0e0e0] shadow-[inset_2px_2px_6px_#bebebe,inset_-2px_-2px_6px_#ffffff]"></div>
+            </div>
+          </div>
         ) : (
           <></>
         )}
