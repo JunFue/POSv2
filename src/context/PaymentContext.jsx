@@ -1,9 +1,15 @@
-import { createContext, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 
 const PaymentContext = createContext();
 
-function PaymentProvider({ children }) {
-  const [paymentData, setPaymentData] = useState([]);
+export function PaymentProvider({ children }) {
+  const [paymentData, setPaymentData] = useState(() => {
+    const storedPayments = localStorage.getItem("Payments");
+    return storedPayments ? JSON.parse(storedPayments) : [];
+  });
+  useEffect(() => {
+    localStorage.setItem("Payments", JSON.stringify(paymentData));
+  }, [paymentData]);
 
   return (
     <PaymentContext.Provider value={{ paymentData, setPaymentData }}>
@@ -12,4 +18,4 @@ function PaymentProvider({ children }) {
   );
 }
 
-export { PaymentContext, PaymentProvider };
+export { PaymentContext };

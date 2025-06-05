@@ -83,6 +83,13 @@ export const ItemRegForm = () => {
     <div className="">
       <form
         onSubmit={handleSubmit(addToCart)}
+        onKeyDownCapture={(e) => {
+          if (e.key === "Enter" && e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit(addToCart)();
+          }
+        }}
         noValidate
         className="gap-[1vw] [&>*]:text-[0.8vw] p-[1vw] mt-[1vw] mx-auto grid grid-cols-[0.3fr_0.5fr_0.3fr_0.5fr] bg-[#e0e0e0] rounded-lg shadow-[inset_6px_6px_12px_#bebebe,inset_-6px_-6px_12px_#ffffff][&>*]:bg-gray-100"
       >
@@ -180,6 +187,7 @@ export const ItemRegForm = () => {
         </p>
         <button
           type="button"
+          className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
           onClick={() => {
             reset({
               barcode: "",
@@ -195,7 +203,12 @@ export const ItemRegForm = () => {
         >
           Clear
         </button>
-        <button type="submit">Register</button>
+        <button
+          type="submit"
+          className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+        >
+          Register
+        </button>
       </form>
     </div>
   );

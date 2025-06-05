@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, createContext } from "react";
 
-const ItemRegData = React.createContext();
+const ItemRegData = createContext();
 
 export function ItemRegProvider({ children }) {
   const [items, setItems] = useState(() => {
