@@ -8,11 +8,12 @@ import React, {
 } from "react";
 import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
-import { ItemRegData } from "../../context/ItemRegContext";
+
 import { generateTransactionNo } from "../../utils/transactionNumberGenerator";
 import { ItemSoldContext } from "../../context/ItemSoldContext";
 import { SuggestionList } from "./SuggestionList";
 import { StocksMgtContext } from "../../context/StocksManagement"; // New import
+import { ItemRegData } from "../../context/ItemRegContext";
 import { PaymentContext } from "../../context/PaymentContext";
 
 // Wrap component with forwardRef
@@ -20,7 +21,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
   const { items: regItems } = useContext(ItemRegData);
   const { setItemSold } = useContext(ItemSoldContext);
   const { stockRecords } = useContext(StocksMgtContext); // Get stocks data
-  const { setPaymentData } = useContext(PaymentContext);
+  const { setPaymentData } = useContext(PaymentContext); // Corrected context name
 
   const form = useForm({
     defaultValues: {
@@ -137,7 +138,6 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           filteredResults[0].name.toLocaleLowerCase() ===
             input.toLocaleLowerCase()
         ) {
-          // Set availableStocks using getNetQuantity instead of item.stock
           setValue("availableStocks", getNetQuantity(filteredResults[0].name));
         } else {
           setValue("availableStocks", "");
@@ -186,7 +186,6 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           shouldValidate: true,
           shouldDirty: true,
         });
-        // Use getNetQuantity for availableStocks instead of selectedItem.stock
         setValue("availableStocks", getNetQuantity(selectedItem.name));
         quantityRef.current?.focus();
         setResults([]);
@@ -204,7 +203,6 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       shouldValidate: true,
       shouldDirty: true,
     });
-    // Update availableStocks based on current stock from stocks monitor
     setValue("availableStocks", getNetQuantity(item.name));
     quantityRef.current?.focus();
     setResults([]);
@@ -232,13 +230,15 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       quantityRef.current?.focus();
       return;
     }
-    if (currentItem.stock !== undefined && quantity > currentItem.stock) {
+    // Use getNetQuantity to check available stock before adding to cart
+    const availableStock = getNetQuantity(currentItem.name);
+    if (availableStock !== "N/A" && quantity > availableStock) {
       alert(
-        `Not enough stock for ${currentItem.name}. Available: ${currentItem.stock}`
+        `Not enough stock for ${currentItem.name}. Available: ${availableStock}`
       );
       setValue(
         "quantity",
-        currentItem.stock > 0 ? currentItem.stock.toString() : "0"
+        availableStock > 0 ? availableStock.toString() : "0"
       );
       quantityRef.current?.focus();
       return;
@@ -265,26 +265,36 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
     setIndex(-1);
   }
 
+  // ------------- MODIFIED done() FUNCTION -------------
   function done() {
-    // Retrieve form values
+    // Retrieve form values needed for the payment record
     const transactionNo = getValues("transactionNo");
-    const cashierName = getValues("cashierName");
+    const cashierName = getValues("cashierName"); // Will be used for 'inCharge'
     const costumerName = getValues("costumerName");
     const transactionTime = getValues("transactionTime");
-    const paymentField = getValues("payment");
+    const paymentField = getValues("payment"); // This corresponds to 'amountRendered'
     const discountField = getValues("discount");
 
-    // Compute cart total sum
-    const total = Array.isArray(cartData)
+    // Calculate the definitive grandTotal (amountToPay) from cartData
+    const calculatedGrandTotal = Array.isArray(cartData)
       ? cartData.reduce((sum, item) => sum + item.total(), 0)
       : 0;
-    const paymentValue = parseFloat(paymentField);
-    const discountValue = parseFloat(discountField) || 0;
-    const computedChange = (paymentValue || 0) + discountValue - total;
 
-    // Prevent transaction if payment is empty or change is negative
-    if (!paymentField) {
-      alert("Enter a payment amount");
+    // Parse payment and discount values
+    const paymentValue = parseFloat(paymentField); // This is amountRendered
+    const discountValue = parseFloat(discountField) || 0;
+
+    // Calculate change based on the definitive grandTotal
+    const computedChange =
+      (paymentValue || 0) + discountValue - calculatedGrandTotal;
+
+    // Validation: Prevent transaction if payment is missing or change is negative
+    if (cartData.length === 0) {
+      alert("Cart is empty. Add items to proceed.");
+      return;
+    }
+    if (!paymentField || isNaN(paymentValue)) {
+      alert("Enter a valid payment amount.");
       return;
     }
     if (computedChange < 0) {
@@ -292,7 +302,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       return;
     }
 
-    // Build sold items array from cartData
+    // Build sold items array for ItemSoldContext (remains the same)
     const soldItems = cartData.map((item) => {
       const regItem = Array.isArray(regItems)
         ? regItems.find((ri) => ri.barcode === item.barcode)
@@ -311,29 +321,38 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
         classification,
       };
     });
-    // Update payment data with transaction details
     setItemSold((prev) => [...prev, ...soldItems]);
-    const paymentDetails = soldItems.map((item) => ({
-      transactionDate: item.transactionDate,
-      transactionNumber: item.transactionNo,
-      costumerName: item.costumer,
-      amountToPay: item.totalPrice,
-      amountRendered: paymentValue.toFixed(2),
+
+    // Construct the single payment record for PaymentContext
+    const paymentRecord = {
+      transactionDate: transactionTime,
+      transactionNumber: transactionNo,
+      costumerName: costumerName || "N/A", // Ensure customerName is not empty
+      amountToPay: calculatedGrandTotal.toFixed(2), // grandTotal
+      amountRendered: paymentValue.toFixed(2), // payment from form
       discount: discountValue.toFixed(2),
       change: computedChange.toFixed(2),
-      inCharge: item.inCharge,
-    }));
+      inCharge: cashierName, // As per your original structure for sold items
+    };
 
-    setPaymentData((prev) => [...prev, ...paymentDetails]);
+    // Update PaymentContext with the single transaction payment record
+    setPaymentData((prev) => [...prev, paymentRecord]);
+
+    // Clear cart and relevant form fields
     setCartData([]);
-
-    // Clear payment and discount fields after transaction
     setValue("payment", "");
     setValue("discount", "");
     setValue("costumerName", "");
-    // Renew transaction number after successful transaction
+    setValue("grandTotal", "0.00"); // Reset grand total display
+    setValue("change", "0.00"); // Reset change display
+
+    // Generate a new transaction number for the next transaction
     setValue("transactionNo", generateTransactionNo());
+
+    // Optionally, focus on the customer name field for the new transaction
+    costumerNameRef.current?.focus();
   }
+  // ------------- END OF MODIFIED done() FUNCTION -------------
 
   const barcodeValue = watch("barcode");
   const matchedItem = Array.isArray(regItems)
@@ -369,8 +388,10 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
           {...register("payment")}
           type="number"
+          step="any"
           onKeyDown={(e) => {
             if (e.key === "Enter") {
+              e.preventDefault(); // Prevent form submission if any
               discountRef.current?.focus();
             }
           }}
@@ -413,6 +434,15 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           ref={(e) => {
             discountFormRef(e);
             discountRef.current = e;
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              // Potentially trigger done() or move to another relevant field
+              // For now, let's assume direct completion or manual click for 'Done' button after discount.
+              // If you have a "Complete Transaction" button that calls `done()`,
+              // this Enter key could programmatically click it or call `done()`.
+            }
           }}
           autoComplete="off"
         />
@@ -473,7 +503,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           {...register("additionalInfo")}
           type="text"
           placeholder="additional info..."
-          readOnly
+          readOnly // Assuming this should remain readOnly as per original
           autoComplete="off"
         />
         <label>Change:</label>

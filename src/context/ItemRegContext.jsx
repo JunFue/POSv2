@@ -1,6 +1,9 @@
 import { useState, useEffect, createContext } from "react";
 
+<<<<<<< HEAD
 // It's common practice to export the context right away
+=======
+>>>>>>> 87a6d641fdeace0181e77bd24bba508553cd9db1
 const ItemRegData = createContext();
 
 export function ItemRegProvider({ children }) {
