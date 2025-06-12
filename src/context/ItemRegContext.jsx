@@ -16,9 +16,11 @@ export function ItemRegProvider({ children }) {
   });
 
   const [serverOnline, setServerOnline] = useState(true);
+  const [loading, setLoading] = useState(false); // new loading state
 
   // Function to fetch items from the new, correct API endpoint
   const refreshItems = async () => {
+    setLoading(true);
     try {
       // 1. Use the new /api/items endpoint
       const res = await fetch("http://localhost:3000/api/items");
@@ -38,6 +40,8 @@ export function ItemRegProvider({ children }) {
       alert("SERVER IS OFFLINE");
       setServerOnline(false);
       throw new Error("Server is Offline");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -49,7 +53,7 @@ export function ItemRegProvider({ children }) {
     // 3. Even though we're not encouraged to pass down the raw `setItems`,
     // we leave it available here if needed. Otherwise, you can remove it from context.
     <ItemRegData.Provider
-      value={{ items, refreshItems, setItems, serverOnline }}
+      value={{ items, refreshItems, setItems, serverOnline, loading }}
     >
       {children}
     </ItemRegData.Provider>

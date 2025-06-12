@@ -7,7 +7,7 @@ import { useContext } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
 export function ItemRegTable() {
-  const { items, refreshItems } = useContext(ItemRegData);
+  const { items, refreshItems, loading } = useContext(ItemRegData);
   const columns = [
     {
       accessorKey: "barcode",
@@ -74,40 +74,49 @@ export function ItemRegTable() {
 
   return (
     <div className="flex flex-col bg-[#e0e0e0] rounded-lg shadow-[inset_6px_6px_12px_#bebebe,inset_-6px_-6px_12px_#ffffff] p-4">
-      <div className="w-full overflow-auto max-h-[100vh] grow">
-        <table className="w-full text-left border-collapse table-auto text-[0.8vw]">
-          <thead>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="border-b border-gray-300 text-gray-700 bg-white sticky top-0"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-100">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="border-b border-gray-300">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      {loading ? (
+        <div className="text-center text-gray-700 text-[1vw] py-4">
+          Loading...
+        </div>
+      ) : (
+        <div className="w-full overflow-auto max-h-[100vh] grow">
+          <table className="w-full text-left border-collapse table-auto text-[0.8vw]">
+            <thead>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="border-b border-gray-300 text-gray-700 bg-white sticky top-0"
+                    >
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map((row) => (
+                <tr key={row.id} className="hover:bg-gray-100">
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="border-b border-gray-300">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

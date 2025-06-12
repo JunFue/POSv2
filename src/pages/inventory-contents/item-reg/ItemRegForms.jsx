@@ -4,8 +4,7 @@ import { useContext } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
 export const ItemRegForm = () => {
-  const { setItems, serverOnline } = useContext(ItemRegData);
-  // Using useForm from react-hook-form to manage form state and validation
+  const { serverOnline, refreshItems } = useContext(ItemRegData); // destructured refreshItems
   const form = useForm();
   const { register, handleSubmit, formState, reset } = form; // control is still needed for DevTool
   const { errors } = formState;
@@ -53,8 +52,8 @@ export const ItemRegForm = () => {
         body: JSON.stringify(data),
       });
       if (!res.ok) throw new Error("Failed to register item");
-      const newItem = await res.json();
-      setItems((prev) => [...prev, newItem]);
+      // After successful registration, refresh items instead of optimistically updating state
+      await refreshItems();
       reset({ barcode: "", name: "", price: "", packaging: "", category: "" });
       setTimeout(() => {
         document.getElementById("barcode")?.focus();
@@ -81,7 +80,11 @@ export const ItemRegForm = () => {
           type="text"
           id="barcode"
           {...register("barcode", { required: "Please set a barcode" })}
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          placeholder={errors.barcode ? errors.barcode.message : ""}
+          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
+            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
+            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+            ${errors.barcode ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -89,9 +92,6 @@ export const ItemRegForm = () => {
             }
           }}
         />
-        <p className="text-[0.5vw] text-red-400! absolute">
-          {errors.barcode?.message}
-        </p>
 
         <label>Name:</label>
         <input
@@ -99,7 +99,11 @@ export const ItemRegForm = () => {
           type="text"
           id="name"
           {...register("name", { required: "Please set a product name" })}
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          placeholder={errors.name ? errors.name.message : ""}
+          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
+            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
+            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+            ${errors.name ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -108,9 +112,6 @@ export const ItemRegForm = () => {
           }}
           ref={nameRef}
         />
-        <p className="text-[0.5vw] text-red-400! absolute">
-          {errors.name?.message}
-        </p>
 
         <label>Price:</label>
         <input
@@ -118,7 +119,11 @@ export const ItemRegForm = () => {
           type="number"
           id="price"
           {...register("price", { required: "Please set a price" })}
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          placeholder={errors.price ? errors.price.message : ""}
+          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
+            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
+            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+            ${errors.price ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -127,19 +132,18 @@ export const ItemRegForm = () => {
           }}
           ref={priceRef}
         />
-        <p className="text-[0.5vw] text-red-400! absolute">
-          {errors.price?.message}
-        </p>
 
         <label>Packaging:</label>
         <input
           autoComplete="off"
           type="text"
           id="packaging"
-          {...register("packaging", {
-            required: "Identify a packaging type",
-          })}
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          {...register("packaging", { required: "Identify a packaging type" })}
+          placeholder={errors.packaging ? errors.packaging.message : ""}
+          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
+            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
+            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+            ${errors.packaging ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -148,15 +152,17 @@ export const ItemRegForm = () => {
           }}
           ref={packagingRef}
         />
-        <p className="text-[0.5vw] text-red-400! absolute">
-          {errors.packaging?.message}
-        </p>
+
         <label>Category:</label>
         <select
           id="category"
           {...register("category", { required: "Categorize your product" })}
           ref={categoryRef}
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          title={errors.category ? errors.category.message : ""}
+          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
+            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
+            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+            ${errors.category ? "border-red-500" : ""}`}
         >
           <option value="">Select category</option>
           <option value="DETOX">DETOX</option>
@@ -164,9 +170,7 @@ export const ItemRegForm = () => {
           <option value="Services">Services</option>
           <option value="Others">Others</option>
         </select>
-        <p className="text-[0.5vw] text-red-400! absolute">
-          {errors.category?.message}
-        </p>
+
         <button
           type="button"
           onClick={() => {
@@ -181,10 +185,15 @@ export const ItemRegForm = () => {
               document.getElementById("barcode")?.focus();
             }, 0);
           }}
+          className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
         >
           Clear
         </button>
-        <button type="submit" disabled={!serverOnline}>
+        <button
+          type="submit"
+          disabled={!serverOnline}
+          className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+        >
           Register
         </button>
       </form>
