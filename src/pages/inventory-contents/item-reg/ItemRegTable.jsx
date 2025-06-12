@@ -1,13 +1,16 @@
+import { useState, useContext } from "react";
 import {
   getCoreRowModel,
+  getSortedRowModel,
   useReactTable,
   flexRender,
 } from "@tanstack/react-table";
-import { useContext } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
 export function ItemRegTable() {
   const { items, refreshItems, loading } = useContext(ItemRegData);
+  const [sorting, setSorting] = useState([]);
+
   const columns = [
     {
       accessorKey: "barcode",
@@ -37,15 +40,14 @@ export function ItemRegTable() {
     {
       accessorKey: "remove",
       header: "Remove",
+      enableSorting: false, // disable sorting for remove column
       cell: ({ row }) => (
         <button
           onClick={async () => {
             try {
               await fetch(
                 `http://localhost:3000/api/item-delete/${row.original.barcode}`,
-                {
-                  method: "DELETE",
-                }
+                { method: "DELETE" }
               );
               refreshItems();
             } catch (error) {
@@ -66,10 +68,14 @@ export function ItemRegTable() {
       ),
     },
   ];
+
   const table = useReactTable({
     data: items,
     columns,
+    state: { sorting },
+    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
   });
 
   return (
@@ -87,14 +93,33 @@ export function ItemRegTable() {
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="border-b border-gray-300 text-gray-700 bg-white sticky top-0"
+                      className="border-b border-gray-300 text-gray-700 bg-white sticky top-0 cursor-pointer"
+                      onClick={
+                        header.column.getCanSort()
+                          ? header.column.getToggleSortingHandler()
+                          : undefined
+                      }
                     >
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
+                      {header.isPlaceholder ? null : (
+                        <>
+                          {flexRender(
                             header.column.columnDef.header,
                             header.getContext()
                           )}
+                          {header.column.id !== "remove" &&
+                            header.column.getCanSort() && (
+                              <span className="ml-1 text-[0.8vw] text-gray-500">
+                                ⇅
+                              </span>
+                            )}
+                          {header.column.id !== "remove" &&
+                            (header.column.getIsSorted() === "asc"
+                              ? " 🔼"
+                              : header.column.getIsSorted() === "desc"
+                              ? " 🔽"
+                              : "")}
+                        </>
+                      )}
                     </th>
                   ))}
                 </tr>

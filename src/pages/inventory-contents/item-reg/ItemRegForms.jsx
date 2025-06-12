@@ -80,7 +80,7 @@ export const ItemRegForm = () => {
           type="text"
           id="barcode"
           {...register("barcode", { required: "Please set a barcode" })}
-          placeholder={errors.barcode ? errors.barcode.message : ""}
+          placeholder={errors.barcode ? errors.barcode.message : undefined}
           className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
             [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
             focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
@@ -99,7 +99,7 @@ export const ItemRegForm = () => {
           type="text"
           id="name"
           {...register("name", { required: "Please set a product name" })}
-          placeholder={errors.name ? errors.name.message : ""}
+          placeholder={errors.name ? errors.name.message : undefined}
           className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
             [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
             focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
@@ -119,7 +119,7 @@ export const ItemRegForm = () => {
           type="number"
           id="price"
           {...register("price", { required: "Please set a price" })}
-          placeholder={errors.price ? errors.price.message : ""}
+          placeholder={errors.price ? errors.price.message : undefined}
           className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
             [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
             focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
@@ -139,7 +139,7 @@ export const ItemRegForm = () => {
           type="text"
           id="packaging"
           {...register("packaging", { required: "Identify a packaging type" })}
-          placeholder={errors.packaging ? errors.packaging.message : ""}
+          placeholder={errors.packaging ? errors.packaging.message : undefined}
           className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
             [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
             focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
@@ -158,7 +158,7 @@ export const ItemRegForm = () => {
           id="category"
           {...register("category", { required: "Categorize your product" })}
           ref={categoryRef}
-          title={errors.category ? errors.category.message : ""}
+          title={errors.category ? errors.category.message : undefined}
           className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
             [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
             focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
