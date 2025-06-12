@@ -7,7 +7,7 @@ import { useContext } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
 export function ItemRegTable() {
-  const { items, setItems } = useContext(ItemRegData);
+  const { items, refreshItems } = useContext(ItemRegData);
   const columns = [
     {
       accessorKey: "barcode",
@@ -39,8 +39,18 @@ export function ItemRegTable() {
       header: "Remove",
       cell: ({ row }) => (
         <button
-          onClick={() => {
-            setItems((prev) => prev.filter((_, i) => i !== row.index));
+          onClick={async () => {
+            try {
+              await fetch(
+                `http://localhost:3000/api/item-delete/${row.original.barcode}`,
+                {
+                  method: "DELETE",
+                }
+              );
+              refreshItems();
+            } catch (error) {
+              alert(error.message);
+            }
           }}
           style={{
             border: "none",

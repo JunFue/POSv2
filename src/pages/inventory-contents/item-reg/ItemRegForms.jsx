@@ -4,7 +4,7 @@ import { useContext } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
 export const ItemRegForm = () => {
-  const { items, setItems } = useContext(ItemRegData);
+  const { setItems } = useContext(ItemRegData);
   // Using useForm from react-hook-form to manage form state and validation
   const form = useForm();
   const { register, handleSubmit, formState, reset } = form; // control is still needed for DevTool
@@ -40,43 +40,24 @@ export const ItemRegForm = () => {
     // for this specific setup pattern if the intent is a one-time registration.
   }, []); // Using the original empty dependency array
 
-  const addToCart = (data) => {
-    const barcodeExists = items.some((item) => item.barcode === data.barcode);
-    const nameExists = items.some((item) => item.name === data.name);
-
-    if (barcodeExists) {
-      alert("Barcode already exists");
-      return;
+  // Modified addToCart function to send POST request to the API
+  const addToCart = async (data) => {
+    try {
+      const res = await fetch("http://localhost:3000/api/item-reg", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error("Failed to register item");
+      const newItem = await res.json();
+      setItems((prev) => [...prev, newItem]);
+      reset({ barcode: "", name: "", price: "", packaging: "", category: "" });
+      setTimeout(() => {
+        document.getElementById("barcode")?.focus();
+      }, 0);
+    } catch (error) {
+      alert(error.message);
     }
-
-    if (nameExists) {
-      alert("Product already exists");
-      return;
-    }
-
-    setItems((c) => [
-      ...c,
-      {
-        barcode: data.barcode,
-        name: data.name,
-        price: data.price,
-        packaging: data.packaging,
-        category: data.category,
-        remove: "",
-      },
-    ]);
-
-    reset({
-      barcode: "",
-      name: "",
-      price: "",
-      packaging: "",
-      category: "",
-    });
-
-    setTimeout(() => {
-      document.getElementById("barcode")?.focus();
-    }, 0);
   };
 
   return (

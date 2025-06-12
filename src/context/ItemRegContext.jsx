@@ -1,19 +1,36 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, createContext } from "react";
 
-const ItemRegData = React.createContext();
+// It's common practice to export the context right away
+const ItemRegData = createContext();
 
 export function ItemRegProvider({ children }) {
-  const [items, setItems] = useState(() => {
-    const storedItems = localStorage.getItem("inventoryItems");
-    return storedItems ? JSON.parse(storedItems) : [];
-  });
+  const [items, setItems] = useState([]);
+
+  // Function to fetch items from the new, correct API endpoint
+  const refreshItems = async () => {
+    try {
+      // 1. Use the new /api/items endpoint
+      const res = await fetch("http://localhost:3000/api/items");
+      if (!res.ok) {
+        throw new Error(`Failed to fetch items. Status: ${res.status}`);
+      }
+      const data = await res.json(); // This will now be an array of items
+      console.log("Fetched items:", data);
+
+      // 2. The API now reliably returns an array, so we can simplify this
+      setItems(data);
+    } catch (error) {
+      console.error("Error in refreshItems:", error.message);
+    }
+  };
 
   useEffect(() => {
-    localStorage.setItem("inventoryItems", JSON.stringify(items));
-  }, [items]);
+    refreshItems();
+  }, []);
 
   return (
-    <ItemRegData.Provider value={{ items, setItems }}>
+    // 3. Don't pass down the raw `setItems` function
+    <ItemRegData.Provider value={{ items, refreshItems }}>
       {children}
     </ItemRegData.Provider>
   );

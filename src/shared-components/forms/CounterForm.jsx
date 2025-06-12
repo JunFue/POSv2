@@ -173,9 +173,9 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
         selectedItem = results[0];
       } else {
         const currentBarcodeValue = e.target.value;
-        const directMatch = regItems.find(
-          (item) => item.barcode === currentBarcodeValue
-        );
+        const directMatch = Array.isArray(regItems)
+          ? regItems.find((item) => item.barcode === currentBarcodeValue)
+          : undefined;
         if (directMatch) {
           selectedItem = directMatch;
         }
@@ -216,7 +216,9 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       alert("Please enter barcode and quantity.");
       return;
     }
-    const currentItem = regItems.find((item) => item.barcode === data.barcode);
+    const currentItem = Array.isArray(regItems)
+      ? regItems.find((item) => item.barcode === data.barcode)
+      : undefined;
     if (!currentItem) {
       alert(`Item with barcode "${data.barcode}" not found.`);
       setValue("barcode", "");
@@ -292,7 +294,9 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
     // Build sold items array from cartData
     const soldItems = cartData.map((item) => {
-      const regItem = regItems.find((ri) => ri.barcode === item.barcode);
+      const regItem = Array.isArray(regItems)
+        ? regItems.find((ri) => ri.barcode === item.barcode)
+        : undefined;
       const classification = regItem ? regItem.category : "";
       return {
         barcode: item.barcode,
@@ -332,9 +336,9 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
   }
 
   const barcodeValue = watch("barcode");
-  const matchedItem = regItems.find(
-    (item) => item.barcode === barcodeValue.trim()
-  );
+  const matchedItem = Array.isArray(regItems)
+    ? regItems.find((item) => item.barcode === barcodeValue.trim())
+    : undefined;
 
   return (
     <div className="bg-[#e0e0e0] rounded-lg">
