@@ -4,7 +4,8 @@ import { useContext } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
 export const ItemRegForm = () => {
-  const { serverOnline, refreshItems } = useContext(ItemRegData); // destructured refreshItems
+  // Include 'items' from context to check for duplicates
+  const { serverOnline, refreshItems, items } = useContext(ItemRegData);
   const form = useForm();
   const { register, handleSubmit, formState, reset } = form; // control is still needed for DevTool
   const { errors } = formState;
@@ -39,10 +40,20 @@ export const ItemRegForm = () => {
     // for this specific setup pattern if the intent is a one-time registration.
   }, []); // Using the original empty dependency array
 
-  // Modified addToCart function to send POST request to the API
-  const addToCart = async (data) => {
+  // Renamed addToRegistry function with duplicate check
+  const addToRegistry = async (data) => {
     if (!serverOnline) {
       alert("SERVER IS OFFLINE");
+      return;
+    }
+    // Check for duplicate barcode or name (case insensitive for name)
+    const duplicate = items.find(
+      (item) =>
+        item.barcode === data.barcode ||
+        item.name.toLowerCase() === data.name.toLowerCase()
+    );
+    if (duplicate) {
+      alert("An item with the same barcode or name already exists.");
       return;
     }
     try {
@@ -70,12 +81,12 @@ export const ItemRegForm = () => {
         <div className="text-red-500 font-bold mb-2">SERVER IS OFFLINE</div>
       )}
       <form
-        onSubmit={handleSubmit(addToCart)}
+        onSubmit={handleSubmit(addToRegistry)}
         onKeyDownCapture={(e) => {
           if (e.key === "Enter" && e.shiftKey) {
             e.preventDefault();
             e.stopPropagation();
-            handleSubmit(addToCart)();
+            handleSubmit(addToRegistry)();
           }
         }}
         noValidate
@@ -193,16 +204,12 @@ export const ItemRegForm = () => {
               document.getElementById("barcode")?.focus();
             }, 0);
           }}
-          className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
         >
           Clear
         </button>
         <button
           type="submit"
-<<<<<<< HEAD
           disabled={!serverOnline}
-=======
->>>>>>> 87a6d641fdeace0181e77bd24bba508553cd9db1
           className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
         >
           Register

@@ -1,9 +1,5 @@
 import { useState, useEffect, createContext } from "react";
 
-<<<<<<< HEAD
-// It's common practice to export the context right away
-=======
->>>>>>> 87a6d641fdeace0181e77bd24bba508553cd9db1
 const ItemRegData = createContext();
 
 export function ItemRegProvider({ children }) {
@@ -31,7 +27,6 @@ export function ItemRegProvider({ children }) {
         throw new Error(`Failed to fetch items. Status: ${res.status}`);
       }
       const data = await res.json(); // This will now be an array of items
-      console.log("Fetched items:", data);
 
       // 2. The API now reliably returns an array, so we update state...
       setItems(data);
