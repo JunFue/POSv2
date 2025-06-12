@@ -4,7 +4,7 @@ import { useContext } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
 export const ItemRegForm = () => {
-  const { setItems } = useContext(ItemRegData);
+  const { setItems, serverOnline } = useContext(ItemRegData);
   // Using useForm from react-hook-form to manage form state and validation
   const form = useForm();
   const { register, handleSubmit, formState, reset } = form; // control is still needed for DevTool
@@ -42,6 +42,10 @@ export const ItemRegForm = () => {
 
   // Modified addToCart function to send POST request to the API
   const addToCart = async (data) => {
+    if (!serverOnline) {
+      alert("SERVER IS OFFLINE");
+      return;
+    }
     try {
       const res = await fetch("http://localhost:3000/api/item-reg", {
         method: "POST",
@@ -62,6 +66,10 @@ export const ItemRegForm = () => {
 
   return (
     <div className="">
+      {/* Alert message when server is offline */}
+      {!serverOnline && (
+        <div className="text-red-500 font-bold mb-2">SERVER IS OFFLINE</div>
+      )}
       <form
         onSubmit={handleSubmit(addToCart)}
         noValidate
@@ -176,7 +184,9 @@ export const ItemRegForm = () => {
         >
           Clear
         </button>
-        <button type="submit">Register</button>
+        <button type="submit" disabled={!serverOnline}>
+          Register
+        </button>
       </form>
     </div>
   );

@@ -4,7 +4,18 @@ import { useState, useEffect, createContext } from "react";
 const ItemRegData = createContext();
 
 export function ItemRegProvider({ children }) {
-  const [items, setItems] = useState([]);
+  // Initialize items state with data from localStorage, if available.
+  const [items, setItems] = useState(() => {
+    try {
+      const stored = localStorage.getItem("items");
+      return stored ? JSON.parse(stored) : [];
+    } catch (error) {
+      console.error("Error reading items from localStorage:", error);
+      return [];
+    }
+  });
+
+  const [serverOnline, setServerOnline] = useState(true);
 
   // Function to fetch items from the new, correct API endpoint
   const refreshItems = async () => {
@@ -17,10 +28,16 @@ export function ItemRegProvider({ children }) {
       const data = await res.json(); // This will now be an array of items
       console.log("Fetched items:", data);
 
-      // 2. The API now reliably returns an array, so we can simplify this
+      // 2. The API now reliably returns an array, so we update state...
       setItems(data);
+
+      // ...and save the new data into localStorage for offline access.
+      localStorage.setItem("items", JSON.stringify(data));
     } catch (error) {
       console.error("Error in refreshItems:", error.message);
+      alert("SERVER IS OFFLINE");
+      setServerOnline(false);
+      throw new Error("Server is Offline");
     }
   };
 
@@ -29,8 +46,11 @@ export function ItemRegProvider({ children }) {
   }, []);
 
   return (
-    // 3. Don't pass down the raw `setItems` function
-    <ItemRegData.Provider value={{ items, refreshItems }}>
+    // 3. Even though we're not encouraged to pass down the raw `setItems`,
+    // we leave it available here if needed. Otherwise, you can remove it from context.
+    <ItemRegData.Provider
+      value={{ items, refreshItems, setItems, serverOnline }}
+    >
       {children}
     </ItemRegData.Provider>
   );
