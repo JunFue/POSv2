@@ -8,8 +8,8 @@ import {
 } from "@tanstack/react-table";
 
 export function ItemSold() {
-  const { serverOnline } = useContext(ItemSoldContext);
-  const [filteredData, setFilteredData] = useState([]);
+  const { itemSold, serverOnline } = useContext(ItemSoldContext);
+  const [filteredData, setFilteredData] = useState(itemSold);
 
   const columns = [
     {
@@ -74,12 +74,19 @@ export function ItemSold() {
     setFilteredData(filteredTransactions);
   };
 
+  const handleLocalFilter = (itemName) => {
+    const filtered = itemSold.filter((item) =>
+      item.itemName.toLowerCase().includes(itemName.toLowerCase())
+    );
+    setFilteredData(filtered);
+  };
+
   return (
     <div>
       {!serverOnline && (
         <div className="text-red-500 font-bold p-2">SERVER IS OFFLINE</div>
       )}
-      <Filters onFilter={handleFilter} />
+      <Filters onFilter={handleFilter} onLocalFilter={handleLocalFilter} />
       <div className="overflow-x-auto rounded-lg shadow">
         <table className="min-w-full divide-y divide-gray-200 text-[0.8vw]">
           <thead className="bg-gray-200">

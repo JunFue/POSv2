@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 
-export function Filters({ onFilter }) {
+export function Filters({ onFilter, onLocalFilter }) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [transactionNo, setTransactionNo] = useState("");
+  const [itemName, setItemName] = useState(""); // Local filter for itemName
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -38,6 +39,12 @@ export function Filters({ onFilter }) {
       alert(`Error fetching data: ${error.message}`);
     } finally {
       setLoading(false); // Reset loading state
+    }
+  };
+
+  const handleLocalFilter = () => {
+    if (onLocalFilter) {
+      onLocalFilter(itemName);
     }
   };
 
@@ -90,6 +97,28 @@ export function Filters({ onFilter }) {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           placeholder="Enter transaction number"
         />
+      </div>
+      <div>
+        <label
+          htmlFor="itemName"
+          className="block text-sm font-medium text-gray-700"
+        >
+          Item Name:
+        </label>
+        <input
+          type="text"
+          id="itemName"
+          value={itemName}
+          onChange={(e) => setItemName(e.target.value)}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+          placeholder="Enter item name"
+        />
+        <button
+          onClick={handleLocalFilter}
+          className="mt-2 px-4 py-2 bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+        >
+          Filter Locally
+        </button>
       </div>
       <button
         onClick={handleFilter}
