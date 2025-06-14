@@ -19,7 +19,8 @@ import { PaymentContext } from "../../context/PaymentContext";
 // Wrap component with forwardRef
 export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
   const { items: regItems } = useContext(ItemRegData);
-  const { setItemSold } = useContext(ItemSoldContext);
+  const { setItemSold, setServerOnline: setSoldServerOnline } =
+    useContext(ItemSoldContext);
   const { stockRecords } = useContext(StocksMgtContext); // Get stocks data
   const { setPaymentData } = useContext(PaymentContext); // Corrected context name
 
@@ -50,6 +51,33 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       setValue("transactionNo", generateTransactionNo());
     },
     completeTransaction: () => done(),
+    getTransactionData: () => {
+      // Return transaction data needed for the API
+      const transactionNo = getValues("transactionNo");
+      const cashierName = getValues("cashierName");
+      const costumerName = getValues("costumerName");
+      const transactionTime = getValues("transactionTime");
+
+      return cartData.map((item) => {
+        const regItem = Array.isArray(regItems)
+          ? regItems.find((ri) => ri.barcode === item.barcode)
+          : undefined;
+        const classification = regItem ? regItem.category : "";
+
+        return {
+          barcode: item.barcode,
+          itemName: item.item,
+          price: item.price,
+          quantity: item.quantity,
+          totalPrice: item.total(),
+          transactionDate: transactionTime,
+          transactionNo: transactionNo,
+          inCharge: cashierName,
+          costumer: costumerName || "N/A",
+          classification,
+        };
+      });
+    },
   }));
 
   useEffect(() => {
@@ -266,7 +294,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
   }
 
   // ------------- MODIFIED done() FUNCTION -------------
-  function done() {
+  async function done() {
     // Retrieve form values needed for the payment record
     const transactionNo = getValues("transactionNo");
     const cashierName = getValues("cashierName"); // Will be used for 'inCharge'
@@ -338,18 +366,37 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
     // Update PaymentContext with the single transaction payment record
     setPaymentData((prev) => [...prev, paymentRecord]);
 
-    // Clear cart and relevant form fields
+    // Send each sold transaction to the /api/transactions endpoint
+    let offline = false;
+    for (const transaction of soldItems) {
+      try {
+        const response = await fetch("http://localhost:3000/api/transactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(transaction),
+        });
+        if (!response.ok) {
+          offline = true;
+        }
+      } catch (error) {
+        offline = true;
+        console.log(error);
+      }
+    }
+    // Update the sold context server flag for offline display
+    setSoldServerOnline(!offline);
+    if (offline) {
+      alert("SERVER IS OFFLINE");
+    }
+
+    // Clear cart and reset form fields as before
     setCartData([]);
     setValue("payment", "");
     setValue("discount", "");
     setValue("costumerName", "");
-    setValue("grandTotal", "0.00"); // Reset grand total display
-    setValue("change", "0.00"); // Reset change display
-
-    // Generate a new transaction number for the next transaction
+    setValue("grandTotal", "0.00");
+    setValue("change", "0.00");
     setValue("transactionNo", generateTransactionNo());
-
-    // Optionally, focus on the customer name field for the new transaction
     costumerNameRef.current?.focus();
   }
   // ------------- END OF MODIFIED done() FUNCTION -------------

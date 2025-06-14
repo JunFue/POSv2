@@ -12,11 +12,8 @@ export function Inventory() {
           path="item-registration"
           element={
             <>
-              <div className="flex text-[1.7vw] flex-row w-full justify-between px-[2vw] h-[4vw] rounded-lg border border-gray-400 shadow-inner p-[0.3vw]">
-                <div>Item Registration</div>
-              </div>
-              <div className="text-[0.8vw] p-[0.5vw]">
-                Files: ItemRegForms.jsx, ItemRegTable.jsx
+              <div className="flex font-bold text-[1.7vw] items-center flex-row w-full justify-between px-[1vw] h-[6vh] rounded-lg border border-gray-400 shadow-inner">
+                <div className="m-auto">Item Registration</div>
               </div>
               <div className="flex flex-col w-full h-full gap-[1vw]">
                 <ItemRegForm />

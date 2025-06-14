@@ -1,12 +1,16 @@
+import { useContext, useState } from "react";
+import { ItemSoldContext } from "../../context/ItemSoldContext";
+import { Filters } from "./Filters";
 import {
   getCoreRowModel,
   useReactTable,
   flexRender,
 } from "@tanstack/react-table";
-import { useContext } from "react";
-import { ItemSoldContext } from "../../context/ItemSoldContext";
 
 export function ItemSold() {
+  const { serverOnline } = useContext(ItemSoldContext);
+  const [filteredData, setFilteredData] = useState([]);
+
   const columns = [
     {
       accessorKey: "barcode",
@@ -59,59 +63,73 @@ export function ItemSold() {
       cell: (props) => <p>{props.getValue()}</p>,
     },
   ];
-  const { itemSold } = useContext(ItemSoldContext);
+
   const table = useReactTable({
-    data: itemSold,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
+
+  const handleFilter = (filteredTransactions) => {
+    setFilteredData(filteredTransactions);
+  };
+
   return (
-    <div className="overflow-x-auto rounded-lg shadow">
-      <table className="min-w-full divide-y divide-gray-200 text-[0.8vw]">
-        <thead className="bg-gray-200">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="border-b border-gray-300 px-4 py-2 text-left"
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext()
+    <div>
+      {!serverOnline && (
+        <div className="text-red-500 font-bold p-2">SERVER IS OFFLINE</div>
+      )}
+      <Filters onFilter={handleFilter} />
+      <div className="overflow-x-auto rounded-lg shadow">
+        <table className="min-w-full divide-y divide-gray-200 text-[0.8vw]">
+          <thead className="bg-gray-200">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="border-b border-gray-300 px-4 py-2 text-left"
+                  >
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {table.getRowModel().rows.map((row) => (
+              <tr key={row.id} className="hover:bg-gray-50">
+                {row.getVisibleCells().map((cell) => {
+                  const accessor = cell.column.columnDef.accessorKey;
+                  const cellClass =
+                    "border-b border-gray-300 px-4 py-2" +
+                    ([
+                      "price",
+                      "quantity",
+                      "totalPrice",
+                      "classification",
+                    ].includes(accessor)
+                      ? " text-center"
+                      : "");
+                  return (
+                    <td key={cell.id} className={cellClass}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
                       )}
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody className="bg-white divide-y divide-gray-200">
-          {table.getRowModel().rows.map((row) => (
-            <tr key={row.id} className="hover:bg-gray-50">
-              {row.getVisibleCells().map((cell) => {
-                const accessor = cell.column.columnDef.accessorKey;
-                const cellClass =
-                  "border-b border-gray-300 px-4 py-2" +
-                  ([
-                    "price",
-                    "quantity",
-                    "totalPrice",
-                    "classification",
-                  ].includes(accessor)
-                    ? " text-center"
-                    : "");
-                return (
-                  <td key={cell.id} className={cellClass}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                );
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

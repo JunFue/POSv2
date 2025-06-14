@@ -75,7 +75,7 @@ export const ItemRegForm = () => {
   };
 
   return (
-    <div className="">
+    <div className="bg-[#f0f0f0] p-4 rounded-lg shadow-md">
       {/* Alert message when server is offline */}
       {!serverOnline && (
         <div className="text-red-500 font-bold mb-2">SERVER IS OFFLINE</div>

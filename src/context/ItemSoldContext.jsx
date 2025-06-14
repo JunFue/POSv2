@@ -7,15 +7,19 @@ export function ItemSoldProvider({ children }) {
     const storedItems = localStorage.getItem("itemSold");
     return storedItems ? JSON.parse(storedItems) : [];
   });
+  const [serverOnline, setServerOnline] = useState(true);
+
   useEffect(() => {
     localStorage.setItem("itemSold", JSON.stringify(itemSold));
   }, [itemSold]);
+
   return (
-    <ItemSoldContext.Provider value={{ itemSold, setItemSold }}>
+    <ItemSoldContext.Provider
+      value={{ itemSold, setItemSold, serverOnline, setServerOnline }}
+    >
       {children}
     </ItemSoldContext.Provider>
   );
 }
 
-// Export the context so it can be used elsewhere.
 export { ItemSoldContext };
