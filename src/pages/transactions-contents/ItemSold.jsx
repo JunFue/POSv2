@@ -9,67 +9,13 @@ import {
 } from "react";
 import { ItemSoldContext } from "../../context/ItemSoldContext";
 import { Filters } from "./Filters";
-import {
-  getCoreRowModel,
-  useReactTable,
-  flexRender,
-} from "@tanstack/react-table";
+import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
+import { useFilterWorker } from "../../hooks/useFilterWorker";
+import { VirtualizedTable } from "../../components/VirtualizedTable";
 import { useDebounce } from "../../hooks/useDebounce";
 
-// Define the worker code as a string. This code will run in a separate thread.
-const workerCode = `
-  self.onmessage = function(e) {
-    const { data, itemNameFilter, classificationFilter } = e.data;
-
-    // Helper function to apply the item name filter and sorting
-    const applyItemNameFilter = (d) => {
-      let filtered = d;
-      if (itemNameFilter.selected.length > 0) {
-        filtered = filtered.filter((item) =>
-          itemNameFilter.selected.includes(item.itemName)
-        );
-      }
-      if (itemNameFilter.sort === "asc") {
-        filtered = [...filtered].sort((a, b) =>
-          String(a.itemName).localeCompare(String(b.itemName))
-        );
-      } else if (itemNameFilter.sort === "desc") {
-        filtered = [...filtered].sort((a, b) =>
-          String(b.itemName).localeCompare(String(a.itemName))
-        );
-      }
-      return filtered;
-    };
-
-    // Helper function to apply the classification filter and sorting
-    const applyClassificationFilter = (d) => {
-      let filtered = d;
-      if (classificationFilter.selected.length > 0) {
-        filtered = filtered.filter((item) =>
-          classificationFilter.selected.includes(item.classification)
-        );
-      }
-      if (classificationFilter.sort === "asc") {
-        filtered = [...filtered].sort((a, b) =>
-          String(a.classification).localeCompare(String(b.classification))
-        );
-      } else if (classificationFilter.sort === "desc") {
-        filtered = [...filtered].sort((a, b) =>
-          String(b.classification).localeCompare(String(a.classification))
-        );
-      }
-      return filtered;
-    };
-
-    // Apply filters sequentially and post the result back to the main thread
-    let result = applyItemNameFilter(data || []);
-    result = applyClassificationFilter(result);
-    self.postMessage(result);
-  };
-`;
-
-// Memoized ColumnFilterDropdown for performance
+// Memoized ColumnFilterDropdown remains here for now.
 const MemoizedColumnFilterDropdown = memo(ColumnFilterDropdown);
 
 export function ItemSold() {
@@ -85,43 +31,31 @@ export function ItemSold() {
     selected: [],
     sort: null,
   });
-
   const [showClassificationDropdown, setShowClassificationDropdown] =
     useState(false);
+  const [totalItems, setTotalItems] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [loading, setLoading] = useState(false);
+  const totalPages = Math.ceil(totalItems / rowsPerPage);
 
-  // State for the data that will be displayed in the table. Initialize as empty.
-  const [filteredData, setFilteredData] = useState([]);
+  // Obtain filtered data using the custom hook.
+  const filteredData = useFilterWorker(
+    itemSold,
+    itemNameFilter,
+    classificationFilter
+  );
   const tableContainerRef = useRef(null);
 
-  // This effect handles all data and filter changes.
-  useEffect(() => {
-    // Create a new worker for each filtering task.
-    const blob = new Blob([workerCode], { type: "application/javascript" });
-    const worker = new Worker(URL.createObjectURL(blob));
+  const handleServerData = (response) => {
+    setItemSold(response.data);
+    setTotalItems(response.totalCount);
+  };
 
-    // Listen for messages (the filtered data) from the worker.
-    worker.onmessage = (e) => {
-      setFilteredData(e.data);
-    };
-
-    // Post the raw data and current filters to the worker to start the job.
-    worker.postMessage({
-      data: itemSold || [],
-      itemNameFilter,
-      classificationFilter,
-    });
-
-    // Cleanup: Terminate the worker when the effect re-runs or the component unmounts.
-    return () => {
-      worker.terminate();
-    };
-  }, [itemSold, itemNameFilter, classificationFilter]); // Re-run whenever data or filters change.
-
-  // Memoize unique values for dropdowns to prevent recalculation on every render.
+  // Memoize unique values for dropdowns.
   const uniqueItemNames = useMemo(() => {
     return Array.from(new Set((itemSold || []).map((d) => d.itemName)));
   }, [itemSold]);
-
   const uniqueClassifications = useMemo(() => {
     return Array.from(new Set((itemSold || []).map((d) => d.classification)));
   }, [itemSold]);
@@ -246,13 +180,11 @@ export function ItemSold() {
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
-
   const { rows } = table.getRowModel();
-
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 40, // Adjust this to your average row height
+    estimateSize: () => 40,
     overscan: 5,
   });
 
@@ -266,73 +198,27 @@ export function ItemSold() {
       {!serverOnline && (
         <div className="text-red-500 font-bold p-2">SERVER IS OFFLINE</div>
       )}
-      <Filters onFilter={setItemSold} />
-
-      <div
-        ref={tableContainerRef}
-        className="overflow-auto rounded-lg shadow border"
-        style={{ height: "600px" }}
-      >
-        <table className="w-full text-[0.8vw]" style={{ tableLayout: "fixed" }}>
-          <thead className="bg-gray-100 sticky top-0 z-10">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="border-b border-gray-300 text-left px-4 py-2 font-semibold text-gray-700 w-[150px]"
-                  >
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody
-            style={{
-              height: `${rowVirtualizer.getTotalSize()}px`,
-              position: "relative",
-              border: "1px solid red",
-            }}
-          >
-            {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-              const row = rows[virtualRow.index];
-              return (
-                <tr
-                  key={row.id}
-                  style={{
-                    position: "absolute",
-                    top: 0,
-                    left: 0,
-                    width: "100%",
-                    border: "1px solid blue",
-                    height: `${virtualRow.size}px`,
-                    transform: `translateY(${virtualRow.start}px)`,
-                    display: "flex",
-                  }}
-                  className="hover:bg-gray-100"
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <td
-                      key={cell.id}
-                      className="border-b border-gray-300 px-4 py-2 truncate grow-1 w-full"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
-                    </td>
-                  ))}
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <Filters
+        onFilter={handleServerData}
+        currentPage={currentPage}
+        setCurrentPage={setCurrentPage}
+        totalPages={totalPages}
+        rowsPerPage={rowsPerPage}
+        setRowsPerPage={setRowsPerPage}
+        loading={loading}
+        setLoading={setLoading}
+      />
+      <div className="relative">
+        <VirtualizedTable
+          table={table}
+          tableContainerRef={tableContainerRef}
+          rowVirtualizer={rowVirtualizer}
+        />
+        {loading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-50">
+            Loading...
+          </div>
+        )}
       </div>
     </div>
   );

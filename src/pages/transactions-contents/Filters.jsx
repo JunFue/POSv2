@@ -1,11 +1,20 @@
 import { useState, useEffect } from "react";
 
-export function Filters({ onFilter, onLocalFilter }) {
+export function Filters({
+  onFilter,
+  onLocalFilter,
+  currentPage,
+  setCurrentPage,
+  totalPages,
+  rowsPerPage,
+  setRowsPerPage,
+  loading, // added prop
+  setLoading, // added prop
+}) {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [transactionNo, setTransactionNo] = useState("");
   const [itemName, setItemName] = useState("");
-  const [loading, setLoading] = useState(false);
 
   // Renamed to be more descriptive for the initial load.
   const initializeFilters = () => {
@@ -13,7 +22,7 @@ export function Filters({ onFilter, onLocalFilter }) {
     setFromDate(today);
     setToDate(today);
     // Fetch data for the initial date range.
-    handleBackendFetch(today, today, "");
+    handleBackendFetch(1, rowsPerPage, today, today, "");
   };
 
   useEffect(() => {
@@ -22,7 +31,13 @@ export function Filters({ onFilter, onLocalFilter }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleBackendFetch = async (startDate, endDate, transNo = "") => {
+  const handleBackendFetch = async (
+    page,
+    limit,
+    startDate,
+    endDate,
+    transNo = ""
+  ) => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -32,6 +47,8 @@ export function Filters({ onFilter, onLocalFilter }) {
         params.append("startDate", startDate);
         params.append("endDate", endDate);
       }
+      params.append("page", page);
+      params.append("limit", limit);
 
       const url = `http://localhost:3000/api/transactions?${params.toString()}`;
       const response = await fetch(url);
@@ -59,16 +76,59 @@ export function Filters({ onFilter, onLocalFilter }) {
       }
       return;
     }
+    setCurrentPage(1);
     // Otherwise, fetch from the backend with current filter values.
-    handleBackendFetch(fromDate, toDate, transactionNo.trim());
+    handleBackendFetch(1, rowsPerPage, fromDate, toDate, transactionNo.trim());
   };
 
   const handleReset = () => {
     // Clear only the transaction number and item name fields.
     setTransactionNo("");
     setItemName("");
+    setCurrentPage(1);
     // Re-fetch data using the *existing* date range.
-    handleBackendFetch(fromDate, toDate);
+    handleBackendFetch(1, rowsPerPage, fromDate, toDate);
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      const nextPage = currentPage + 1;
+      setCurrentPage(nextPage);
+      handleBackendFetch(
+        nextPage,
+        rowsPerPage,
+        fromDate,
+        toDate,
+        transactionNo.trim()
+      );
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      const prevPage = currentPage - 1;
+      setCurrentPage(prevPage);
+      handleBackendFetch(
+        prevPage,
+        rowsPerPage,
+        fromDate,
+        toDate,
+        transactionNo.trim()
+      );
+    }
+  };
+
+  const handleRowsPerPageChange = (e) => {
+    const newRowsPerPage = Number(e.target.value);
+    setRowsPerPage(newRowsPerPage);
+    setCurrentPage(1); // Reset to page 1
+    handleBackendFetch(
+      1,
+      newRowsPerPage,
+      fromDate,
+      toDate,
+      transactionNo.trim()
+    );
   };
 
   return (
@@ -153,6 +213,38 @@ export function Filters({ onFilter, onLocalFilter }) {
         >
           Reset
         </button>
+      </div>
+      <div className="flex items-center gap-4">
+        <button
+          onClick={handlePreviousPage}
+          disabled={currentPage <= 1 || loading}
+          className="bg-blue-500 text-white text-[1.2vw] px-3 py-2 rounded disabled:opacity-50 transition-colors"
+        >
+          Previous
+        </button>
+        <span className="text-[1vw]">
+          Page {currentPage} of {totalPages}
+        </span>
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage >= totalPages || loading}
+          className="text-[1.2vw] bg-blue-500 text-white px-3 py-2 rounded disabled:opacity-50 transition-colors"
+        >
+          Next
+        </button>
+        <select
+          value={rowsPerPage}
+          onChange={handleRowsPerPageChange}
+          disabled={loading}
+          className="text-[1.2vw] bg-white border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors"
+        >
+          <option value={10}>10</option>
+          <option value={25}>25</option>
+          <option value={50}>50</option>
+          <option value={100}>100</option>
+          <option value={500}>500</option>
+          <option value={1000}>1000</option>
+        </select>
       </div>
     </div>
   );
