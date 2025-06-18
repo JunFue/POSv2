@@ -58,68 +58,55 @@ export function POSContents() {
   };
 
   return (
-    <>
-      <div>
-        <div
-          id="pos-header-container"
-          className="relative flex flex-row h-fit items-center"
-        >
-          <img
-            src="logo.png"
-            alt=""
-            className="absolute top-1 left-1 w-[4vw] aspect-auto"
-          />
-          <div className="flex flex-col w-full items-center">
-            <h1 className="text-[2vw] font-bold">POINT OF SALE</h1>
-            <p className="text-[1vw]">made for: GREEN SECRETS</p>
-            <p className="italic text-[0.5vw]">Property of JunFue</p>
-          </div>
-        </div>
+    <div className="bg-accent-200/20 rounded-lg border border-accent-800 shadow-md p-3">
+      <header className="flex flex-col items-center mb-1">
+        <h1 className="text-4xl font-bold font-info-text! text-accent-300 ">
+          POINT OF SALE
+        </h1>
+        <p className="text-sm text-accent-600">Made for: GREEN SECRETS</p>
+        <p className="text-xs italic text-accent-600">Property of JunFue</p>
+      </header>
 
-        <CounterForm
-          cartData={cartData}
-          setCartData={setCartData}
-          ref={counterFormRef}
-        ></CounterForm>
+      <CounterForm
+        cartData={cartData}
+        setCartData={setCartData}
+        ref={counterFormRef}
+      />
 
-        <div
-          id="buttons-container"
-          className="grid grid-cols-6 h-[2.6vw] gap-[1vw] [&>*]:text-[0.8vw] backdrop-blur-md rounded-[0.4vw] shadow-inner p-[0.4vw] [&>*]:whitespace-nowrap [&>*]:transition-all"
+      <div className="grid grid-cols-3 gap-4 mt-6">
+        <button
+          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95"
+          onClick={() => {
+            setCartData([]);
+            counterFormRef.current?.regenerateTransactionNo();
+          }}
         >
-          <button
-            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
-            onClick={() => {
-              setCartData([]);
-              counterFormRef.current?.regenerateTransactionNo();
-            }}
-          >
-            NEW COSTUMER
-          </button>
-          <button className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95">
-            ADD TO CART
-          </button>
-          <button
-            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
-            onClick={handleDone}
-          >
-            DONE
-          </button>
-          <button
-            className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
-            onClick={() => setCartData([])}
-          >
-            CLEAR
-          </button>
-          <button className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95">
-            SYNC
-          </button>
-          <button className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95">
-            DOWNLOAD DATA
-          </button>
-        </div>
+          New Customer
+        </button>
+        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
+          Add to Cart
+        </button>
+        <button
+          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95"
+          onClick={handleDone}
+        >
+          Done
+        </button>
+        <button
+          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95"
+          onClick={() => setCartData([])}
+        >
+          Clear
+        </button>
+        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
+          Sync
+        </button>
+        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
+          Settings
+        </button>
       </div>
 
-      <CartTable></CartTable>
-    </>
+      <CartTable />
+    </div>
   );
 }

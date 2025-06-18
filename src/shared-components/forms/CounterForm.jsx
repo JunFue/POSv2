@@ -407,32 +407,32 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
     : undefined;
 
   return (
-    <div className="bg-[#e0e0e0] rounded-lg">
+    <div className="shiny-gradient backdrop-blur-xl rounded-xl border border-accent-200/40 shadow-lg p-1 text-accent-100">
       <form
         onSubmit={handleSubmit(addToCart)}
-        className="grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-[0.5vw] [&>*]:text-[0.8vw] [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:text-nowrap p-[0.3vw]"
+        className="[&>*]:text-[1.2vw] [&>*]:font-info-text! grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-[0.5vw] [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:text-nowrap p-[0.3vh]"
       >
         <label title="Cashier Name">Cashier Name:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...register("cashierName")}
           type="text"
           autoComplete="off"
           readOnly
         />
 
-        <label>Transaction Time:</label>
+        <label title="Transaction Time">Transaction Time:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...register("transactionTime")}
           type="text"
           autoComplete="off"
           readOnly
         />
 
-        <label>Payment:</label>
+        <label title="Payment">Payment:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...register("payment")}
           type="number"
           step="any"
@@ -447,7 +447,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Costumer Name">Costumer Name:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...costumerNameRegisterProps}
           type="text"
           ref={(e) => {
@@ -463,18 +463,18 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           autoComplete="off"
         />
 
-        <label>Transaction No.:</label>
+        <label title="Transaction No.">Transaction No.:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...register("transactionNo")}
           type="text"
           readOnly
           autoComplete="off"
         />
 
-        <label>Discount:</label>
+        <label title="Discount">Discount:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...discountRegisterProps}
           type="number"
           step="any"
@@ -494,9 +494,9 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           autoComplete="off"
         />
 
-        <label>Barcode:</label>
+        <label title="Barcode">Barcode:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...barcodeRegisterProps}
           type="text"
           ref={(e) => {
@@ -508,9 +508,9 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           autoComplete="off"
         />
 
-        <label>Available Stocks:</label>
+        <label title="Available Stocks">Available Stocks:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...register("availableStocks")}
           type="text"
           placeholder="Stocks Available"
@@ -518,17 +518,17 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           autoComplete="off"
         />
 
-        <label>Grand Total:</label>
+        <label title="Grand Total">Grand Total:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...register("grandTotal")}
           type="text"
           readOnly
           autoComplete="off"
         />
-        <label>Quantity:</label>
+        <label title="Quantity">Quantity:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...quantityRegisterProps}
           type="number"
           ref={(e) => {
@@ -544,18 +544,18 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
           autoComplete="off"
         />
 
-        <label>Additional Info:</label>
+        <label title="Additional Info">Additional Info:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...register("additionalInfo")}
           type="text"
           placeholder="additional info..."
           readOnly // Assuming this should remain readOnly as per original
           autoComplete="off"
         />
-        <label>Change:</label>
+        <label title="Change">Change:</label>
         <input
-          className="w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:300ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
           {...register("change")}
           type="text"
           readOnly
@@ -569,7 +569,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       />
       <div
         id="item-description"
-        className="text-center text-[1.2vw] border border-[#DDDDDD] shadow-inner rounded-sm bg-[#FAF9F3]"
+        className="text-center text-[1.2vw] border border-white/30 shadow-inner rounded-sm bg-white/20"
       >
         {barcodeValue && matchedItem ? (
           <p>

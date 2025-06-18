@@ -5,7 +5,7 @@ import { MonthlyTable } from "./dashboard-contents/MonthlyTable";
 
 export function Dashboard() {
   return (
-    <div className="w-full h-full border text-[2vw] bg-gray-50">
+    <div className="w-full h-full custom-gradient rounded-lg border border-accent-800 shadow-md p-4">
       {/* Nested Routing */}
       <Routes>
         <Route index element={<Overview />} />
