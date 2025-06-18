@@ -2,10 +2,13 @@ import { useContext, useRef } from "react";
 import { CartTable } from "../shared-components/tables/CartTable";
 import { CounterForm } from "../shared-components/forms/CounterForm";
 import { CartContext } from "../context/CartContext";
+import { SettingsContext } from "../context/SettingsContext";
+import { Settings } from "./Settings";
 
 export function POSContents() {
   const { cartData, setCartData } = useContext(CartContext);
   const counterFormRef = useRef(null);
+  const { showSettings, setShowSettings } = useContext(SettingsContext);
 
   const handleDone = async () => {
     try {
@@ -58,7 +61,7 @@ export function POSContents() {
   };
 
   return (
-    <div className="bg-accent-200/20 rounded-lg border border-accent-800 shadow-md p-3">
+    <div className="bg-accent-200/20 rounded-lg border border-accent-800 shadow-md p-3 relative">
       <header className="flex flex-col items-center mb-1">
         <h1 className="text-4xl font-bold font-info-text! text-accent-300 ">
           POINT OF SALE
@@ -101,9 +104,17 @@ export function POSContents() {
         <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
           Sync
         </button>
-        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
+        <button
+          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95"
+          onClick={() => {
+            setShowSettings((prev) => !prev);
+            console.log(showSettings);
+          }}
+        >
           Settings
         </button>
+
+        {showSettings ? <Settings /> : null}
       </div>
 
       <CartTable />

@@ -4,18 +4,21 @@ import { ItemSoldProvider } from "./ItemSoldContext.jsx";
 import { ItemRegProvider } from "./ItemRegContext.jsx";
 import { CartProvider } from "./CartContext.jsx";
 import { PaymentProvider } from "./PaymentContext.jsx";
+import { SettingsProvider } from "./SettingsContext.jsx";
 
 export function AppProviders({ children }) {
   return (
-    <PaymentProvider>
-      <StocksMgtProvider>
-        <ItemSoldProvider>
-          <ItemRegProvider>
-            <CartProvider>{children}</CartProvider>
-          </ItemRegProvider>
-        </ItemSoldProvider>
-      </StocksMgtProvider>
-    </PaymentProvider>
+    <SettingsProvider>
+      <PaymentProvider>
+        <StocksMgtProvider>
+          <ItemSoldProvider>
+            <ItemRegProvider>
+              <CartProvider>{children}</CartProvider>
+            </ItemRegProvider>
+          </ItemSoldProvider>
+        </StocksMgtProvider>
+      </PaymentProvider>
+    </SettingsProvider>
   );
 }
 

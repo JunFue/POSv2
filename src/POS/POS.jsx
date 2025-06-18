@@ -1,11 +1,13 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
 import { POSContents } from "./POSContents";
+import { SettingsContext } from "../context/SettingsContext";
 
 export function POS() {
   const [isOpen, setIsOpen] = useState(true);
   const [content, setContent] = useState(false);
   const [loadingAnimation, setLoadingAnimation] = useState(false);
+  const { showSettings } = useContext(SettingsContext);
   const open = () => {
     setIsOpen(!isOpen);
   };

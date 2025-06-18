@@ -19,8 +19,7 @@ function App() {
           <Nav />
           <div className="shadow-[inset_2px_2px_6px_#bfbfbf,inset_-2px_-2px_6px_#ffffff] overflow-y-scroll">
             <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="dashboard/*" element={<Dashboard />} />
+              <Route path="/*" element={<Dashboard />} />
               <Route path="cashout" element={<Cashout />} />
               <Route path="transactions/*" element={<Transactions />} />
               <Route path="inventory/*" element={<Inventory />} />

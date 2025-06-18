@@ -15,7 +15,7 @@ export function MonthlyTable() {
   return (
     <div className="w-full h-full p-4 custom-gradient rounded-lg border border-accent-800 shadow-md text-accent-50 font-info-text!">
       <h2 className="text-3xl mb-2">Monthly Transactions</h2>
-      <div className="overflow-auto">
+      <div className="overflow-auto bg-white/40 backdrop-blur-md p-2 rounded">
         <table className="min-w-full border-collapse">
           <thead>
             <tr>
