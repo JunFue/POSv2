@@ -61,7 +61,7 @@ export function POSContents() {
   };
 
   return (
-    <div className="bg-accent-200/20 rounded-lg border border-accent-800 shadow-md p-3 relative">
+    <div className="bg-accent-200/20 rounded-lg border border-accent-800 shadow-custom-outset neumorphic-background p-3 relative">
       <header className="flex flex-col items-center mb-1">
         <h1 className="text-4xl font-bold font-info-text! text-accent-300 ">
           POINT OF SALE
@@ -78,7 +78,7 @@ export function POSContents() {
 
       <div className="grid grid-cols-3 gap-4 mt-6">
         <button
-          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95"
+          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-custom-button neumorphic-button-style transition-all active:scale-95"
           onClick={() => {
             setCartData([]);
             counterFormRef.current?.regenerateTransactionNo();
@@ -86,26 +86,26 @@ export function POSContents() {
         >
           New Customer
         </button>
-        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
+        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-custom-button neumorphic-button-style transition-all active:scale-95">
           Add to Cart
         </button>
         <button
-          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95"
+          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-custom-button neumorphic-button-style transition-all active:scale-95"
           onClick={handleDone}
         >
           Done
         </button>
         <button
-          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95"
+          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-custom-button neumorphic-button-style transition-all active:scale-95"
           onClick={() => setCartData([])}
         >
           Clear
         </button>
-        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
+        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-custom-button neumorphic-button-style transition-all active:scale-95">
           Sync
         </button>
         <button
-          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95"
+          className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-custom-button neumorphic-button-style transition-all active:scale-95"
           onClick={() => {
             setShowSettings((prev) => !prev);
             console.log(showSettings);

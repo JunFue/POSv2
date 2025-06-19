@@ -17,7 +17,7 @@ function App() {
         <POS />
         <div className="flex flex-col gap-[0.3vw] flex-grow p-[0.2vw] rounded-2xl basis-0 min-w-0">
           <Nav />
-          <div className="shadow-[inset_2px_2px_6px_#bfbfbf,inset_-2px_-2px_6px_#ffffff] overflow-y-scroll">
+          <div className="shadow-custom-inset neumorphic-background overflow-y-scroll">
             <Routes>
               <Route path="/*" element={<Dashboard />} />
               <Route path="cashout" element={<Cashout />} />

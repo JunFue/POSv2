@@ -7,44 +7,145 @@
   box-sizing: border-box;
   font-family: "Poppins", sans-serif;
   font-optical-sizing: auto;
-  
 }
 
-
 @theme {
+  /* Define non-themeable properties here */
+  --color-cyan: #00FFFF;
+  --font-info-text: "VT323", monospace;
+}
 
-  --color-accent-50: #eefbf3;
-  --color-accent-100: #d6f5df;
-  --color-accent-200: #b0eac4;
-  --color-accent-300: #7cd9a3;
-  --color-accent-400: #47c07e;
-  --color-accent-500: #24a562;
-  --color-accent-600: #16854e;
-  --color-accent-700: #137145;
-  --color-accent-800: #115435;
-  --color-accent-900: #0f452d;
-  --color-accent-950: #072719;
-  
-  
+@layer base {
+  /* This is now the base layer where we define all our themes */
+  :root, [data-theme="light"] {
+    /* Theme: Light (Original Green) */
+    --color-accent-50: #eefbf3;
+    --color-accent-100: #d6f5df;
+    --color-accent-200: #b0eac4;
+    --color-accent-300: #7cd9a3;
+    --color-accent-400: #47c07e;
+    --color-accent-500: #24a562;
+    --color-accent-600: #16854e;
+    --color-accent-700: #137145;
+    --color-accent-800: #115435;
+    --color-accent-900: #0f452d;
+    --color-accent-950: #072719;
 
---color-primary-50: #f6f6f6;
---color-primary-100: #e7e7e7;
---color-primary-200: #d1d1d1;
---color-primary-300: #b0b0b0;
---color-primary-400: #888888;
---color-primary-500: #6d6d6d;
---color-primary-600: #5d5d5d;
---color-primary-700: #4f4f4f;
---color-primary-800: #454545;
---color-primary-900: #3d3d3d;
---color-primary-950: #0f0f0f;
+    --color-primary-50: #f6f6f6;
+    --color-primary-100: #e7e7e7;
+    --color-primary-200: #d1d1d1;
+    --color-primary-300: #b0b0b0;
+    --color-primary-400: #888888;
+    --color-primary-500: #6d6d6d;
+    --color-primary-600: #5d5d5d;
+    --color-primary-700: #4f4f4f;
+    --color-primary-800: #454545;
+    --color-primary-900: #3d3d3d;
+    --color-primary-950: #0f0f0f;
 
-/* font colors */
+    /* Shadow Definitions for Light Theme */
+    --shadow-color-light: #ffffff;
+    --shadow-color-dark: #bebebe;
+    --shadow-outset: 8px 8px 16px var(--shadow-color-dark), -8px -8px 16px var(--shadow-color-light);
+    --shadow-inset: inset 2px 2px 6px var(--shadow-color-dark), inset -2px -2px 6px var(--shadow-color-light);
+    --shadow-button: 4px 4px 8px var(--shadow-color-dark), -4px -4px 8px var(--shadow-color-light);
+  }
 
---color-cyan: #00FFFF;
+  [data-theme="dark"] {
+    /* Theme: Dark (Blue) */
+    --color-accent-50: #f0f7ff;
+    --color-accent-100: #e0f0ff;
+    --color-accent-200: #c2e0ff;
+    --color-accent-300: #a3d1ff;
+    --color-accent-400: #85c2ff;
+    --color-accent-500: #66b2ff;
+    --color-accent-600: #4d9eff;
+    --color-accent-700: #338bff;
+    --color-accent-800: #1a78ff;
+    --color-accent-900: #0062e6;
+    --color-accent-950: #003780;
 
---font-info-text: "VT323", monospace;
+    --color-primary-50: #f6f6f6;
+    --color-primary-100: #e7e7e7;
+    --color-primary-200: #d1d1d1;
+    --color-primary-300: #b0b0b0;
+    --color-primary-400: #888888;
+    --color-primary-500: #6d6d6d;
+    --color-primary-600: #5d5d5d;
+    --color-primary-700: #4f4f4f;
+    --color-primary-800: #454545;
+    --color-primary-900: #3d3d3d;
+    --color-primary-950: #0f0f0f;
 
+    /* Shadow Definitions for Dark Theme (subtler on dark backgrounds) */
+    --shadow-color-light: #5a5a5a;
+    --shadow-color-dark: #000000;
+    --shadow-outset: 8px 8px 16px var(--shadow-color-dark), -8px -8px 16px var(--shadow-color-light);
+    --shadow-inset: inset 4px 4px 8px var(--shadow-color-dark), inset -4px -4px 8px var(--shadow-color-light);
+    --shadow-button: 4px 4px 8px var(--shadow-color-dark), -4px -4px 8px var(--shadow-color-light);
+  }
+
+  [data-theme="default"] {
+      /* Theme: Default (Grayscale) */
+      --color-accent-50: #ffffff;
+      --color-accent-100: #f5f5f5;
+      --color-accent-200: #e5e5e5;
+      --color-accent-300: #d4d4d4;
+      --color-accent-400: #a3a3a3;
+      --color-accent-500: #737373;
+      --color-accent-600: #525252;
+      --color-accent-700: #404040;
+      --color-accent-800: #262626;
+      --color-accent-900: #171717;
+      --color-accent-950: #0a0a0a;
+
+      /* Using the same primary as light/dark, but you could change it */
+      --color-primary-50: #f6f6f6;
+      --color-primary-100: #e7e7e7;
+      /* ... keep the rest of the primary colors or adjust as needed */
+
+      /* Shadow Definitions for Default Theme */
+      --shadow-color-light: #ffffff;
+      --shadow-color-dark: #bebebe;
+      --shadow-outset: 8px 8px 16px var(--shadow-color-dark), -8px -8px 16px var(--shadow-color-light);
+      --shadow-inset: inset 2px 2px 6px var(--shadow-color-dark), inset -2px -2px 6px var(--shadow-color-light);
+      --shadow-button: 4px 4px 8px var(--shadow-color-dark), -4px -4px 8px var(--shadow-color-light);
+  }
+
+  [data-theme="neomorphic"] {
+    /* Theme: Neomorphic */
+    /* Neomorphism works best with a base color that is not pure white */
+    --color-accent-50: #e0e0e0;
+    --color-accent-100: #e0e0e0;
+    --color-accent-200: #e0e0e0;
+    --color-accent-300: #828282; /* Text Color */
+    --color-accent-400: #656565;
+    --color-accent-500: #4f4f4f;
+    --color-accent-600: #3a3a3a;
+    --color-accent-700: #2b2b2b;
+    --color-accent-800: #1c1c1c;
+    --color-accent-900: #0f0f0f;
+    --color-accent-950: #000000;
+
+    --color-primary-50: #f6f6f6;
+    --color-primary-100: #e7e7e7;
+    --color-primary-200: #d1d1d1;
+    --color-primary-300: #b0b0b0;
+    --color-primary-400: #888888;
+    --color-primary-500: #6d6d6d;
+    --color-primary-600: #5d5d5d;
+    --color-primary-700: #4f4f4f;
+    --color-primary-800: #454545;
+    --color-primary-900: #3d3d3d;
+    --color-primary-950: #0f0f0f;
+
+    /* Shadow Definitions for Neomorphic Theme */
+    --shadow-color-light: #ffffff;
+    --shadow-color-dark: #bebebe;
+    --shadow-outset: 8px 8px 16px var(--shadow-color-dark), -8px -8px 16px var(--shadow-color-light);
+    --shadow-inset: inset 2px 2px 6px var(--shadow-color-dark), inset -2px -2px 6px var(--shadow-color-light);
+    --shadow-button: 4px 4px 8px var(--shadow-color-dark), -4px -4px 8px var(--shadow-color-light);
+  }
 }
 
 /* Add a unique custom gradient */
@@ -66,3 +167,29 @@
   background-image: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.25) 100%);
 }
 
+/* NEW: Custom shadow classes that use our CSS variables */
+.shadow-custom-outset {
+  box-shadow: var(--shadow-outset);
+}
+
+.shadow-custom-inset {
+  box-shadow: var(--shadow-inset);
+}
+
+.shadow-custom-button {
+  box-shadow: var(--shadow-button);
+}
+
+/* In neomorphic theme, change background of certain elements */
+[data-theme="neomorphic"] .neumorphic-background {
+    background-color: var(--color-accent-50);
+}
+
+[data-theme="neomorphic"] .neumorphic-button-style {
+    background-color: var(--color-accent-50);
+    color: var(--color-accent-500);
+}
+
+[data-theme="neomorphic"] .neumorphic-button-style:hover {
+    background-color: var(--color-accent-100);
+}
