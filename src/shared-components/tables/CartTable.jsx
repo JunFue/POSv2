@@ -62,16 +62,16 @@ export function CartTable() {
     getCoreRowModel: getCoreRowModel(),
   });
   return (
-    <div className="flex flex-col mt-[0.5vw] bg-[#e0e0e0] rounded-lg shadow-[inset_6px_6px_12px_#bebebe,inset_-6px_-6px_12px_#ffffff] p-4">
+    <div className="flex flex-col mt-[0.5vw] bg-background rounded-lg shadow-neumorphic p-4">
       <div className="w-full overflow-auto max-h-96">
-        <table className="w-full text-left border-collapse table-auto text-[0.8vw]">
+        <table className="w-full text-left border-collapse table-auto text-[1.3vw]">
           <thead>
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="border-b border-gray-300 text-gray-700 bg-white sticky top-0"
+                    className="text-head-text bg-[#f3f4f6] sticky top-0 px-4"
                   >
                     {header.isPlaceholder
                       ? null
@@ -84,11 +84,11 @@ export function CartTable() {
               </tr>
             ))}
           </thead>
-          <tbody>
+          <tbody className="shadow-input bg-[#eeeff0] rounded-2xl">
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-gray-100">
+              <tr key={row.id} className="hover:bg-gray-200">
                 {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="border-b border-gray-300">
+                  <td key={cell.id} className="px-4">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}

@@ -1,195 +1,41 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=VT323&display=swap");
 
 @import "tailwindcss";
 
-*{
+* {
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
+  font-family: "VT323", "Poppins", sans-serif;
   font-optical-sizing: auto;
 }
 
-@theme {
-  /* Define non-themeable properties here */
-  --color-cyan: #00FFFF;
-  --font-info-text: "VT323", monospace;
+@theme inline {
+  --color-background: var(--color-background);
+  --color-body-text: var(--color-body-text);
+  --color-head-text: var(--color-head-text);
+  --color-highlight-text: var(--color-highlight-text);
+  --shadow-neumorphic: var(--shadow-neumorphic);
+  --shadow-input: var(--shadow-input);
+  
 }
 
-@layer base {
-  /* This is now the base layer where we define all our themes */
-  :root, [data-theme="light"] {
-    /* Theme: Light (Original Green) */
-    --color-accent-50: #eefbf3;
-    --color-accent-100: #d6f5df;
-    --color-accent-200: #b0eac4;
-    --color-accent-300: #7cd9a3;
-    --color-accent-400: #47c07e;
-    --color-accent-500: #24a562;
-    --color-accent-600: #16854e;
-    --color-accent-700: #137145;
-    --color-accent-800: #115435;
-    --color-accent-900: #0f452d;
-    --color-accent-950: #072719;
-
-    --color-primary-50: #f6f6f6;
-    --color-primary-100: #e7e7e7;
-    --color-primary-200: #d1d1d1;
-    --color-primary-300: #b0b0b0;
-    --color-primary-400: #888888;
-    --color-primary-500: #6d6d6d;
-    --color-primary-600: #5d5d5d;
-    --color-primary-700: #4f4f4f;
-    --color-primary-800: #454545;
-    --color-primary-900: #3d3d3d;
-    --color-primary-950: #0f0f0f;
-
-    /* Shadow Definitions for Light Theme */
-    --shadow-color-light: #ffffff;
-    --shadow-color-dark: #bebebe;
-    --shadow-outset: 8px 8px 16px var(--shadow-color-dark), -8px -8px 16px var(--shadow-color-light);
-    --shadow-inset: inset 2px 2px 6px var(--shadow-color-dark), inset -2px -2px 6px var(--shadow-color-light);
-    --shadow-button: 4px 4px 8px var(--shadow-color-dark), -4px -4px 8px var(--shadow-color-light);
-  }
-
-  [data-theme="dark"] {
-    /* Theme: Dark (Blue) */
-    --color-accent-50: #f0f7ff;
-    --color-accent-100: #e0f0ff;
-    --color-accent-200: #c2e0ff;
-    --color-accent-300: #a3d1ff;
-    --color-accent-400: #85c2ff;
-    --color-accent-500: #66b2ff;
-    --color-accent-600: #4d9eff;
-    --color-accent-700: #338bff;
-    --color-accent-800: #1a78ff;
-    --color-accent-900: #0062e6;
-    --color-accent-950: #003780;
-
-    --color-primary-50: #f6f6f6;
-    --color-primary-100: #e7e7e7;
-    --color-primary-200: #d1d1d1;
-    --color-primary-300: #b0b0b0;
-    --color-primary-400: #888888;
-    --color-primary-500: #6d6d6d;
-    --color-primary-600: #5d5d5d;
-    --color-primary-700: #4f4f4f;
-    --color-primary-800: #454545;
-    --color-primary-900: #3d3d3d;
-    --color-primary-950: #0f0f0f;
-
-    /* Shadow Definitions for Dark Theme (subtler on dark backgrounds) */
-    --shadow-color-light: #5a5a5a;
-    --shadow-color-dark: #000000;
-    --shadow-outset: 8px 8px 16px var(--shadow-color-dark), -8px -8px 16px var(--shadow-color-light);
-    --shadow-inset: inset 4px 4px 8px var(--shadow-color-dark), inset -4px -4px 8px var(--shadow-color-light);
-    --shadow-button: 4px 4px 8px var(--shadow-color-dark), -4px -4px 8px var(--shadow-color-light);
-  }
-
-  [data-theme="default"] {
-      /* Theme: Default (Grayscale) */
-      --color-accent-50: #ffffff;
-      --color-accent-100: #f5f5f5;
-      --color-accent-200: #e5e5e5;
-      --color-accent-300: #d4d4d4;
-      --color-accent-400: #a3a3a3;
-      --color-accent-500: #737373;
-      --color-accent-600: #525252;
-      --color-accent-700: #404040;
-      --color-accent-800: #262626;
-      --color-accent-900: #171717;
-      --color-accent-950: #0a0a0a;
-
-      /* Using the same primary as light/dark, but you could change it */
-      --color-primary-50: #f6f6f6;
-      --color-primary-100: #e7e7e7;
-      /* ... keep the rest of the primary colors or adjust as needed */
-
-      /* Shadow Definitions for Default Theme */
-      --shadow-color-light: #ffffff;
-      --shadow-color-dark: #bebebe;
-      --shadow-outset: 8px 8px 16px var(--shadow-color-dark), -8px -8px 16px var(--shadow-color-light);
-      --shadow-inset: inset 2px 2px 6px var(--shadow-color-dark), inset -2px -2px 6px var(--shadow-color-light);
-      --shadow-button: 4px 4px 8px var(--shadow-color-dark), -4px -4px 8px var(--shadow-color-light);
-  }
-
-  [data-theme="neomorphic"] {
-    /* Theme: Neomorphic */
-    /* Neomorphism works best with a base color that is not pure white */
-    --color-accent-50: #e0e0e0;
-    --color-accent-100: #e0e0e0;
-    --color-accent-200: #e0e0e0;
-    --color-accent-300: #828282; /* Text Color */
-    --color-accent-400: #656565;
-    --color-accent-500: #4f4f4f;
-    --color-accent-600: #3a3a3a;
-    --color-accent-700: #2b2b2b;
-    --color-accent-800: #1c1c1c;
-    --color-accent-900: #0f0f0f;
-    --color-accent-950: #000000;
-
-    --color-primary-50: #f6f6f6;
-    --color-primary-100: #e7e7e7;
-    --color-primary-200: #d1d1d1;
-    --color-primary-300: #b0b0b0;
-    --color-primary-400: #888888;
-    --color-primary-500: #6d6d6d;
-    --color-primary-600: #5d5d5d;
-    --color-primary-700: #4f4f4f;
-    --color-primary-800: #454545;
-    --color-primary-900: #3d3d3d;
-    --color-primary-950: #0f0f0f;
-
-    /* Shadow Definitions for Neomorphic Theme */
-    --shadow-color-light: #ffffff;
-    --shadow-color-dark: #bebebe;
-    --shadow-outset: 8px 8px 16px var(--shadow-color-dark), -8px -8px 16px var(--shadow-color-light);
-    --shadow-inset: inset 2px 2px 6px var(--shadow-color-dark), inset -2px -2px 6px var(--shadow-color-light);
-    --shadow-button: 4px 4px 8px var(--shadow-color-dark), -4px -4px 8px var(--shadow-color-light);
-  }
+:root {
+  --color-background: #f3f4f6;
+  --color-body-text: #4a5568;
+  --color-head-text: #38b2ac;
+  --color-highlight-text: #f97316;
+  --shadow-neumorphic: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+  --shadow-input: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+ 
 }
 
-/* Add a unique custom gradient */
-.custom-gradient {
-  background-image: linear-gradient(
-    120deg,
-    var(--color-primary-950) 0%,
-    var(--color-primary-950) 30%,
-    var(--color-primary-800) 40%,
-    var(--color-primary-900) 50%,
-    var(--color-primary-800) 60%,
-    var(--color-primary-950) 70%,
-    var(--color-primary-950) 100%
-  );
+.dark {
+  --color-background: #1e1f24;
+  --color-body-text: #efefef;
+  --color-head-text: #38b2ac;
+  --color-highlight-text: #f97316;
+  --shadow-neumorphic: 8px 8px 16px #121317, -8px -8px 16px #292b30;
+  --shadow-input: inset 4px 4px 8px #121317, inset -4px -4px 8px #292b30;
 }
 
-/* Add a shiny gradient for a light, reflective effect */
-.shiny-gradient {
-  background-image: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.25) 100%);
-}
 
-/* NEW: Custom shadow classes that use our CSS variables */
-.shadow-custom-outset {
-  box-shadow: var(--shadow-outset);
-}
-
-.shadow-custom-inset {
-  box-shadow: var(--shadow-inset);
-}
-
-.shadow-custom-button {
-  box-shadow: var(--shadow-button);
-}
-
-/* In neomorphic theme, change background of certain elements */
-[data-theme="neomorphic"] .neumorphic-background {
-    background-color: var(--color-accent-50);
-}
-
-[data-theme="neomorphic"] .neumorphic-button-style {
-    background-color: var(--color-accent-50);
-    color: var(--color-accent-500);
-}
-
-[data-theme="neomorphic"] .neumorphic-button-style:hover {
-    background-color: var(--color-accent-100);
-}
