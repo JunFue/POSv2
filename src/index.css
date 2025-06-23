@@ -1,68 +1,41 @@
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap");
-@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=VT323&display=swap");
 
 @import "tailwindcss";
 
-*{
+* {
   box-sizing: border-box;
-  font-family: "Poppins", sans-serif;
+  font-family: "VT323", "Poppins", sans-serif;
   font-optical-sizing: auto;
+}
+
+@theme inline {
+  --color-background: var(--color-background);
+  --color-body-text: var(--color-body-text);
+  --color-head-text: var(--color-head-text);
+  --color-highlight-text: var(--color-highlight-text);
+  --shadow-neumorphic: var(--shadow-neumorphic);
+  --shadow-input: var(--shadow-input);
   
 }
 
-
-@theme {
-
-  --color-accent-50: #eefbf3;
-  --color-accent-100: #d6f5df;
-  --color-accent-200: #b0eac4;
-  --color-accent-300: #7cd9a3;
-  --color-accent-400: #47c07e;
-  --color-accent-500: #24a562;
-  --color-accent-600: #16854e;
-  --color-accent-700: #137145;
-  --color-accent-800: #115435;
-  --color-accent-900: #0f452d;
-  --color-accent-950: #072719;
-  
-  
-
---color-primary-50: #f6f6f6;
---color-primary-100: #e7e7e7;
---color-primary-200: #d1d1d1;
---color-primary-300: #b0b0b0;
---color-primary-400: #888888;
---color-primary-500: #6d6d6d;
---color-primary-600: #5d5d5d;
---color-primary-700: #4f4f4f;
---color-primary-800: #454545;
---color-primary-900: #3d3d3d;
---color-primary-950: #0f0f0f;
-
-/* font colors */
-
---color-cyan: #00FFFF;
-
---font-info-text: "VT323", monospace;
-
+:root {
+  --color-background: #f3f4f6;
+  --color-body-text: #4a5568;
+  --color-head-text: #38b2ac;
+  --color-highlight-text: #f97316;
+  --shadow-neumorphic: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+  --shadow-input: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+ 
 }
 
-/* Add a unique custom gradient */
-.custom-gradient {
-  background-image: linear-gradient(
-    120deg,
-    var(--color-primary-950) 0%,
-    var(--color-primary-950) 30%,
-    var(--color-primary-800) 40%,
-    var(--color-primary-900) 50%,
-    var(--color-primary-800) 60%,
-    var(--color-primary-950) 70%,
-    var(--color-primary-950) 100%
-  );
+.dark {
+  --color-background: #1e1f24;
+  --color-body-text: #efefef;
+  --color-head-text: #38b2ac;
+  --color-highlight-text: #f97316;
+  --shadow-neumorphic: 8px 8px 16px #121317, -8px -8px 16px #292b30;
+  --shadow-input: inset 4px 4px 8px #121317, inset -4px -4px 8px #292b30;
 }
 
-/* Add a shiny gradient for a light, reflective effect */
-.shiny-gradient {
-  background-image: linear-gradient(135deg, rgba(255,255,255,0.25) 0%, rgba(255,255,255,0.10) 50%, rgba(255,255,255,0.25) 100%);
-}
 

@@ -407,14 +407,15 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
     : undefined;
 
   return (
-    <div className="shiny-gradient backdrop-blur-xl rounded-xl border border-accent-200/40 shadow-lg p-1 text-accent-100">
+    <div className="shiny-gradient p-1 text-accent-100">
       <form
         onSubmit={handleSubmit(addToCart)}
         className="[&>*]:text-[1.2vw] [&>*]:font-info-text! grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-[0.5vw] [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:text-nowrap p-[0.3vh]"
       >
         <label title="Cashier Name">Cashier Name:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...register("cashierName")}
           type="text"
           autoComplete="off"
@@ -423,7 +424,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Transaction Time">Transaction Time:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...register("transactionTime")}
           type="text"
           autoComplete="off"
@@ -432,7 +434,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Payment">Payment:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...register("payment")}
           type="number"
           step="any"
@@ -447,7 +450,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Costumer Name">Costumer Name:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...costumerNameRegisterProps}
           type="text"
           ref={(e) => {
@@ -465,7 +469,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Transaction No.">Transaction No.:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...register("transactionNo")}
           type="text"
           readOnly
@@ -474,7 +479,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Discount">Discount:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...discountRegisterProps}
           type="number"
           step="any"
@@ -496,7 +502,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Barcode">Barcode:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...barcodeRegisterProps}
           type="text"
           ref={(e) => {
@@ -510,7 +517,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Available Stocks">Available Stocks:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...register("availableStocks")}
           type="text"
           placeholder="Stocks Available"
@@ -520,7 +528,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Grand Total">Grand Total:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...register("grandTotal")}
           type="text"
           readOnly
@@ -528,7 +537,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
         />
         <label title="Quantity">Quantity:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...quantityRegisterProps}
           type="number"
           ref={(e) => {
@@ -546,7 +556,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
         <label title="Additional Info">Additional Info:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...register("additionalInfo")}
           type="text"
           placeholder="additional info..."
@@ -555,7 +566,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
         />
         <label title="Change">Change:</label>
         <input
-          className="w-full text-primary-900 bg-primary-200/30 text-[1vw] backdrop-blur-md border border-accent-200/40 rounded-[15px] pl-[0.6vw] shadow-[inset_2px_2px_5px_rgba(0,0,0,0.2),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] transition-all focus:outline-none focus:ring-2 focus:ring-primary-300"
+          className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
+         focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
           {...register("change")}
           type="text"
           readOnly
@@ -569,7 +581,7 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
       />
       <div
         id="item-description"
-        className="text-center text-[1.2vw] border border-white/30 shadow-inner rounded-sm bg-white/20"
+        className="text-center text-[1.2vw]  shadow-input rounded-sm "
       >
         {barcodeValue && matchedItem ? (
           <p>
