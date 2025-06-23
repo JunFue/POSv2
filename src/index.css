@@ -9,6 +9,17 @@
   font-optical-sizing: auto;
 }
 
+body,
+button,
+div,
+input,
+a {
+  transition-property: color, background-color, box-shadow, border-color;
+  transition-duration: 0.3s;
+  transition-timing-function: ease-in-out;
+}
+
+
 @theme inline {
   --color-background: var(--color-background);
   --color-body-text: var(--color-body-text);
@@ -16,6 +27,7 @@
   --color-highlight-text: var(--color-highlight-text);
   --shadow-neumorphic: var(--shadow-neumorphic);
   --shadow-input: var(--shadow-input);
+  --shadow-button: var(--shadow-button);
   
 }
 
@@ -26,6 +38,7 @@
   --color-highlight-text: #f97316;
   --shadow-neumorphic: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
   --shadow-input: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
+  --shadow-button: 4px 4px 8px #d1d9e6, -4px -4px 8px#ffffff;
  
 }
 
@@ -36,6 +49,21 @@
   --color-highlight-text: #f97316;
   --shadow-neumorphic: 8px 8px 16px #121317, -8px -8px 16px #292b30;
   --shadow-input: inset 4px 4px 8px #121317, inset -4px -4px 8px #292b30;
+  --shadow-button: 4px 4px 8px #121317, -4px -4px 8px#292b30;
 }
+
+
+
+.evergreen {
+  --color-background: #4a5d52; /* darker sage green */
+  --color-body-text: #e8f0ea; /* light sage-tinted text for contrast */
+  --color-head-text: #b5caa0; /* soft light sage for headings */
+  --color-highlight-text: #dce4d5; /* pale green highlight */
+  --shadow-neumorphic: 8px 8px 16px #3e4f46, -8px -8px 16px #566c5e;
+  --shadow-input: inset 4px 4px 8px #3e4f46, inset -4px -4px 8px #566c5e;
+  --shadow-button: 4px 4px 8px #3e4f46, -4px -4px 8px #566c5e;
+}
+
+
 
 

@@ -30,7 +30,7 @@ export function POS() {
       <div
         className={`relative flex flex-col ${
           isOpen ? "flex-grow p-[0.8vw]" : "flex-shrink [&>*]:hidden "
-        } rounded-2xl transition-all duration-1000 ease-in-out basis-0 min-w-0`}
+        } rounded-2xl transition-all! duration-1000 ease-in-out basis-0 min-w-0`}
       >
         <button
           className={`absolute z-1 top-[0.5vw] ${

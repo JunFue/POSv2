@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useRef } from "react";
 import { CartTable } from "../shared-components/tables/CartTable";
 import { CounterForm } from "../shared-components/forms/CounterForm";
 import { CartContext } from "../context/CartContext";
@@ -76,9 +76,9 @@ export function POSContents() {
 
       <div className="grid grid-cols-3 gap-4 mt-6">
         <button
-          className="font-info-text! text-2xl text-body-text bg-[#f3f4f6] hover:bg-primary-700 rounded-md px-4 shadow-[4px_4px_8px_#d1d9e6,_-4px_-4px_8px_#ffffff] 
+          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
          active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-[#f3f4f6] hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
           onClick={() => {
             setCartData([]);
             counterFormRef.current?.regenerateTransactionNo();
@@ -87,32 +87,43 @@ export function POSContents() {
           New Customer
         </button>
         <button
-          className="font-info-text! text-2xl text-body-text bg-[#f3f4f6] hover:bg-primary-700 rounded-md px-4 shadow-[4px_4px_8px_#d1d9e6,_-4px_-4px_8px_#ffffff] 
+          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
          active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-[#f3f4f6] hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
         >
           Add to Cart
         </button>
         <button
-          className="font-info-text! text-2xl text-body-text bg-[#f3f4f6] hover:bg-primary-700 rounded-md px-4 shadow-[4px_4px_8px_#d1d9e6,_-4px_-4px_8px_#ffffff] 
+          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
          active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-[#f3f4f6] hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
           onClick={handleDone}
         >
           Done
         </button>
         <button
-          className="font-info-text! text-2xl text-body-text bg-[#f3f4f6] hover:bg-primary-700 rounded-md px-4 shadow-[4px_4px_8px_#d1d9e6,_-4px_-4px_8px_#ffffff] 
+          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
          active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-[#f3f4f6] hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
           onClick={() => setCartData([])}
         >
           Clear
         </button>
-        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
+        <button
+          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
+         active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
+         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+        >
           Sync
         </button>
-        <button className="font-info-text! text-2xl text-accent-300 bg-primary-600 hover:bg-primary-700 rounded-md py-1 px-4 border border-primary-400 shadow-lg transition-all active:scale-95">
+        <button
+          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
+         active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
+         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+          onClick={() => {
+            setShowSettings((prev) => !prev); /*Unresolved*/
+          }}
+        >
           Settings
         </button>
 

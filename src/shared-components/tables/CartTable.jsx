@@ -71,7 +71,7 @@ export function CartTable() {
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="text-head-text bg-[#f3f4f6] sticky top-0 px-4"
+                    className="text-head-text bg-background sticky top-0 px-4"
                   >
                     {header.isPlaceholder
                       ? null
@@ -84,7 +84,7 @@ export function CartTable() {
               </tr>
             ))}
           </thead>
-          <tbody className="shadow-input bg-[#eeeff0] rounded-2xl">
+          <tbody className="shadow-input bg-background rounded-2xl">
             {table.getRowModel().rows.map((row) => (
               <tr key={row.id} className="hover:bg-gray-200">
                 {row.getVisibleCells().map((cell) => (

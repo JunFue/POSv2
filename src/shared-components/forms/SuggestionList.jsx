@@ -2,12 +2,12 @@ import React from "react";
 
 export function SuggestionList({ suggestions, highlightedIndex, onSelect }) {
   return (
-    <div className="w-fit absolute z-1 top-[11vw] left-[9vw] bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto">
+    <div className="w-fit px-1 absolute z-1 top-[25%] left-[21%] bg-background/30 backdrop-blur-lg border border-background/40 shadow-[0_8px_32px_0_cyan] rounded max-h-40 overflow-y-auto">
       {suggestions.map((item, idx) => (
         <p
           key={item.id || item.barcode || idx}
-          className={`text-[1vw] ${
-            highlightedIndex === idx ? "bg-gray-200" : ""
+          className={`text-[1vw] px-1 ${
+            highlightedIndex === idx ? "bg-cyan-600 " : ""
           }`}
           onClick={() => onSelect(item)}
           style={{ cursor: "pointer" }}
