@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { FaAnglesLeft, FaAnglesRight } from "react-icons/fa6";
-import { POSContents } from "./POSContents";
+import { POSContents } from "./components/POSContents";
 
 export function POS() {
   const [isOpen, setIsOpen] = useState(true);

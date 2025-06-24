@@ -1,9 +1,9 @@
 import { useContext, useRef } from "react";
-import { CartTable } from "../shared-components/tables/CartTable";
-import { CounterForm } from "../shared-components/forms/CounterForm";
-import { CartContext } from "../context/CartContext";
-import { SettingsContext } from "../context/SettingsContext";
-import { Settings } from "./Settings";
+import { CartTable } from "../../../shared-components/tables/CartTable";
+import { CounterForm } from "../../../shared-components/forms/CounterForm";
+import { CartContext } from "../../../context/CartContext";
+import { SettingsContext } from "../../../context/SettingsContext";
+import { Settings } from "../../../features/pos-features/settings/Settings";
 
 export function POSContents() {
   const { cartData, setCartData } = useContext(CartContext);
@@ -77,8 +77,8 @@ export function POSContents() {
       <div className="grid grid-cols-3 gap-4 mt-6">
         <button
           className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         active:shadow-button-inset
+         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
           onClick={() => {
             setCartData([]);
             counterFormRef.current?.regenerateTransactionNo();
@@ -88,38 +88,38 @@ export function POSContents() {
         </button>
         <button
           className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         active:shadow-button-inset
+         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
         >
           Add to Cart
         </button>
         <button
           className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         active:shadow-button-inset
+         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
           onClick={handleDone}
         >
           Done
         </button>
         <button
           className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         active:shadow-button-inset
+         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
           onClick={() => setCartData([])}
         >
           Clear
         </button>
         <button
           className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         active:shadow-button-inset
+         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
         >
-          Sync
+          Login
         </button>
         <button
           className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-[inset_4px_4px_8px_#d1d9e6,_inset_-4px_-4px_8px_#ffffff] 
-         border-2 border-background hover:border-2 transition-all duration-300 ease-in-out hover:border-teal-300"
+         active:shadow-button-inset
+         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
           onClick={() => {
             setShowSettings((prev) => !prev); /*Unresolved*/
           }}

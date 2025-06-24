@@ -194,6 +194,7 @@ export function ItemSold() {
         setShowItemNameDropdown(false);
         setShowClassificationDropdown(false);
       }}
+      className="bg-background"
     >
       {!serverOnline && (
         <div className="text-red-500 font-bold p-2">SERVER IS OFFLINE</div>
@@ -215,7 +216,7 @@ export function ItemSold() {
           rowVirtualizer={rowVirtualizer}
         />
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-gray-200 bg-opacity-50">
+          <div className="absolute inset-0 flex items-center justify-center bg-background shadow-input bg-opacity-50">
             Loading...
           </div>
         )}

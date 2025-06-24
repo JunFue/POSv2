@@ -4,7 +4,7 @@ import { Payments } from "./transactions-contents/Payments";
 
 export function Transactions() {
   return (
-    <div className="w-full h-fit rounded-lg border border-gray-400 shadow-inner p-[0.3vw] text-[2vw]">
+    <div className="w-full h-fit rounded-lg bg-background shadow-neumorphic p-[0.3vw] text-[2vw]">
       <Routes>
         <Route path="item-sold" element={<ItemSold />} />
         <Route path="payments-made" element={<Payments />} />

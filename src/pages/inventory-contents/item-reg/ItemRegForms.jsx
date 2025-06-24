@@ -75,7 +75,7 @@ export const ItemRegForm = () => {
   };
 
   return (
-    <div className="bg-[#f0f0f0] p-4 rounded-lg shadow-md">
+    <div className="bg-background p-4 rounded-lg shadow-neumorphic">
       {/* Alert message when server is offline */}
       {!serverOnline && (
         <div className="text-red-500 font-bold mb-2">SERVER IS OFFLINE</div>
@@ -90,7 +90,7 @@ export const ItemRegForm = () => {
           }
         }}
         noValidate
-        className="gap-[1vw] [&>*]:text-[0.8vw] p-[1vw] mt-[1vw] mx-auto grid grid-cols-[0.3fr_0.5fr_0.3fr_0.5fr] bg-[#e0e0e0] rounded-lg shadow-[inset_6px_6px_12px_#bebebe,inset_-6px_-6px_12px_#ffffff][&>*]:bg-gray-100"
+        className="gap-[1vw] [&>*]:text-[0.8vw] p-[1vw] mt-[1vw] mx-auto grid grid-cols-[0.3fr_0.5fr_0.3fr_0.5fr] rounded-lg bg-background shadow-neumorphic"
       >
         <label>Barcode:</label>
         <input
@@ -99,9 +99,7 @@ export const ItemRegForm = () => {
           id="barcode"
           {...register("barcode", { required: "Please set a barcode" })}
           placeholder={errors.barcode ? errors.barcode.message : undefined}
-          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
-            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
-            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+          className={`traditional-input
             ${errors.barcode ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -118,9 +116,7 @@ export const ItemRegForm = () => {
           id="name"
           {...register("name", { required: "Please set a product name" })}
           placeholder={errors.name ? errors.name.message : undefined}
-          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
-            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
-            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+          className={`traditional-input
             ${errors.name ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -138,9 +134,7 @@ export const ItemRegForm = () => {
           id="price"
           {...register("price", { required: "Please set a price" })}
           placeholder={errors.price ? errors.price.message : undefined}
-          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
-            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
-            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+          className={`traditional-input
             ${errors.price ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -158,9 +152,7 @@ export const ItemRegForm = () => {
           id="packaging"
           {...register("packaging", { required: "Identify a packaging type" })}
           placeholder={errors.packaging ? errors.packaging.message : undefined}
-          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
-            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
-            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+          className={`traditional-input
             ${errors.packaging ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -177,9 +169,7 @@ export const ItemRegForm = () => {
           {...register("category", { required: "Categorize your product" })}
           ref={categoryRef}
           title={errors.category ? errors.category.message : undefined}
-          className={`w-full border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] 
-            [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] 
-            focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]
+          className={`traditional-input
             ${errors.category ? "border-red-500" : ""}`}
         >
           <option value="">Select category</option>
@@ -191,7 +181,7 @@ export const ItemRegForm = () => {
 
         <button
           type="button"
-          className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+          className="traditional-button"
           onClick={() => {
             reset({
               barcode: "",
@@ -210,7 +200,7 @@ export const ItemRegForm = () => {
         <button
           type="submit"
           disabled={!serverOnline}
-          className="bg-[#e0e0e0] text-gray-700 rounded-[0.6vw] shadow-[8px_8px_16px_#bebebe,-8px_-8px_16px_#ffffff] border-none focus:outline-none transition-all duration-100 ease-in-out active:shadow-[inset_4px_4px_8px_#bebebe,inset_-4px_-4px_8px_#ffffff] active:scale-95"
+          className="traditional-button"
         >
           Register
         </button>

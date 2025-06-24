@@ -79,7 +79,7 @@ export function ItemRegTable() {
   });
 
   return (
-    <div className="flex flex-col bg-[#e0e0e0] rounded-lg shadow-[inset_6px_6px_12px_#bebebe,inset_-6px_-6px_12px_#ffffff] p-4">
+    <div className="flex flex-col bg-background rounded-lg p-4">
       {loading ? (
         <div className="text-center text-gray-700 text-[1vw] py-4">
           Loading...
@@ -87,13 +87,13 @@ export function ItemRegTable() {
       ) : (
         <div className="w-full overflow-auto max-h-[100vh] grow">
           <table className="w-full text-left border-collapse table-auto text-[0.8vw]">
-            <thead>
+            <thead className="bg-background">
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="border-b border-gray-300 text-gray-700 bg-white sticky top-0 cursor-pointer"
+                      className="text-head-text sticky top-0 cursor-pointer"
                       onClick={
                         header.column.getCanSort()
                           ? header.column.getToggleSortingHandler()

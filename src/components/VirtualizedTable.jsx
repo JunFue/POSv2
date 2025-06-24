@@ -4,17 +4,20 @@ export function VirtualizedTable({ table, tableContainerRef, rowVirtualizer }) {
   return (
     <div
       ref={tableContainerRef}
-      className="overflow-auto rounded-lg shadow border"
+      className="overflow-auto rounded-lg bg-background shadow-input"
       style={{ height: "600px" }}
     >
-      <table className="w-full text-[0.8vw]" style={{ tableLayout: "fixed" }}>
-        <thead className="bg-gray-100 sticky top-0 z-10">
+      <table
+        className="w-full text-[0.8vw] rounded-2xl"
+        style={{ tableLayout: "fixed" }}
+      >
+        <thead className="bg-background shadow-neumorphic sticky top-0 z-1">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="border-b border-gray-300 text-left px-4 py-2 font-semibold text-gray-700 w-[150px]"
+                  className="text-left px-4 py-2 font-semibold text-head-text w-[150px]"
                 >
                   {header.isPlaceholder
                     ? null
@@ -28,6 +31,7 @@ export function VirtualizedTable({ table, tableContainerRef, rowVirtualizer }) {
           ))}
         </thead>
         <tbody
+          className="shadow-input bg-background rounded-2xl"
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
             position: "relative",

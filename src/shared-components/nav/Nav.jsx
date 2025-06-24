@@ -80,7 +80,7 @@ export function Nav() {
   ];
 
   return (
-    <nav className="flex items-center justify-around bg-white/30 backdrop-blur-md p-4 shadow-md text-base rounded-3xl">
+    <nav className="flex items-center justify-around bg-background shadow-neumorphic p-4 text-base rounded-3xl">
       {links.map((link) => (
         <div key={link.path} className="relative group">
           <Link

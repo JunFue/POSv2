@@ -1,6 +1,6 @@
 import { useContext } from "react";
-import { SettingsContext } from "../context/SettingsContext";
-import { ThemeContext } from "../context/ThemeContext";
+import { SettingsContext } from "../../../context/SettingsContext";
+import { ThemeContext } from "../../../context/ThemeContext";
 
 export function Settings() {
   const { setShowSettings } = useContext(SettingsContext);
