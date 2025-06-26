@@ -6,22 +6,25 @@ import { CartProvider } from "./CartContext.jsx";
 import { PaymentProvider } from "./PaymentContext.jsx";
 import { SettingsProvider } from "./SettingsContext.jsx";
 import { ThemeProviders } from "./ThemeContext.jsx";
+import { AuthProvider } from "./AuthContext.jsx";
 
 export function AppProviders({ children }) {
   return (
-    <ThemeProviders>
-      <SettingsProvider>
-        <PaymentProvider>
-          <StocksMgtProvider>
-            <ItemSoldProvider>
-              <ItemRegProvider>
-                <CartProvider>{children}</CartProvider>
-              </ItemRegProvider>
-            </ItemSoldProvider>
-          </StocksMgtProvider>
-        </PaymentProvider>
-      </SettingsProvider>
-    </ThemeProviders>
+    <AuthProvider>
+      <ThemeProviders>
+        <SettingsProvider>
+          <PaymentProvider>
+            <StocksMgtProvider>
+              <ItemSoldProvider>
+                <ItemRegProvider>
+                  <CartProvider>{children}</CartProvider>
+                </ItemRegProvider>
+              </ItemSoldProvider>
+            </StocksMgtProvider>
+          </PaymentProvider>
+        </SettingsProvider>
+      </ThemeProviders>
+    </AuthProvider>
   );
 }
 

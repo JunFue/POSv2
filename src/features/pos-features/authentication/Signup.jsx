@@ -1,0 +1,122 @@
+import { useState } from "react";
+import { useAuth } from "./hooks/Useauth";
+
+export function Signup() {
+  const { toggleView } = useAuth();
+
+  const [fullName, setFullName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(null);
+
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setIsLoading(true);
+    try {
+      const response = await fetch(
+        "http://localhost:3000/api/auth/complete-signup",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ fullName, email, password }),
+        }
+      );
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Signup failed.");
+      setSuccess("Signup successful! Please log in.");
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="rounded-3xl bg-white/30 backdrop-blur-lg border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] p-4 flex flex-col justify-center gap-2 text-gray-800 z-2">
+      <h2 className="text-3xl font-bold text-white mb-2 text-center">
+        Create Your Account
+      </h2>
+      <p className="text-white/80 mb-8 text-center">
+        Join us and start your journey.
+      </p>
+      <form onSubmit={handleSignup}>
+        <div className="mb-4">
+          <label
+            className="block text-white text-sm font-bold mb-2"
+            htmlFor="fullName"
+          >
+            Full Name
+          </label>
+          <input
+            className="shadow-inner bg-white/20 border border-white/30 text-white placeholder-white/70 appearance-none rounded-lg w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 focus:ring-green-400"
+            id="fullName"
+            type="text"
+            placeholder="John Doe"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+          />
+        </div>
+        <div className="mb-4">
+          <label
+            className="block text-white text-sm font-bold mb-2"
+            htmlFor="signup-email"
+          >
+            Email Address
+          </label>
+          <input
+            className="shadow-inner bg-white/20 border border-white/30 text-white placeholder-white/70 appearance-none rounded-lg w-full py-3 px-4 leading-tight focus:outline-none focus:ring-2 focus:ring-green-400"
+            id="signup-email"
+            type="email"
+            placeholder="you@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+        </div>
+        <div className="mb-6">
+          <label
+            className="block text-white text-sm font-bold mb-2"
+            htmlFor="signup-password"
+          >
+            Password
+          </label>
+          <input
+            className="shadow-inner bg-white/20 border border-white/30 text-white placeholder-white/70 appearance-none rounded-lg w-full py-3 px-4 mb-3 leading-tight focus:outline-none focus:ring-2 focus:ring-green-400"
+            id="signup-password"
+            type="password"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+        </div>
+        {error && (
+          <p className="text-red-400 text-center text-sm mb-4">{error}</p>
+        )}
+        {success && (
+          <p className="text-green-300 text-center text-sm mb-4">{success}</p>
+        )}
+        <div className="flex items-center justify-between">
+          <button
+            className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-300 disabled:bg-green-300"
+            type="submit"
+            disabled={isLoading}
+          >
+            {isLoading ? "Signing Up..." : "Sign Up"}
+          </button>
+        </div>
+      </form>
+      <p className="text-center text-white/80 text-sm mt-6">
+        Already have an account?{" "}
+        <button
+          onClick={toggleView}
+          className="font-bold text-white hover:text-green-200 focus:outline-none"
+        >
+          Sign In
+        </button>
+      </p>
+    </div>
+  );
+}

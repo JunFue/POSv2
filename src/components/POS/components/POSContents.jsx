@@ -1,14 +1,16 @@
-import { useContext, useRef } from "react";
+import { useContext, useRef, useState } from "react";
 import { CartTable } from "../../../shared-components/tables/CartTable";
 import { CounterForm } from "../../../shared-components/forms/CounterForm";
 import { CartContext } from "../../../context/CartContext";
 import { SettingsContext } from "../../../context/SettingsContext";
 import { Settings } from "../../../features/pos-features/settings/Settings";
+import Auth from "../../../features/pos-features/authentication/Auth";
 
 export function POSContents() {
   const { cartData, setCartData } = useContext(CartContext);
   const counterFormRef = useRef(null);
   const { showSettings, setShowSettings } = useContext(SettingsContext);
+  const [isShowForm, setIsShowForm] = useState(false);
 
   const handleDone = async () => {
     try {
@@ -113,9 +115,14 @@ export function POSContents() {
           className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
          active:shadow-button-inset
          border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
+          onClick={() => {
+            setIsShowForm((prev) => !prev);
+          }}
         >
           Login
         </button>
+
+        {isShowForm ? <Auth /> : null}
         <button
           className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
          active:shadow-button-inset

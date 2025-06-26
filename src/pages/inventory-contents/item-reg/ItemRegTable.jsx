@@ -87,13 +87,13 @@ export function ItemRegTable() {
       ) : (
         <div className="w-full overflow-auto max-h-[100vh] grow">
           <table className="w-full text-left border-collapse table-auto text-[0.8vw]">
-            <thead className="bg-background">
+            <thead>
               {table.getHeaderGroups().map((headerGroup) => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map((header) => (
                     <th
                       key={header.id}
-                      className="text-head-text sticky top-0 cursor-pointer"
+                      className="text-head-text sticky top-0 cursor-pointer bg-background"
                       onClick={
                         header.column.getCanSort()
                           ? header.column.getToggleSortingHandler()
