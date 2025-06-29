@@ -2,6 +2,8 @@
 // This component now cleanly switches between Login and Signup.
 
 import { useAuth } from "./hooks/Useauth";
+import { Login } from "./Login";
+import { Signup } from "./Signup";
 
 export default function Auth() {
   const { isLoginView } = useAuth();

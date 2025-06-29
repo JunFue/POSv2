@@ -1,4 +1,4 @@
-import { useContext, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState } from "react";
 import { CartTable } from "../../../shared-components/tables/CartTable";
 import { CounterForm } from "../../../shared-components/forms/CounterForm";
 import { CartContext } from "../../../context/CartContext";
@@ -6,11 +6,24 @@ import { SettingsContext } from "../../../context/SettingsContext";
 import { Settings } from "../../../features/pos-features/settings/Settings";
 import Auth from "../../../features/pos-features/authentication/Auth";
 
+// Import the new button components
+
+import { AddToCartBtn } from "./buttons/AddToCartBtn";
+import { DoneBtn } from "./buttons/DoneBtn";
+import { ClearBtn } from "./buttons/ClearBtn";
+import { LoginBtn } from "./buttons/LoginBtn";
+import { NewCustomerBtn } from "./buttons/NewCostumerBtn";
+import { SettingsBtn } from "./buttons/SettingsBtn";
+
 export function POSContents() {
   const { cartData, setCartData } = useContext(CartContext);
   const counterFormRef = useRef(null);
   const { showSettings, setShowSettings } = useContext(SettingsContext);
   const [isShowForm, setIsShowForm] = useState(false);
+
+  useEffect(() => {
+    setIsShowForm(true);
+  }, []);
 
   const handleDone = async () => {
     try {
@@ -62,6 +75,11 @@ export function POSContents() {
     }
   };
 
+  const handleAddToCart = () => {
+    // Programmatically trigger the form submission in CounterForm
+    counterFormRef.current?.submitAddToCart();
+  };
+
   return (
     <div className="rounded-[20px] bg-background shadow-neumorphic p-3">
       <header className="flex flex-col items-center mb-1">
@@ -77,62 +95,20 @@ export function POSContents() {
       />
 
       <div className="grid grid-cols-3 gap-4 mt-6">
-        <button
-          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-button-inset
-         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
+        <NewCustomerBtn
           onClick={() => {
             setCartData([]);
             counterFormRef.current?.regenerateTransactionNo();
           }}
-        >
-          New Customer
-        </button>
-        <button
-          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-button-inset
-         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
-        >
-          Add to Cart
-        </button>
-        <button
-          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-button-inset
-         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
-          onClick={handleDone}
-        >
-          Done
-        </button>
-        <button
-          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-button-inset
-         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
-          onClick={() => setCartData([])}
-        >
-          Clear
-        </button>
-        <button
-          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-button-inset
-         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
-          onClick={() => {
-            setIsShowForm((prev) => !prev);
-          }}
-        >
-          Login
-        </button>
+        />
+        <AddToCartBtn onClick={handleAddToCart} />
+        <DoneBtn onClick={handleDone} />
+        <ClearBtn onClick={() => setCartData([])} />
+        <LoginBtn onClick={() => setIsShowForm((prev) => !prev)} />
 
         {isShowForm ? <Auth /> : null}
-        <button
-          className="text-[1.5vw] text-body-text bg-background hover:bg-primary-700 rounded-md px-4 shadow-button 
-         active:shadow-button-inset
-         border-2 active:border-background border-background hover:border-2 transition-all duration-300 ease-in hover:border-teal-300"
-          onClick={() => {
-            setShowSettings((prev) => !prev); /*Unresolved*/
-          }}
-        >
-          Settings
-        </button>
+
+        <SettingsBtn onClick={() => setShowSettings((prev) => !prev)} />
 
         {showSettings ? <Settings /> : null}
       </div>

@@ -1,4 +1,5 @@
 import { useState, useEffect, createContext } from "react";
+import { AuthContext } from "./AuthContext";
 
 const ItemRegData = createContext();
 
@@ -43,9 +44,15 @@ export function ItemRegProvider({ children }) {
     }
   };
 
+  const { authToken } = AuthContext;
+
   useEffect(() => {
+    if (!authToken) {
+  
+      return;
+    }
     refreshItems();
-  }, []);
+  }, [authToken]);
 
   return (
     // 3. Even though we're not encouraged to pass down the raw `setItems`,

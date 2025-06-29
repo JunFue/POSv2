@@ -44,7 +44,6 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
 
   // Set initial values
   setValue("cashierName", "Junel Fuentes");
-
   // Expose methods to parent
   useImperativeHandle(ref, () => ({
     regenerateTransactionNo: () => {
@@ -52,7 +51,6 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
     },
     completeTransaction: () => done(),
     getTransactionData: () => {
-      // Return transaction data needed for the API
       const transactionNo = getValues("transactionNo");
       const cashierName = getValues("cashierName");
       const costumerName = getValues("costumerName");
@@ -78,6 +76,8 @@ export const CounterForm = forwardRef(({ cartData, setCartData }, ref) => {
         };
       });
     },
+    // Expose the addToCart handler for the external button
+    submitAddToCart: handleSubmit(addToCart),
   }));
 
   useEffect(() => {
