@@ -1,11 +1,9 @@
-// --- Login.js ---
-// This component's code doesn't change, but its imports are now cleaner.
-
 import { useState } from "react";
 import { useAuth } from "./hooks/Useauth";
+import { supabase } from "../../../utils/supabaseClient";
 
 export function Login() {
-  const { toggleView, onLoginSuccess } = useAuth(); // Consumes context via the hook
+  const { toggleView, onLoginSuccess } = useAuth(); // onLoginSuccess no longer needs to handle a token
 
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -17,29 +15,22 @@ export function Login() {
     setError(null);
     setIsLoading(true);
 
-    if (!emailOrPhone || !password) {
-      setError("Please enter both email/phone and password.");
-      setIsLoading(false);
-      return;
-    }
+    // Call Supabase directly to sign in
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: emailOrPhone,
+      password: password,
+    });
 
-    try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: emailOrPhone, password: password }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Login failed.");
-      if (data.token) onLoginSuccess(data.token);
-      else throw new Error("Token not provided by server.");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+    if (error) {
+      setError(error.message);
+    } else if (data.user) {
+      // Supabase handles the session. Just trigger the success state.
+      onLoginSuccess();
     }
+    setIsLoading(false);
   };
 
+  // ... rest of the JSX remains the same
   return (
     <div className="rounded-3xl bg-white/30 backdrop-blur-lg border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] p-4 flex flex-col justify-center gap-2 text-gray-800 z-2">
       <h2 className="text-3xl font-bold text-white mb-2 text-center">

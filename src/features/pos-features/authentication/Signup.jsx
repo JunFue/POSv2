@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "./hooks/Useauth";
+import { supabase } from "../../../utils/supabaseClient";
 
 export function Signup() {
   const { toggleView } = useAuth();
@@ -13,30 +14,27 @@ export function Signup() {
 
   const handleSignup = async (e) => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
+    // ... reset state logic
     setIsLoading(true);
-    try {
-      const response = await fetch(
-        "http://localhost:3000/api/auth/complete-signup",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ fullName, email, password }),
-        }
-      );
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error || "Signup failed.");
-      setSuccess("Signup successful! Please log in.");
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setIsLoading(false);
+
+    // Call Supabase directly to sign up
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: { data: { fullName } }, // Pass fullName to match backend
+    });
+
+    if (error) {
+      setError(error.message);
+    } else {
+      setSuccess("Signup successful! Check your email for verification.");
+      // ... clear form logic
     }
+    setIsLoading(false);
   };
 
   return (
-    <div className="rounded-3xl bg-white/30 backdrop-blur-lg border border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] p-4 flex flex-col justify-center gap-2 text-gray-800 z-2">
+    <div className="rounded-3xl bg-white/30 backdrop-blur-lg border-white/40 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] p-4 flex flex-col justify-center gap-2 text-gray-800 z-2">
       <h2 className="text-3xl font-bold text-white mb-2 text-center">
         Create Your Account
       </h2>
@@ -44,6 +42,7 @@ export function Signup() {
         Join us and start your journey.
       </p>
       <form onSubmit={handleSignup}>
+        {/* Full Name Input */}
         <div className="mb-4">
           <label
             className="block text-white text-sm font-bold mb-2"
@@ -58,8 +57,10 @@ export function Signup() {
             placeholder="John Doe"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
+            required
           />
         </div>
+        {/* Email Input */}
         <div className="mb-4">
           <label
             className="block text-white text-sm font-bold mb-2"
@@ -74,8 +75,10 @@ export function Signup() {
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
+        {/* Password Input */}
         <div className="mb-6">
           <label
             className="block text-white text-sm font-bold mb-2"
@@ -90,14 +93,17 @@ export function Signup() {
             placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            required
           />
         </div>
+        {/* Error and Success Messages */}
         {error && (
           <p className="text-red-400 text-center text-sm mb-4">{error}</p>
         )}
         {success && (
           <p className="text-green-300 text-center text-sm mb-4">{success}</p>
         )}
+        {/* Submit Button */}
         <div className="flex items-center justify-between">
           <button
             className="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-300 disabled:bg-green-300"
