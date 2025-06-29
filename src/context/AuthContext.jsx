@@ -1,39 +1,44 @@
-import React, { createContext, useState } from "react";
+import React, { createContext, useState, useEffect } from "react";
+import { supabase } from "../utils/supabaseClient";
+// --- 1. Import the Supabase client ---
 
-// --- AuthContext.js ---
-// This file now *only* creates the context and the provider component.
-// This resolves the "Fast Refresh" warning.
-
-// 1. Create the context and export it so the hook can use it.
 const AuthContext = createContext();
 
-// 2. Create and export the Provider component
 export function AuthProvider({ children }) {
-  const [isLoginView, setIsLoginView] = useState(true);
-  // Get token from localStorage on initial load
-  const [authToken, setAuthToken] = useState(() =>
-    localStorage.getItem("authToken")
-  );
+  // --- 2. Manage the Supabase session state ---
+  const [session, setSession] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const toggleView = () => {
-    setIsLoginView(!isLoginView);
-  };
+  useEffect(() => {
+    // --- 3. Get the initial session ---
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setSession(session);
+      setLoading(false);
+    });
 
-  const onLoginSuccess = (token) => {
-    localStorage.setItem("authToken", token);
-    setAuthToken(token);
-    console.log("Login successful! Token:", token);
-    alert("Login Successful! You would be redirected now.");
-  };
+    // --- 4. Listen for auth state changes (login, logout, etc.) ---
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
 
+    // --- 5. Cleanup the listener when the component unmounts ---
+    return () => subscription.unsubscribe();
+  }, []);
+
+  // --- 6. Provide the session and user to the rest of the app ---
   const value = {
-    isLoginView,
-    toggleView,
-    onLoginSuccess,
-    authToken,
+    session,
+    user: session?.user ?? null,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  // Only render children when the initial session has been loaded
+  return (
+    <AuthContext.Provider value={value}>
+      {!loading && children}
+    </AuthContext.Provider>
+  );
 }
 
 export { AuthContext };
