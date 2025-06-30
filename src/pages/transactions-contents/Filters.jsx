@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
+// --- Step 1: Import the useAuth hook ---
 
 export function Filters({
   onFilter,
@@ -8,28 +10,32 @@ export function Filters({
   totalPages,
   rowsPerPage,
   setRowsPerPage,
-  loading, // added prop
-  setLoading, // added prop
+  loading,
+  setLoading,
 }) {
+  // --- Step 2: Get user and session from the auth context ---
+  const { user, session } = useAuth();
+
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [transactionNo, setTransactionNo] = useState("");
   const [itemName, setItemName] = useState("");
 
-  // Renamed to be more descriptive for the initial load.
   const initializeFilters = () => {
     const today = new Date().toISOString().split("T")[0];
     setFromDate(today);
     setToDate(today);
-    // Fetch data for the initial date range.
     handleBackendFetch(1, rowsPerPage, today, today, "");
   };
 
   useEffect(() => {
-    // This effect runs once on component mount to set initial dates and load data.
-    initializeFilters();
+    // --- Step 3: Make the initial fetch dependent on the user ---
+    // This effect now only runs when a user is successfully logged in.
+    if (user) {
+      initializeFilters();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [user]);
 
   const handleBackendFetch = async (
     page,
@@ -38,6 +44,13 @@ export function Filters({
     endDate,
     transNo = ""
   ) => {
+    // --- Step 4: Add the authentication token to every backend request ---
+    if (!session) {
+      // Don't fetch if there's no active session
+      return;
+    }
+    const token = session.access_token;
+
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -51,7 +64,12 @@ export function Filters({
       params.append("limit", limit);
 
       const url = `http://localhost:3000/api/transactions?${params.toString()}`;
-      const response = await fetch(url);
+      // Add the Authorization header to the fetch options
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
       if (response.ok) {
         const filteredData = await response.json();
@@ -59,17 +77,19 @@ export function Filters({
           onFilter(filteredData);
         }
       } else {
-        alert("Failed to fetch filtered data from the server.");
+        console.error("Failed to fetch filtered data from the server.");
       }
     } catch (error) {
-      alert(`Error fetching data: ${error.message}`);
+      console.error(`Error fetching data: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
+  // --- No changes are needed for the functions below ---
+  // They all call handleBackendFetch, which is now secure.
+
   const handleFilter = () => {
-    // If item name is used, filter locally.
     if (itemName.trim() !== "") {
       if (onLocalFilter) {
         onLocalFilter(itemName);
@@ -77,16 +97,13 @@ export function Filters({
       return;
     }
     setCurrentPage(1);
-    // Otherwise, fetch from the backend with current filter values.
     handleBackendFetch(1, rowsPerPage, fromDate, toDate, transactionNo.trim());
   };
 
   const handleReset = () => {
-    // Clear only the transaction number and item name fields.
     setTransactionNo("");
     setItemName("");
     setCurrentPage(1);
-    // Re-fetch data using the *existing* date range.
     handleBackendFetch(1, rowsPerPage, fromDate, toDate);
   };
 
@@ -121,7 +138,7 @@ export function Filters({
   const handleRowsPerPageChange = (e) => {
     const newRowsPerPage = Number(e.target.value);
     setRowsPerPage(newRowsPerPage);
-    setCurrentPage(1); // Reset to page 1
+    setCurrentPage(1);
     handleBackendFetch(
       1,
       newRowsPerPage,
@@ -130,6 +147,8 @@ export function Filters({
       transactionNo.trim()
     );
   };
+
+  // --- No changes needed for the JSX below ---
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-background rounded-lg shadow-md">

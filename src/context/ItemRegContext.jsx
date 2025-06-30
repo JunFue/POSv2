@@ -1,10 +1,10 @@
-import { useState, useEffect, createContext } from "react";
-import { AuthContext } from "./AuthContext";
+import { useState, useEffect, createContext, useContext } from "react"; // 1. Add useContext
+import { supabase } from "../utils/supabaseClient";
+import { AuthContext } from "./AuthContext"; // 2. Import AuthContext
 
 const ItemRegData = createContext();
 
 export function ItemRegProvider({ children }) {
-  // Initialize items state with data from localStorage, if available.
   const [items, setItems] = useState(() => {
     try {
       const stored = localStorage.getItem("items");
@@ -16,47 +16,55 @@ export function ItemRegProvider({ children }) {
   });
 
   const [serverOnline, setServerOnline] = useState(true);
-  const [loading, setLoading] = useState(false); // new loading state
+  const [loading, setLoading] = useState(false);
 
-  // Function to fetch items from the new, correct API endpoint
+  // 3. Get the user from the AuthContext
+  const { user } = useContext(AuthContext);
+
   const refreshItems = async () => {
     setLoading(true);
     try {
-      // 1. Use the new /api/items endpoint
-      const res = await fetch("http://localhost:3000/api/items");
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error("User not authenticated.");
+      }
+      const token = session.access_token;
+
+      const res = await fetch("http://localhost:3000/api/items", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
       if (!res.ok) {
         throw new Error(`Failed to fetch items. Status: ${res.status}`);
       }
-      const data = await res.json(); // This will now be an array of items
-
-      // 2. The API now reliably returns an array, so we update state...
+      const data = await res.json();
       setItems(data);
-
-      // ...and save the new data into localStorage for offline access.
       localStorage.setItem("items", JSON.stringify(data));
+      setServerOnline(true);
     } catch (error) {
       console.error("Error in refreshItems:", error.message);
-      alert("SERVER IS OFFLINE");
       setServerOnline(false);
-      throw new Error("Server is Offline");
     } finally {
       setLoading(false);
     }
   };
 
-  const { authToken } = AuthContext;
-
+  // 4. Make the data fetch dependent on the user's login status
   useEffect(() => {
-    if (!authToken) {
-  
-      return;
+    if (user) {
+      // If a user is logged in, fetch the items
+      refreshItems();
+    } else {
+      // If the user logs out, clear the items from state
+      setItems([]);
     }
-    refreshItems();
-  }, [authToken]);
+  }, [user]); // This effect now runs whenever the user's state changes
 
   return (
-    // 3. Even though we're not encouraged to pass down the raw `setItems`,
-    // we leave it available here if needed. Otherwise, you can remove it from context.
     <ItemRegData.Provider
       value={{ items, refreshItems, setItems, serverOnline, loading }}
     >

@@ -16,10 +16,6 @@ import { generateTransactionNo } from "../../utils/transactionNumberGenerator";
 import { CartContext } from "../../context/CartContext";
 import { ItemRegData } from "../../context/ItemRegContext";
 
-/**
- * A container component that manages the state and logic for the point-of-sale form.
- * It uses custom hooks to separate concerns and renders presentational child components.
- */
 export const CounterForm = forwardRef((props, ref) => {
   const { cartData } = useContext(CartContext);
   const { items: regItems } = useContext(ItemRegData);
@@ -42,14 +38,12 @@ export const CounterForm = forwardRef((props, ref) => {
   });
   const { register, handleSubmit, setValue, watch, getValues, reset } = form;
 
-  // Refs for direct DOM access and focus management
   const costumerNameRef = useRef(null);
   const barcodeRef = useRef(null);
   const quantityRef = useRef(null);
   const discountRef = useRef(null);
   const inputRefs = { costumerNameRef, barcodeRef, quantityRef, discountRef };
 
-  // Initialize custom hooks to handle complex logic
   const {
     suggestions,
     highlightedIndex,
@@ -63,7 +57,6 @@ export const CounterForm = forwardRef((props, ref) => {
     inputRefs
   );
 
-  // Expose functions to the parent component (POSContents)
   useImperativeHandle(ref, () => ({
     regenerateTransactionNo: () =>
       setValue("transactionNo", generateTransactionNo()),
@@ -90,18 +83,15 @@ export const CounterForm = forwardRef((props, ref) => {
     submitAddToCart: handleSubmit(addToCart),
   }));
 
-  // Watch for changes in form fields to compute other values
   const payment = watch("payment");
   const discount = watch("discount");
   const barcodeValue = watch("barcode");
 
-  // Effect for initial setup
   useEffect(() => {
     setValue("transactionNo", generateTransactionNo());
     costumerNameRef.current?.focus();
   }, [setValue]);
 
-  // Effect for the running transaction timer
   useEffect(() => {
     const interval = setInterval(() => {
       setValue("transactionTime", dayjs().format("YYYY-MM-DD HH:mm:ss"));
@@ -109,7 +99,6 @@ export const CounterForm = forwardRef((props, ref) => {
     return () => clearInterval(interval);
   }, [setValue]);
 
-  // Effect to recalculate totals and change whenever relevant data changes
   useEffect(() => {
     const total = cartData.reduce((sum, item) => sum + item.total(), 0);
     setValue("grandTotal", total.toFixed(2));
@@ -127,10 +116,11 @@ export const CounterForm = forwardRef((props, ref) => {
   return (
     <div className="shiny-gradient p-1 text-accent-100">
       <CounterFormFields
-        // The ref object contains all individual input refs
         ref={{ costumerNameRef, barcodeRef, quantityRef, discountRef }}
+        // --- Pass the main register function directly ---
         register={register}
         handleSubmit={handleSubmit(addToCart)}
+        // --- Pass the original handler from the hook ---
         onBarcodeChange={handleBarcodeChange}
         onBarcodeKeyDown={handleBarcodeKeyDown}
       />

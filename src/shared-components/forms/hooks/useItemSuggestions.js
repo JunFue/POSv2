@@ -1,5 +1,4 @@
 import { useState, useContext } from "react";
-
 import { useStockManager } from "./useStockManager";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
@@ -46,10 +45,25 @@ export const useItemSuggestions = (setValue, quantityRef) => {
       );
     } else if (e.key === "Enter") {
       e.preventDefault();
-      let selectedItem = suggestions[highlightedIndex];
-      if (selectedItem) {
-        handleSelectSuggestion(selectedItem);
-      } else if (e.target.value) {
+
+      // --- REVISED LOGIC FOR "ENTER" KEY ---
+      let itemToSelect = null;
+
+      // First, check if an item is highlighted with the arrow keys.
+      if (highlightedIndex > -1) {
+        itemToSelect = suggestions[highlightedIndex];
+      }
+      // If not highlighted, but there's exactly one suggestion, select it.
+      else if (suggestions.length === 1) {
+        itemToSelect = suggestions[0];
+      }
+
+      // If an item was determined to be selected, handle it.
+      if (itemToSelect) {
+        handleSelectSuggestion(itemToSelect);
+      }
+      // Otherwise, if there's text in the input, move focus to quantity.
+      else if (e.target.value) {
         quantityRef.current?.focus();
       }
     }

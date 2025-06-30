@@ -1,5 +1,7 @@
 import { useContext } from "react";
 import { useStockManager } from "./useStockManager";
+// --- 1. Import the supabase client ---
+import { supabase } from "../../../utils/supabaseClient";
 
 import { CartContext } from "../../../context/CartContext";
 import { ItemRegData } from "../../../context/ItemRegContext";
@@ -8,25 +10,19 @@ import { ItemSoldContext } from "../../../context/ItemSoldContext";
 import { generateTransactionNo } from "../../../utils/transactionNumberGenerator";
 
 export const useTransactionHandler = (formMethods, refs) => {
-  // CONTEXTS
   const { cartData, setCartData } = useContext(CartContext);
   const { items: regItems } = useContext(ItemRegData);
   const { setItemSold, setServerOnline: setSoldServerOnline } =
     useContext(ItemSoldContext);
   const { setPaymentData } = useContext(PaymentContext);
 
-  // HOOKS
   const { getNetQuantity } = useStockManager();
 
-  // PROPS
   const { getValues, setValue, reset } = formMethods;
   const { barcodeRef, costumerNameRef, quantityRef } = refs;
 
-  /**
-   * Validates and adds an item to the cart.
-   * @param {object} data - The form data, containing barcode and quantity.
-   */
   const addToCart = (data) => {
+    // This function remains the same
     if (!data.barcode || !data.quantity) {
       alert("Please enter barcode and quantity.");
       return;
@@ -80,10 +76,8 @@ export const useTransactionHandler = (formMethods, refs) => {
     barcodeRef.current?.focus();
   };
 
-  /**
-   * Finalizes the transaction, sending data to contexts and the server, and resetting the form.
-   */
   const handleDone = async () => {
+    // ... (logic for getting form values remains the same)
     const {
       transactionNo,
       cashierName,
@@ -114,7 +108,19 @@ export const useTransactionHandler = (formMethods, refs) => {
       return;
     }
 
+    // --- 2. Get the user's session and token BEFORE the loop ---
+    const {
+      data: { session },
+      error: sessionError,
+    } = await supabase.auth.getSession();
+    if (sessionError || !session) {
+      alert("Authentication error. Please sign in again.");
+      return;
+    }
+    const token = session.access_token;
+
     const soldItems = cartData.map((item) => {
+      // ... (logic to create soldItems remains the same)
       const regItem = regItems.find((ri) => ri.barcode === item.barcode);
       return {
         barcode: item.barcode,
@@ -131,6 +137,7 @@ export const useTransactionHandler = (formMethods, refs) => {
     });
 
     const paymentRecord = {
+      // ... (paymentRecord logic remains the same)
       transactionDate: transactionTime,
       transactionNumber: transactionNo,
       costumerName: costumerName || "N/A",
@@ -147,9 +154,13 @@ export const useTransactionHandler = (formMethods, refs) => {
     let offline = false;
     for (const transaction of soldItems) {
       try {
+        // --- 3. Add the Authorization header to the fetch request ---
         const response = await fetch("http://localhost:3000/api/transactions", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
           body: JSON.stringify(transaction),
         });
         if (!response.ok) {

@@ -6,12 +6,15 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { ItemRegData } from "../../../context/ItemRegContext";
+// --- 1. Import the Supabase client ---
+import { supabase } from "../../../utils/supabaseClient"; // Adjust path if needed
 
 export function ItemRegTable() {
   const { items, refreshItems, loading } = useContext(ItemRegData);
   const [sorting, setSorting] = useState([]);
 
   const columns = [
+    // ... (other columns are unchanged) ...
     {
       accessorKey: "barcode",
       header: "Barcode",
@@ -40,14 +43,30 @@ export function ItemRegTable() {
     {
       accessorKey: "remove",
       header: "Remove",
-      enableSorting: false, // disable sorting for remove column
+      enableSorting: false,
       cell: ({ row }) => (
         <button
           onClick={async () => {
             try {
+              // --- 2. Get the user's session token ---
+              const {
+                data: { session },
+              } = await supabase.auth.getSession();
+              if (!session) {
+                alert("You must be logged in to delete an item.");
+                return;
+              }
+              const token = session.access_token;
+
+              // --- 3. Add the Authorization header to the fetch request ---
               await fetch(
                 `http://localhost:3000/api/item-delete/${row.original.barcode}`,
-                { method: "DELETE" }
+                {
+                  method: "DELETE",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                }
               );
               refreshItems();
             } catch (error) {
@@ -69,6 +88,7 @@ export function ItemRegTable() {
     },
   ];
 
+  // ... (useReactTable hook and JSX table remain the same) ...
   const table = useReactTable({
     data: items,
     columns,
