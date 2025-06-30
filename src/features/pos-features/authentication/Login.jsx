@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useAuth } from "./hooks/Useauth";
+import { useContext, useState } from "react";
 import { supabase } from "../../../utils/supabaseClient";
+import { AuthContext } from "../../../context/AuthContext";
 
 export function Login() {
-  const { toggleView, onLoginSuccess } = useAuth(); // onLoginSuccess no longer needs to handle a token
+  const { toggle } = useContext(AuthContext);
 
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -16,16 +16,13 @@ export function Login() {
     setIsLoading(true);
 
     // Call Supabase directly to sign in
-    const { data, error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: emailOrPhone,
       password: password,
     });
 
     if (error) {
       setError(error.message);
-    } else if (data.user) {
-      // Supabase handles the session. Just trigger the success state.
-      onLoginSuccess();
     }
     setIsLoading(false);
   };
@@ -88,7 +85,9 @@ export function Login() {
       <p className="text-center text-white/80 text-sm mt-6">
         Don't have an account?{" "}
         <button
-          onClick={toggleView}
+          onClick={() => {
+            toggle((prev) => !prev);
+          }}
           className="font-bold text-white hover:text-blue-200 focus:outline-none"
         >
           Create an account
