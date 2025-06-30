@@ -12,8 +12,6 @@ import { LoginBtn } from "./buttons/LoginBtn";
 import { NewCustomerBtn } from "./buttons/NewCostumerBtn";
 import { SettingsBtn } from "./buttons/SettingsBtn";
 
-// --- Step 1: Import the useAuth hook and a new LogoutButton ---
-// Adjust path if needed
 import { LogoutButton } from "./buttons/LogoutButton";
 import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
 
@@ -23,12 +21,12 @@ export function POSContents() {
   const { showSettings, setShowSettings } = useContext(SettingsContext);
   const [isShowAuth, setIsShowAuth] = useState(false);
 
-  // --- Step 2: Get the user from the useAuth hook ---
   const { user } = useAuth();
 
-  const handleDone = async () => {
-    // ... your existing handleDone function
-    // You can now add the user's token to this fetch request
+  // --- REVISED handleDone FUNCTION ---
+  // It now calls the completeTransaction function exposed by the CounterForm ref.
+  const handleDone = () => {
+    counterFormRef.current?.completeTransaction();
   };
 
   const handleAddToCart = () => {
@@ -38,7 +36,6 @@ export function POSContents() {
   return (
     <div className="rounded-[20px] bg-background shadow-neumorphic p-3">
       <header className="flex flex-col items-center mb-1">
-        {/* --- Step 3: Display a welcome message if the user is logged in --- */}
         {user ? (
           <p className="text-sm text-green-600 font-bold">
             Welcome, {user.email}!
@@ -58,17 +55,16 @@ export function POSContents() {
       <div className="grid grid-cols-3 gap-4 mt-6">
         <NewCustomerBtn /* ... */ />
         <AddToCartBtn onClick={handleAddToCart} />
+        {/* The DoneBtn now correctly triggers the transaction logic */}
         <DoneBtn onClick={handleDone} />
         <ClearBtn onClick={() => setCartData([])} />
 
-        {/* --- Step 4: Conditionally show Login or Logout button --- */}
         {user ? (
           <LogoutButton />
         ) : (
           <LoginBtn onClick={() => setIsShowAuth((prev) => !prev)} />
         )}
 
-        {/* --- Step 5: Only show the Auth form if no user is logged in --- */}
         {isShowAuth && !user ? <Auth /> : null}
 
         <SettingsBtn onClick={() => setShowSettings((prev) => !prev)} />

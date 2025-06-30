@@ -1,14 +1,14 @@
 import React, { forwardRef } from "react";
 
-/**
- * A presentational component that renders all the input fields for the point-of-sale form.
- * It receives all logic and refs as props from a container component.
- */
 export const CounterFormFields = forwardRef((props, ref) => {
   const { register, handleSubmit, onBarcodeChange, onBarcodeKeyDown } = props;
 
-  // Destructure the refs passed from the parent component
   const { costumerNameRef, barcodeRef, quantityRef, discountRef } = ref;
+
+  const barcodeRegistration = register("barcode");
+  const quantityRegistration = register("quantity");
+  // --- 1. Get the registration props for the costumerName field ---
+  const costumerNameRegistration = register("costumerName");
 
   return (
     <form
@@ -55,9 +55,13 @@ export const CounterFormFields = forwardRef((props, ref) => {
       <input
         className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
          focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
-        {...register("costumerName")}
+        // --- 2. Apply the same ref merging fix here ---
+        {...costumerNameRegistration}
+        ref={(e) => {
+          costumerNameRegistration.ref(e); // Required for react-hook-form
+          costumerNameRef.current = e; // Required for our focus management
+        }}
         type="text"
-        ref={costumerNameRef}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -88,8 +92,6 @@ export const CounterFormFields = forwardRef((props, ref) => {
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            // This could trigger the done/complete function or move focus elsewhere.
-            // For now, it just prevents form submission on Enter.
           }
         }}
         autoComplete="off"
@@ -99,11 +101,14 @@ export const CounterFormFields = forwardRef((props, ref) => {
       <input
         className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
          focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
-        {...register("barcode")}
-        type="text"
-        ref={barcodeRef}
+        {...barcodeRegistration}
+        ref={(e) => {
+          barcodeRegistration.ref(e);
+          barcodeRef.current = e;
+        }}
         onChange={onBarcodeChange}
         onKeyDown={onBarcodeKeyDown}
+        type="text"
         autoComplete="off"
       />
 
@@ -131,13 +136,16 @@ export const CounterFormFields = forwardRef((props, ref) => {
       <input
         className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
          focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
-        {...register("quantity")}
+        {...quantityRegistration}
+        ref={(e) => {
+          quantityRegistration.ref(e);
+          quantityRef.current = e;
+        }}
         type="number"
-        ref={quantityRef}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            handleSubmit(); // This will trigger the addToCart function
+            handleSubmit();
           }
         }}
         autoComplete="off"

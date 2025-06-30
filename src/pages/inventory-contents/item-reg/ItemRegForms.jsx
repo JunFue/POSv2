@@ -1,13 +1,13 @@
-import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useContext } from "react";
+import { useContext, useEffect, useRef } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
+// --- 1. Import the Supabase client ---
+import { supabase } from "../../../utils/supabaseClient"; // Adjust path if needed
 
 export const ItemRegForm = () => {
-  // Include 'items' from context to check for duplicates
   const { serverOnline, refreshItems, items } = useContext(ItemRegData);
   const form = useForm();
-  const { register, handleSubmit, formState, reset } = form; // control is still needed for DevTool
+  const { register, handleSubmit, formState, reset } = form;
   const { errors } = formState;
 
   // Refs for focus control only
@@ -15,12 +15,6 @@ export const ItemRegForm = () => {
   const priceRef = useRef(null);
   const packagingRef = useRef(null);
   const categoryRef = useRef(null);
-
-  // Reinstated useEffect block:
-  // This is necessary to ensure react-hook-form correctly registers and tracks
-  // inputs when you provide your own `ref` prop (for focus, etc.) alongside
-  // spreading {...register("fieldName")}.
-  // It calls the `ref` callback from `register()` with your specific DOM element.
 
   useEffect(() => {
     if (nameRef.current) {
@@ -35,18 +29,13 @@ export const ItemRegForm = () => {
     if (categoryRef.current) {
       register("category").ref(categoryRef.current);
     }
-    // The empty dependency array [] ensures this effect runs once after the initial mount.
-    // The `register` function from useForm is stable, so it doesn't need to be a dependency
-    // for this specific setup pattern if the intent is a one-time registration.
-  }, []); // Using the original empty dependency array
+  }, [register]);
 
-  // Renamed addToRegistry function with duplicate check
   const addToRegistry = async (data) => {
     if (!serverOnline) {
       alert("SERVER IS OFFLINE");
       return;
     }
-    // Check for duplicate barcode or name (case insensitive for name)
     const duplicate = items.find(
       (item) =>
         item.barcode === data.barcode ||
@@ -57,13 +46,28 @@ export const ItemRegForm = () => {
       return;
     }
     try {
+      // --- 2. Get the user's session token ---
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) {
+        alert("You must be logged in to register an item.");
+        return;
+      }
+      const token = session.access_token;
+
+      // --- 3. Add the Authorization header to the fetch request ---
       const res = await fetch("http://localhost:3000/api/item-reg", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(data),
       });
+
       if (!res.ok) throw new Error("Failed to register item");
-      // After successful registration, refresh items instead of optimistically updating state
+
       await refreshItems();
       reset({ barcode: "", name: "", price: "", packaging: "", category: "" });
       setTimeout(() => {
@@ -74,6 +78,7 @@ export const ItemRegForm = () => {
     }
   };
 
+  // ... (Rest of the JSX form remains the same) ...
   return (
     <div className="bg-background p-4 rounded-lg shadow-neumorphic">
       {/* Alert message when server is offline */}
