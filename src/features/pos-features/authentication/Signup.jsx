@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { useAuth } from "./hooks/Useauth";
+import { useContext, useState } from "react";
 import { supabase } from "../../../utils/supabaseClient";
+import { AuthContext } from "../../../context/AuthContext";
 
 export function Signup() {
-  const { toggleView } = useAuth();
+  const { toggle } = useContext(AuthContext);
 
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
@@ -117,7 +117,9 @@ export function Signup() {
       <p className="text-center text-white/80 text-sm mt-6">
         Already have an account?{" "}
         <button
-          onClick={toggleView}
+          onClick={() => {
+            toggle((prev) => !prev);
+          }}
           className="font-bold text-white hover:text-green-200 focus:outline-none"
         >
           Sign In
