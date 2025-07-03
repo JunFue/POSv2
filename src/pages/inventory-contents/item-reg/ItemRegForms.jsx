@@ -1,8 +1,7 @@
 import { useForm } from "react-hook-form";
 import { useContext, useEffect, useRef } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
-// --- 1. Import the Supabase client ---
-import { supabase } from "../../../utils/supabaseClient"; // Adjust path if needed
+import { supabase } from "../../../utils/supabaseClient";
 
 export const ItemRegForm = () => {
   const { serverOnline, refreshItems, items } = useContext(ItemRegData);
@@ -10,12 +9,12 @@ export const ItemRegForm = () => {
   const { register, handleSubmit, formState, reset } = form;
   const { errors } = formState;
 
-  // Refs for focus control only
   const nameRef = useRef(null);
   const priceRef = useRef(null);
   const packagingRef = useRef(null);
   const categoryRef = useRef(null);
 
+  // This useEffect is for focus management and can be kept as is.
   useEffect(() => {
     if (nameRef.current) {
       register("name").ref(nameRef.current);
@@ -30,6 +29,26 @@ export const ItemRegForm = () => {
       register("category").ref(categoryRef.current);
     }
   }, [register]);
+
+  // --- 1. Add a useEffect to listen for the 'Shift + Enter' key combination ---
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Check if Shift and Enter are pressed simultaneously
+      if (e.key === "Enter" && e.shiftKey) {
+        e.preventDefault(); // Prevent default browser actions
+        // Programmatically trigger the form submission
+        handleSubmit(addToRegistry)();
+      }
+    };
+
+    // Add the event listener to the whole document
+    document.addEventListener("keydown", handleKeyDown);
+
+    // Cleanup function to remove the listener when the component unmounts
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [handleSubmit]); // Rerun effect if handleSubmit changes
 
   const addToRegistry = async (data) => {
     if (!serverOnline) {
@@ -46,7 +65,6 @@ export const ItemRegForm = () => {
       return;
     }
     try {
-      // --- 2. Get the user's session token ---
       const {
         data: { session },
       } = await supabase.auth.getSession();
@@ -56,7 +74,6 @@ export const ItemRegForm = () => {
       }
       const token = session.access_token;
 
-      // --- 3. Add the Authorization header to the fetch request ---
       const res = await fetch("http://localhost:3000/api/item-reg", {
         method: "POST",
         headers: {
@@ -78,22 +95,14 @@ export const ItemRegForm = () => {
     }
   };
 
-  // ... (Rest of the JSX form remains the same) ...
   return (
     <div className="bg-background p-4 rounded-lg shadow-neumorphic">
-      {/* Alert message when server is offline */}
       {!serverOnline && (
         <div className="text-red-500 font-bold mb-2">SERVER IS OFFLINE</div>
       )}
+      {/* --- 2. The onKeyDownCapture can be removed from the form tag --- */}
       <form
         onSubmit={handleSubmit(addToRegistry)}
-        onKeyDownCapture={(e) => {
-          if (e.key === "Enter" && e.shiftKey) {
-            e.preventDefault();
-            e.stopPropagation();
-            handleSubmit(addToRegistry)();
-          }
-        }}
         noValidate
         className="gap-[1vw] [&>*]:text-[0.8vw] p-[1vw] mt-[1vw] mx-auto grid grid-cols-[0.3fr_0.5fr_0.3fr_0.5fr] rounded-lg bg-background shadow-neumorphic"
       >

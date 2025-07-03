@@ -1,5 +1,4 @@
 import { useContext, useRef, useState } from "react";
-import { useContext, useRef, useState } from "react";
 import { CartTable } from "../../../shared-components/tables/CartTable";
 import { CounterForm } from "../../../shared-components/forms/CounterForm";
 import { CartContext } from "../../../context/CartContext";
