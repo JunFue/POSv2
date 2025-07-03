@@ -12,7 +12,7 @@ import { AppProviders } from "./context/Provider.jsx";
 function App() {
   return (
     <AppProviders>
-      <div className="flex flex-row w-screen h-screen bg-background text-body-text gap-[0.3vw] p-[0.5vw] overflow-hidden">
+      <div className="flex flex-col lg:flex-row w-screen h-screen bg-background text-body-text gap-[0.3vw] p-[0.5vw] overflow-hidden">
         <POS></POS>
         <div className="flex flex-col gap-[0.3vw] flex-grow p-[0.2vw] rounded-2xl basis-0 min-w-0">
           <Nav />

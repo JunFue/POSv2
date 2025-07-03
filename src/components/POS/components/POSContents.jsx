@@ -41,20 +41,15 @@ export function POSContents() {
     <div className="rounded-[20px] bg-background shadow-neumorphic p-3">
       <header className="flex flex-col items-center mb-1">
         {user ? (
-          <p className="text-sm text-green-600 font-bold">
+          <p className="text-xs md:text-[16px] text-green-600 font-bold">
             Welcome, {user.email}!
           </p>
         ) : (
           <p className="text-sm text-body-text">Please sign in.</p>
         )}
-        {user ? (
-          <p className="text-sm text-green-600 font-bold">
-            Welcome, {user.email}!
-          </p>
-        ) : (
-          <p className="text-sm text-body-text">Please sign in.</p>
-        )}
-        <h1 className="text-4xl font-bold text-head-text">POINT OF SALE</h1>
+        <h1 className="sm:text-2xl lg:text-3xl 2xl:text-4xl font-bold text-head-text">
+          POINT OF SALE
+        </h1>
       </header>
 
       <CounterForm
@@ -77,13 +72,6 @@ export function POSContents() {
           <LoginBtn onClick={() => setIsShowAuth((prev) => !prev)} />
         )}
 
-        {user ? (
-          <LogoutButton />
-        ) : (
-          <LoginBtn onClick={() => setIsShowAuth((prev) => !prev)} />
-        )}
-
-        {isShowAuth && !user ? <Auth /> : null}
         {isShowAuth && !user ? <Auth /> : null}
 
         <SettingsBtn onClick={() => setShowSettings((prev) => !prev)} />

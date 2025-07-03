@@ -13,7 +13,7 @@ export const CounterFormFields = forwardRef((props, ref) => {
   return (
     <form
       onSubmit={handleSubmit}
-      className="[&>*]:text-[1.2vw] [&>*]:font-info-text! grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-[0.5vw] [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:text-nowrap p-[0.3vh]"
+      className="[&>*]:text-[10px] [&>*]:sm:text-[13px] [&>*]:md:text-[20px] [&>*]:lg:text-[20px] [&>*]:font-info-text! grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-[0.5vw] [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:text-nowrap p-[0.3vh]"
     >
       <label title="Cashier Name">Cashier Name:</label>
       <input
