@@ -9,11 +9,11 @@ import { AddToCartBtn } from "./buttons/AddToCartBtn";
 import { DoneBtn } from "./buttons/DoneBtn";
 import { ClearBtn } from "./buttons/ClearBtn";
 import { LoginBtn } from "./buttons/LoginBtn";
-import { NewCustomerBtn } from "./buttons/NewCostumerBtn";
 import { SettingsBtn } from "./buttons/SettingsBtn";
 
 import { LogoutButton } from "./buttons/LogoutButton";
 import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
+import { NewCustomerBtn } from "./buttons/NewCostumerBtn";
 
 export function POSContents() {
   const { cartData, setCartData } = useContext(CartContext);
@@ -23,14 +23,18 @@ export function POSContents() {
 
   const { user } = useAuth();
 
-  // --- REVISED handleDone FUNCTION ---
-  // It now calls the completeTransaction function exposed by the CounterForm ref.
   const handleDone = () => {
     counterFormRef.current?.completeTransaction();
   };
 
   const handleAddToCart = () => {
     counterFormRef.current?.submitAddToCart();
+  };
+
+  // --- 1. Create a handler for the New Customer button ---
+  const handleNewCustomer = () => {
+    // This calls the function exposed by CounterForm via its ref
+    counterFormRef.current?.regenerateTransactionNo();
   };
 
   return (
@@ -53,9 +57,9 @@ export function POSContents() {
       />
 
       <div className="grid grid-cols-3 gap-4 mt-6">
-        <NewCustomerBtn /* ... */ />
+        {/* --- 2. Pass the new handler to the NewCustomerBtn --- */}
+        <NewCustomerBtn onClick={handleNewCustomer} />
         <AddToCartBtn onClick={handleAddToCart} />
-        {/* The DoneBtn now correctly triggers the transaction logic */}
         <DoneBtn onClick={handleDone} />
         <ClearBtn onClick={() => setCartData([])} />
 
