@@ -143,47 +143,8 @@ export const useTransactionHandler = (formMethods, refs) => {
       inCharge: cashierName,
     };
 
-    // --- ADDED FOR DEBUGGING: Log the data before sending ---
-    console.log("Frontend: Preparing to send payment data:", paymentRecord);
-    console.log("Frontend: Preparing to send transaction items:", soldItems);
-
-    setItemSold((prev) => [...prev, ...soldItems]);
-    setPaymentData((prev) => [...prev, paymentRecord]);
-
-    let offline = false;
-
-    try {
-      for (const transaction of soldItems) {
-        const res = await fetch("http://localhost:3000/api/transactions", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(transaction),
-        });
-        if (!res.ok) offline = true;
-      }
-
-      const paymentRes = await fetch("http://localhost:3000/api/payments", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(paymentRecord),
-      });
-      if (!paymentRes.ok) offline = true;
-    } catch (error) {
-      offline = true;
-      console.error("API error during transaction finalization:", error);
-    }
-
-    setSoldServerOnline(!offline);
-    if (offline) {
-      alert("SERVER IS OFFLINE. Data saved locally.");
-    }
-
+    // --- REVISED LOGIC ---
+    // 1. Clear the UI immediately for a responsive feel.
     setCartData([]);
     reset({
       ...getValues(),
@@ -198,6 +159,56 @@ export const useTransactionHandler = (formMethods, refs) => {
       transactionNo: generateTransactionNo(),
     });
     costumerNameRef.current?.focus();
+
+    // 2. Update local contexts (still happens instantly)
+    setItemSold((prev) => [...prev, ...soldItems]);
+    setPaymentData((prev) => [...prev, paymentRecord]);
+
+    // 3. Perform network requests in the background.
+    // We don't need to 'await' these inside the function because the UI is already cleared.
+    const sendDataToServer = async () => {
+      let offline = false;
+      try {
+        const requests = soldItems.map((item) =>
+          fetch("http://localhost:3000/api/transactions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(item),
+          })
+        );
+
+        requests.push(
+          fetch("http://localhost:3000/api/payments", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify(paymentRecord),
+          })
+        );
+
+        const responses = await Promise.all(requests);
+
+        // Check if any request failed
+        if (responses.some((res) => !res.ok)) {
+          offline = true;
+        }
+      } catch (error) {
+        offline = true;
+        console.error("API error during transaction finalization:", error);
+      }
+
+      setSoldServerOnline(!offline);
+      if (offline) {
+        alert("SERVER IS OFFLINE. Some data may not have been saved.");
+      }
+    };
+
+    sendDataToServer();
   };
 
   return { addToCart, handleDone };

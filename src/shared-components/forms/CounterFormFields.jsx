@@ -7,8 +7,9 @@ export const CounterFormFields = forwardRef((props, ref) => {
 
   const barcodeRegistration = register("barcode");
   const quantityRegistration = register("quantity");
-  // --- 1. Get the registration props for the costumerName field ---
   const costumerNameRegistration = register("costumerName");
+  // --- 1. Get the registration props for the discount field ---
+  const discountRegistration = register("discount");
 
   return (
     <form
@@ -55,11 +56,10 @@ export const CounterFormFields = forwardRef((props, ref) => {
       <input
         className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
          focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
-        // --- 2. Apply the same ref merging fix here ---
         {...costumerNameRegistration}
         ref={(e) => {
-          costumerNameRegistration.ref(e); // Required for react-hook-form
-          costumerNameRef.current = e; // Required for our focus management
+          costumerNameRegistration.ref(e);
+          costumerNameRef.current = e;
         }}
         type="text"
         onKeyDown={(e) => {
@@ -85,10 +85,14 @@ export const CounterFormFields = forwardRef((props, ref) => {
       <input
         className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
          focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
-        {...register("discount")}
+        // --- 2. Apply the ref merging fix to the discount input ---
+        {...discountRegistration}
+        ref={(e) => {
+          discountRegistration.ref(e); // Required for react-hook-form
+          discountRef.current = e; // Required for our focus management
+        }}
         type="number"
         step="any"
-        ref={discountRef}
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
