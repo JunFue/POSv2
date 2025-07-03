@@ -1,10 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
-// --- Step 1: Import the useAuth hook ---
 
-export function Filters({
+export function PaymentsFilter({
   onFilter,
-  onLocalFilter,
   currentPage,
   setCurrentPage,
   totalPages,
@@ -13,13 +11,10 @@ export function Filters({
   loading,
   setLoading,
 }) {
-  // --- Step 2: Get user and session from the auth context ---
   const { user, session } = useAuth();
-
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [transactionNo, setTransactionNo] = useState("");
-  const [itemName, setItemName] = useState("");
 
   const initializeFilters = () => {
     const today = new Date().toISOString().split("T")[0];
@@ -29,12 +24,9 @@ export function Filters({
   };
 
   useEffect(() => {
-    // --- Step 3: Make the initial fetch dependent on the user ---
-    // This effect now only runs when a user is successfully logged in.
     if (user) {
       initializeFilters();
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const handleBackendFetch = async (
@@ -44,27 +36,21 @@ export function Filters({
     endDate,
     transNo = ""
   ) => {
-    // --- Step 4: Add the authentication token to every backend request ---
-    if (!session) {
-      // Don't fetch if there's no active session
-      return;
-    }
+    if (!session) return;
     const token = session.access_token;
-
     setLoading(true);
     try {
-      const params = new URLSearchParams();
+      const params = new URLSearchParams({
+        page,
+        limit,
+        startDate,
+        endDate,
+      });
       if (transNo) {
-        params.append("transactionNo", transNo);
-      } else if (startDate && endDate) {
-        params.append("startDate", startDate);
-        params.append("endDate", endDate);
+        params.set("transactionNo", transNo);
       }
-      params.append("page", page);
-      params.append("limit", limit);
 
-      const url = `http://localhost:3000/api/transactions?${params.toString()}`;
-      // Add the Authorization header to the fetch options
+      const url = `http://localhost:3000/api/payments?${params.toString()}`;
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -73,36 +59,24 @@ export function Filters({
 
       if (response.ok) {
         const filteredData = await response.json();
-        if (onFilter) {
-          onFilter(filteredData);
-        }
+        onFilter(filteredData);
       } else {
-        console.error("Failed to fetch filtered data from the server.");
+        console.error("Failed to fetch payments from the server.");
       }
     } catch (error) {
-      console.error(`Error fetching data: ${error.message}`);
+      console.error(`Error fetching payments: ${error.message}`);
     } finally {
       setLoading(false);
     }
   };
 
-  // --- No changes are needed for the functions below ---
-  // They all call handleBackendFetch, which is now secure.
-
   const handleFilter = () => {
-    if (itemName.trim() !== "") {
-      if (onLocalFilter) {
-        onLocalFilter(itemName);
-      }
-      return;
-    }
     setCurrentPage(1);
     handleBackendFetch(1, rowsPerPage, fromDate, toDate, transactionNo.trim());
   };
 
   const handleReset = () => {
     setTransactionNo("");
-    setItemName("");
     setCurrentPage(1);
     handleBackendFetch(1, rowsPerPage, fromDate, toDate);
   };
@@ -147,8 +121,6 @@ export function Filters({
       transactionNo.trim()
     );
   };
-
-  // --- No changes needed for the JSX below ---
 
   return (
     <div className="flex flex-col gap-4 p-4 bg-background rounded-lg shadow-md">
@@ -200,22 +172,6 @@ export function Filters({
           placeholder="Enter transaction number"
         />
       </div>
-      <div>
-        <label
-          htmlFor="itemName"
-          className="block text-sm font-medium text-gray-700"
-        >
-          Item Name:
-        </label>
-        <input
-          type="text"
-          id="itemName"
-          value={itemName}
-          onChange={(e) => setItemName(e.target.value)}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          placeholder="Enter item name for local search"
-        />
-      </div>
       <div className="flex gap-4">
         <button
           onClick={handleFilter}
@@ -258,8 +214,6 @@ export function Filters({
           <option value={25}>25</option>
           <option value={50}>50</option>
           <option value={100}>100</option>
-          <option value={500}>500</option>
-          <option value={1000}>1000</option>
         </select>
       </div>
     </div>

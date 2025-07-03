@@ -7,13 +7,13 @@ import {
   useCallback,
   memo,
 } from "react";
-import { ItemSoldContext } from "../../context/ItemSoldContext";
+import { ItemSoldContext } from "../../../context/ItemSoldContext";
 import { Filters } from "./Filters";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useFilterWorker } from "../../hooks/useFilterWorker";
-import { VirtualizedTable } from "../../components/VirtualizedTable";
-import { useDebounce } from "../../hooks/useDebounce";
+import { useFilterWorker } from "../../../hooks/useFilterWorker";
+import { VirtualizedTable } from "../../../components/VirtualizedTable";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 // Memoized ColumnFilterDropdown remains here for now.
 const MemoizedColumnFilterDropdown = memo(ColumnFilterDropdown);

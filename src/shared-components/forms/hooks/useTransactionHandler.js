@@ -1,6 +1,5 @@
 import { useContext } from "react";
 import { useStockManager } from "./useStockManager";
-// --- 1. Import the supabase client ---
 import { supabase } from "../../../utils/supabaseClient";
 
 import { CartContext } from "../../../context/CartContext";
@@ -22,7 +21,7 @@ export const useTransactionHandler = (formMethods, refs) => {
   const { barcodeRef, costumerNameRef, quantityRef } = refs;
 
   const addToCart = (data) => {
-    // This function remains the same
+    // ... addToCart logic remains the same
     if (!data.barcode || !data.quantity) {
       alert("Please enter barcode and quantity.");
       return;
@@ -77,7 +76,6 @@ export const useTransactionHandler = (formMethods, refs) => {
   };
 
   const handleDone = async () => {
-    // ... (logic for getting form values remains the same)
     const {
       transactionNo,
       cashierName,
@@ -108,7 +106,6 @@ export const useTransactionHandler = (formMethods, refs) => {
       return;
     }
 
-    // --- 2. Get the user's session and token BEFORE the loop ---
     const {
       data: { session },
       error: sessionError,
@@ -120,7 +117,6 @@ export const useTransactionHandler = (formMethods, refs) => {
     const token = session.access_token;
 
     const soldItems = cartData.map((item) => {
-      // ... (logic to create soldItems remains the same)
       const regItem = regItems.find((ri) => ri.barcode === item.barcode);
       return {
         barcode: item.barcode,
@@ -137,7 +133,6 @@ export const useTransactionHandler = (formMethods, refs) => {
     });
 
     const paymentRecord = {
-      // ... (paymentRecord logic remains the same)
       transactionDate: transactionTime,
       transactionNumber: transactionNo,
       costumerName: costumerName || "N/A",
@@ -148,14 +143,18 @@ export const useTransactionHandler = (formMethods, refs) => {
       inCharge: cashierName,
     };
 
+    // --- ADDED FOR DEBUGGING: Log the data before sending ---
+    console.log("Frontend: Preparing to send payment data:", paymentRecord);
+    console.log("Frontend: Preparing to send transaction items:", soldItems);
+
     setItemSold((prev) => [...prev, ...soldItems]);
     setPaymentData((prev) => [...prev, paymentRecord]);
 
     let offline = false;
-    for (const transaction of soldItems) {
-      try {
-        // --- 3. Add the Authorization header to the fetch request ---
-        const response = await fetch("http://localhost:3000/api/transactions", {
+
+    try {
+      for (const transaction of soldItems) {
+        const res = await fetch("http://localhost:3000/api/transactions", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -163,14 +162,23 @@ export const useTransactionHandler = (formMethods, refs) => {
           },
           body: JSON.stringify(transaction),
         });
-        if (!response.ok) {
-          offline = true;
-        }
-      } catch (error) {
-        offline = true;
-        console.error("Transaction API error:", error);
+        if (!res.ok) offline = true;
       }
+
+      const paymentRes = await fetch("http://localhost:3000/api/payments", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(paymentRecord),
+      });
+      if (!paymentRes.ok) offline = true;
+    } catch (error) {
+      offline = true;
+      console.error("API error during transaction finalization:", error);
     }
+
     setSoldServerOnline(!offline);
     if (offline) {
       alert("SERVER IS OFFLINE. Data saved locally.");
