@@ -16,13 +16,19 @@ import { generateTransactionNo } from "../../utils/transactionNumberGenerator";
 import { CartContext } from "../../context/CartContext";
 import { ItemRegData } from "../../context/ItemRegContext";
 
+// --- 1. Import the useAuth hook ---
+import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
+
 export const CounterForm = forwardRef((props, ref) => {
   const { cartData } = useContext(CartContext);
   const { items: regItems } = useContext(ItemRegData);
+  // --- 2. Get the user from the auth context ---
+  const { user } = useAuth();
 
   const form = useForm({
     defaultValues: {
-      cashierName: "Junel Fuentes",
+      // --- 3. Remove the hardcoded name ---
+      cashierName: "",
       transactionTime: "",
       payment: "",
       costumerName: "",
@@ -99,6 +105,17 @@ export const CounterForm = forwardRef((props, ref) => {
     return () => clearInterval(interval);
   }, [setValue]);
 
+  // --- 4. Add a useEffect to set the cashier's name when the user logs in ---
+  useEffect(() => {
+    if (user) {
+      // Use the full name from user metadata, or fall back to the email
+      const name = user.user_metadata?.fullName || user.email;
+      setValue("cashierName", name);
+    } else {
+      setValue("cashierName", "");
+    }
+  }, [user, setValue]);
+
   useEffect(() => {
     const total = cartData.reduce((sum, item) => sum + item.total(), 0);
     setValue("grandTotal", total.toFixed(2));
@@ -117,10 +134,8 @@ export const CounterForm = forwardRef((props, ref) => {
     <div className="shiny-gradient p-1 text-accent-100">
       <CounterFormFields
         ref={{ costumerNameRef, barcodeRef, quantityRef, discountRef }}
-        // --- Pass the main register function directly ---
         register={register}
         handleSubmit={handleSubmit(addToCart)}
-        // --- Pass the original handler from the hook ---
         onBarcodeChange={handleBarcodeChange}
         onBarcodeKeyDown={handleBarcodeKeyDown}
       />
