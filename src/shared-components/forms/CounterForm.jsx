@@ -134,8 +134,10 @@ export const CounterForm = forwardRef((props, ref) => {
     <div className="shiny-gradient p-1 text-accent-100">
       <CounterFormFields
         ref={{ costumerNameRef, barcodeRef, quantityRef, discountRef }}
+        // --- Pass the main register function directly ---
         register={register}
         handleSubmit={handleSubmit(addToCart)}
+        // --- Pass the original handler from the hook ---
         onBarcodeChange={handleBarcodeChange}
         onBarcodeKeyDown={handleBarcodeKeyDown}
       />

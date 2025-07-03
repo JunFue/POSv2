@@ -1,4 +1,5 @@
 import { useContext, useRef, useState } from "react";
+import { useContext, useRef, useState } from "react";
 import { CartTable } from "../../../shared-components/tables/CartTable";
 import { CounterForm } from "../../../shared-components/forms/CounterForm";
 import { CartContext } from "../../../context/CartContext";
@@ -47,6 +48,13 @@ export function POSContents() {
         ) : (
           <p className="text-sm text-body-text">Please sign in.</p>
         )}
+        {user ? (
+          <p className="text-sm text-green-600 font-bold">
+            Welcome, {user.email}!
+          </p>
+        ) : (
+          <p className="text-sm text-body-text">Please sign in.</p>
+        )}
         <h1 className="text-4xl font-bold text-head-text">POINT OF SALE</h1>
       </header>
 
@@ -60,6 +68,7 @@ export function POSContents() {
         {/* --- 2. Pass the new handler to the NewCustomerBtn --- */}
         <NewCustomerBtn onClick={handleNewCustomer} />
         <AddToCartBtn onClick={handleAddToCart} />
+        {/* The DoneBtn now correctly triggers the transaction logic */}
         <DoneBtn onClick={handleDone} />
         <ClearBtn onClick={() => setCartData([])} />
 
@@ -69,6 +78,13 @@ export function POSContents() {
           <LoginBtn onClick={() => setIsShowAuth((prev) => !prev)} />
         )}
 
+        {user ? (
+          <LogoutButton />
+        ) : (
+          <LoginBtn onClick={() => setIsShowAuth((prev) => !prev)} />
+        )}
+
+        {isShowAuth && !user ? <Auth /> : null}
         {isShowAuth && !user ? <Auth /> : null}
 
         <SettingsBtn onClick={() => setShowSettings((prev) => !prev)} />
