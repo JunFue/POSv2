@@ -131,7 +131,7 @@ export const CounterForm = forwardRef((props, ref) => {
   );
 
   return (
-    <div className="shiny-gradient p-1 text-accent-100">
+    <div className="relative shiny-gradient p-1 text-accent-100">
       <CounterFormFields
         ref={{ costumerNameRef, barcodeRef, quantityRef, discountRef }}
         // --- Pass the main register function directly ---
@@ -148,7 +148,7 @@ export const CounterForm = forwardRef((props, ref) => {
       />
       <div
         id="item-description"
-        className="text-center text-[1.2vw] shadow-input rounded-sm"
+        className="text-center body-text-media shadow-input rounded-sm"
       >
         {barcodeValue && matchedItem ? (
           <p>

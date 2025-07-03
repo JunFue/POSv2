@@ -113,5 +113,16 @@ a {
     outline-offset: 2px;
     box-shadow: 0 0 0 2px #5eead4; /* focus:ring-2 focus:ring-teal-300 */
   }
+
+  .body-text-media {
+    @apply text-[10px] sm:text-[13px] md:text-[20px] lg:text-[20px];
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none; /* IE and Edge */
+    scrollbar-width: none;    /* Firefox */
+  }
 }
 
