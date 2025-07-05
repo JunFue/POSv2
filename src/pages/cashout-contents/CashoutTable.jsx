@@ -29,7 +29,10 @@ export function CashoutTable({ data, loading, onDelete }) {
         header: ({ column }) => (
           <SortableHeader column={column}>Amount</SortableHeader>
         ),
-        cell: (info) => `$${info.getValue().toFixed(2)}`,
+        cell: (info) => {
+          const value = parseFloat(info.getValue());
+          return isNaN(value) ? "N/A" : `$${value.toFixed(2)}`;
+        },
         size: 120,
       },
       {
@@ -38,7 +41,8 @@ export function CashoutTable({ data, loading, onDelete }) {
         size: 250,
       },
       {
-        accessorKey: "receiptNo",
+        // --- FIX: Change accessorKey to match the database column name ---
+        accessorKey: "receipt_no",
         header: ({ column }) => (
           <SortableHeader column={column}>Receipt No.</SortableHeader>
         ),
@@ -95,7 +99,6 @@ export function CashoutTable({ data, loading, onDelete }) {
   }
 
   return (
-    // --- 1. Apply styles from the reference VirtualizedTable.jsx ---
     <div
       ref={tableContainerRef}
       className="overflow-auto rounded-lg bg-background shadow-input h-[500px]"
@@ -106,11 +109,12 @@ export function CashoutTable({ data, loading, onDelete }) {
       >
         <thead className="bg-background shadow-neumorphic sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id} className="border">
+            <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="text-center font-semibold text-head-text w-[150px]"
+                  className="text-left px-4 py-2 font-semibold text-head-text"
+                  style={{ width: `${header.getSize()}px` }}
                 >
                   {flexRender(
                     header.column.columnDef.header,
@@ -131,7 +135,6 @@ export function CashoutTable({ data, loading, onDelete }) {
           {rowVirtualizer.getVirtualItems().map((virtualRow) => {
             const row = rows[virtualRow.index];
             return (
-              // --- 2. Make the table row a flex container ---
               <tr
                 key={row.id}
                 style={{
@@ -141,12 +144,11 @@ export function CashoutTable({ data, loading, onDelete }) {
                   width: "100%",
                   height: `${virtualRow.size}px`,
                   transform: `translateY(${virtualRow.start}px)`,
-                  display: "flex", // This is the key change
+                  display: "flex",
                 }}
                 className="hover:bg-gray-100"
               >
                 {row.getVisibleCells().map((cell) => (
-                  // --- 3. Apply styles and width to each cell ---
                   <td
                     key={cell.id}
                     className="border-b border-gray-300 px-4 py-2 truncate flex items-center"

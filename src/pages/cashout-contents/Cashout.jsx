@@ -5,7 +5,7 @@ import { CashoutTable } from "./CashoutTable";
 import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
 
 export function Cashout() {
-  const [selection] = useState({ date: new Date() });
+  const [selection, setSelection] = useState({ date: new Date() });
   const [cashouts, setCashouts] = useState([]);
   const [loading, setLoading] = useState(false);
   const { session } = useAuth();
@@ -13,6 +13,10 @@ export function Cashout() {
   const handleFilter = useCallback(
     async (currentSelection) => {
       if (!session) return;
+
+      // Update the component's state with the new selection from the calendar
+      setSelection(currentSelection);
+
       setLoading(true);
 
       const params = new URLSearchParams();
@@ -60,29 +64,41 @@ export function Cashout() {
     [session]
   );
 
-  const handleAddCashout = (newCashout) => {
-    setCashouts((prevCashouts) => [
-      { ...newCashout, id: `temp-${Date.now()}`, status: "pending" },
-      ...prevCashouts,
-    ]);
+  const handleAddCashout = (newCashoutWithTempId) => {
+    // This function correctly receives the temporary ID from the form
+    setCashouts((prevCashouts) => [newCashoutWithTempId, ...prevCashouts]);
   };
 
   const handleDeleteCashout = async (idToDelete) => {
+    const originalCashouts = [...cashouts];
     // Optimistically remove from UI
     setCashouts((prev) => prev.filter((c) => c.id !== idToDelete));
 
-    // Send delete request to backend
     try {
       if (!session) throw new Error("Not authenticated");
-      await fetch(`http://localhost:3000/api/cashout/${idToDelete}`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${session.access_token}`,
-        },
-      });
+      // Don't try to delete temporary client-side items from the DB
+      if (String(idToDelete).startsWith("temp-")) {
+        return;
+      }
+
+      const response = await fetch(
+        `http://localhost:3000/api/cashout/${idToDelete}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to delete on server");
+      }
     } catch (error) {
       console.error("Failed to delete cashout:", error);
-      // Optional: Add logic to re-add the item to the list if the delete fails
+      // If the delete fails, revert the UI to its original state
+      setCashouts(originalCashouts);
+      alert("Failed to delete the record. Please try again.");
     }
   };
 
@@ -107,7 +123,6 @@ export function Cashout() {
       </div>
       <div className="md:col-span-2 flex flex-col gap-4">
         <CashoutForm
-          // --- Pass the current date selection to the form ---
           selection={selection}
           onAddCashout={handleAddCashout}
           updateCashoutStatus={updateCashoutStatus}
