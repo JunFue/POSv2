@@ -4,6 +4,7 @@ import { useAuth } from "../../features/pos-features/authentication/hooks/Useaut
 import { FaPlus, FaTrash } from "react-icons/fa";
 
 export function CashoutForm({
+  selection,
   onAddCashout,
   updateCashoutStatus,
   setCashoutFailed,
@@ -25,7 +26,6 @@ export function CashoutForm({
   const dropdownRef = useRef(null);
   const dropdownListRef = useRef(null);
   const amountRef = useRef(null);
-  // --- 1. Add refs for the next input fields ---
   const notesRef = useRef(null);
   const receiptNoRef = useRef(null);
 
@@ -42,7 +42,6 @@ export function CashoutForm({
     required: true,
     valueAsNumber: true,
   });
-  // --- 2. Get registration props for the new fields ---
   const notesRegistration = register("notes");
   const receiptNoRegistration = register("receiptNo");
 
@@ -146,22 +145,32 @@ export function CashoutForm({
 
   const onSubmit = useCallback(
     async (data) => {
-      const tempId = `temp-${Date.now()}`;
-      const newCashout = { ...data, id: tempId, status: "pending" };
+      if (!selection || !selection.date) {
+        alert(
+          "Please select a single date from the calendar to record a cashout."
+        );
+        return;
+      }
 
-      onAddCashout(newCashout);
+      const tempId = `temp-${Date.now()}`;
+      const payload = {
+        ...data,
+        cashout_date: selection.date.toISOString(),
+      };
+
+      onAddCashout({ ...payload, id: tempId, status: "pending" });
       reset();
       setValue("category", categories[0]);
 
       try {
         if (!session) throw new Error("Not authenticated");
-        const response = await fetch("http://localhost:3000/api/cashouts", {
+        const response = await fetch("http://localhost:3000/api/cashout", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${session.access_token}`,
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify(payload),
         });
         if (!response.ok) throw new Error("Server responded with an error");
         const savedRecord = await response.json();
@@ -179,6 +188,7 @@ export function CashoutForm({
       setCashoutFailed,
       setValue,
       updateCashoutStatus,
+      selection,
     ]
   );
 
@@ -261,7 +271,6 @@ export function CashoutForm({
               amountRegistration.ref(e);
               amountRef.current = e;
             }}
-            // --- 3. Add onKeyDown handler to jump focus ---
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -308,7 +317,7 @@ export function CashoutForm({
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
-                e.preventDefault(); // Prevent submission but do nothing else
+                e.preventDefault();
               }
             }}
           />
