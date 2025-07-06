@@ -4,6 +4,7 @@ import { DashboardCard } from "./DashboardCard";
 import { FlashInfo } from "./FlashInfo";
 import { DailyReport } from "./DailyReport";
 import { CashoutReport } from "./CashoutReport";
+import { CashFlow } from "./CashFlow"; // 1. Import the new component
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 
@@ -13,6 +14,7 @@ const initialCards = [
   { id: "1", title: "Flash Info", component: <FlashInfo /> },
   { id: "2", title: "Daily Report", component: <DailyReport /> },
   { id: "3", title: "Cashout Report", component: <CashoutReport /> },
+  { id: "4", title: "Cash Flow", component: <CashFlow /> }, // 2. Add the new card to the list
 ];
 
 // Function to generate the initial layout for the cards
@@ -20,9 +22,9 @@ const generateLayout = () => {
   return initialCards.map((card, index) => ({
     i: card.id,
     x: (index * 4) % 12, // Initial x position
-    y: 0, // Initial y position
+    y: Math.floor(index / 3) * 4, // Initial y position, creates new rows
     w: 4, // Default width
-    h: 4, // Default height
+    h: 5, // Default height (made slightly taller for the table)
   }));
 };
 
@@ -44,8 +46,6 @@ export function Dashboard() {
       onLayoutChange={handleLayoutChange}
     >
       {initialCards.map((card) => (
-        // The extra div has been removed.
-        // DashboardCard is now the direct child and receives the correct styles.
         <DashboardCard key={card.id} title={card.title}>
           {card.component}
         </DashboardCard>

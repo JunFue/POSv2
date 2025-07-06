@@ -11,6 +11,18 @@ export function DashboardCard({ children, title, ...props }) {
       {...props} // This spreads style, className, AND the necessary event handlers
       className={`${props.className} bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg rounded-xl p-1 !overflow-hidden flex flex-col`}
     >
+      {/* This style block hides the scrollbar on Webkit and Firefox browsers */}
+      <style>
+        {`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+          }
+        `}
+      </style>
       {/* Card Header */}
       <div className="flex justify-between items-center p-4 text-white cursor-grab">
         <h3 className="font-bold text-lg">{title}</h3>
@@ -38,7 +50,7 @@ export function DashboardCard({ children, title, ...props }) {
       </div>
 
       {/* Card Content */}
-      <div className="flex-grow overflow-auto text-white px-4 pb-4">
+      <div className="flex-grow overflow-y-auto text-white px-4 pb-4 scrollbar-hide">
         {children}
       </div>
     </div>

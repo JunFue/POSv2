@@ -16,7 +16,9 @@ export function DailyReport() {
   ];
 
   return (
-    <div className="w-full h-full overflow-y-auto">
+    // The "overflow-y-auto" class has been removed from this div.
+    // Scrolling is now handled entirely by the parent DashboardCard.
+    <div className="w-full h-full">
       <ul className="space-y-2">
         {reportItems.map((item, index) => (
           <li
