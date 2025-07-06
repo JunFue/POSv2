@@ -135,12 +135,12 @@ export function StocksForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-[1vw] items-center [&>*]:border [&>*]:border-gray-300"
+      className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-[1vw] items-center bg-background shadow-neumorphic rounded-[5px]"
     >
-      <div className="relative flex flex-col gap-1 items-center">
+      <div className="relative flex flex-col gap-1 items-center p-2">
         <label className="text-[1vw] font-medium">Item</label>
         <input
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
           {...register("item")}
           onChange={handleItemChange}
           onKeyDown={handleItemKeyDown}
@@ -170,7 +170,7 @@ export function StocksForm() {
       <div className="relative flex flex-col gap-1 items-center">
         <label className="text-[1vw] font-medium">Stock Flow</label>
         <select
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
           {...register("stockFlow")}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -187,7 +187,7 @@ export function StocksForm() {
         <label className="text-[1vw] font-medium">Quantity</label>
         <input
           type="number"
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
           {...register("quantity")}
           min={1}
           autoComplete="off"
@@ -203,15 +203,12 @@ export function StocksForm() {
         <label className="text-[1vw] font-medium">Notes</label>
         <input
           type="text"
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] border-[none] outline-[none] rounded-[15px] pl-[0.6vw] bg-[#ccc] [box-shadow:inset_2px_5px_10px_rgba(0,0,0,0.3)] [transition:100ms_ease-in-out] focus:bg-[white] focus:scale-105 focus:[box-shadow:13px_13px_100px_#969696,_-13px_-13px_100px_#ffffff]"
+          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
           {...register("notes")}
           autoComplete="off"
         />
       </div>
-      <button
-        type="submit"
-        className="bg-emerald-700 text-white px-4 py-2 rounded shadow hover:bg-emerald-600"
-      >
+      <button type="submit" className="shadow-button px-2 rounded-[5px] ">
         Record
       </button>
     </form>

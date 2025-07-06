@@ -6,7 +6,7 @@ import { StocksMonitor } from "./inventory-contents/stocks-monitor/StocksMonitor
 
 export function Inventory() {
   return (
-    <div className="w-full h-fit rounded-lg border border-gray-400 shadow-inner p-[0.3vw] text-[2vw]">
+    <div className="w-full h-fit rounded-lg shadow-neumorphic p-[0.3vw] text-[2vw]">
       <Routes>
         <Route
           path="item-registration"
@@ -26,12 +26,10 @@ export function Inventory() {
           path="stocks-management"
           element={
             <>
-              <div className="flex text-[1.7vw] flex-row w-full justify-between px-[2vw] h-[4vw] rounded-lg border border-gray-400 shadow-inner p-[0.3vw]">
+              <div className="flex text-[1.7vw] flex-row w-full justify-between px-[2vw] h-[4vw] rounded-lg p-[0.3vw]">
                 <div className="font-bold">Stocks Management</div>
               </div>
-              <div className="text-[0.8vw] p-[0.5vw]">
-                Files: Stocks.jsx, StocksForm.jsx, StocksTable.jsx
-              </div>
+
               <Stocks />
             </>
           }

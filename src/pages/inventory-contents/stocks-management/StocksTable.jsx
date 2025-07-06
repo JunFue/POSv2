@@ -62,7 +62,7 @@ export function StocksTable() {
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-6 py-3 text-left font-semibold text-gray-500 uppercase tracking-wider"
+                    className="px-6 py-3 text-left font-semibold text-head-text uppercase tracking-wider"
                   >
                     {header.isPlaceholder
                       ? null
