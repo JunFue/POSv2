@@ -1,8 +1,8 @@
 import React from "react";
-import { DashboardCard } from "./dashboard-contents/DashboardCard";
-import { FlashInfo } from "./dashboard-contents/FlashInfo";
-import { DailyReport } from "./dashboard-contents/DailyReport";
-import { CashoutReport } from "./dashboard-contents/CashoutReport";
+import { DashboardCard } from "./DashboardCard";
+import { FlashInfo } from "./FlashInfo";
+import { DailyReport } from "./DailyReport";
+import { CashoutReport } from "./CashoutReport";
 
 export function Dashboard() {
   return (
