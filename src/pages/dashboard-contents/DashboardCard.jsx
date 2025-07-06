@@ -1,49 +1,22 @@
 import React, { useState } from "react";
-import { useSortable } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
 import { BsThreeDotsVertical } from "react-icons/bs";
-import { FaSearchPlus } from "react-icons/fa"; // Import the zoom icon
 
-export function DashboardCard({
-  children,
-  title,
-  id,
-  width,
-  height,
-  handleZoom,
-}) {
+export function DashboardCard({ children, title, ...props }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id });
-
-  // Add a smooth transition for size changes
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition: transition || "width 0.2s ease-in-out, height 0.2s ease-in-out",
-    width: `${width}px`,
-    height: `${height}px`,
-  };
-
+  // The props from react-grid-layout (style, className, event handlers)
+  // must be passed directly to the root element.
   return (
     <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      className="bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg rounded-xl p-1 relative flex flex-col"
+      {...props} // This spreads style, className, AND the necessary event handlers
+      className={`${props.className} bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg rounded-xl p-1 !overflow-hidden flex flex-col`}
     >
-      {/* Card Header - Draggable Handle */}
-      <div
-        {...listeners}
-        className="flex justify-between items-center p-4 text-white cursor-grab touch-none"
-      >
+      {/* Card Header */}
+      <div className="flex justify-between items-center p-4 text-white cursor-grab">
         <h3 className="font-bold text-lg">{title}</h3>
         <div className="relative">
           <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent drag from starting when clicking the menu
-              setIsDropdownOpen((prev) => !prev);
-            }}
+            onClick={() => setIsDropdownOpen((prev) => !prev)}
             className="p-1 rounded-full hover:bg-white/20"
           >
             <BsThreeDotsVertical />
@@ -68,17 +41,6 @@ export function DashboardCard({
       <div className="flex-grow overflow-auto text-white px-4 pb-4">
         {children}
       </div>
-
-      {/* Zoom Icon */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation(); // Prevent drag from starting
-          handleZoom(id);
-        }}
-        className="absolute bottom-2 right-2 p-2 text-white/50 hover:text-white"
-      >
-        <FaSearchPlus />
-      </button>
     </div>
   );
 }

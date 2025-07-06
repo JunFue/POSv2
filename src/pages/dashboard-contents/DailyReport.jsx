@@ -1,12 +1,34 @@
 import React from "react";
 
 export function DailyReport() {
+  const reportItems = [
+    "User 'junfue@gmail.com' logged in.",
+    "Transaction 'XYZ-123' completed successfully.",
+    "New item 'Product C' registered in inventory.",
+    "System alert: Stock for 'Product A' is low.",
+    "User 'jane.doe@example.com' updated their profile.",
+    "Scheduled maintenance started at 2:00 AM.",
+    "Transaction 'ABC-789' was flagged for review.",
+    "API key for 'ThirdPartyApp' was regenerated.",
+    "User 'test@test.com' failed login attempt.",
+    "Server performance metrics are normal.",
+    "Daily backup completed.",
+  ];
+
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full overflow-y-auto">
       <ul className="space-y-2">
-        <li className="text-sm">User 'junfue@gmail.com' logged in.</li>
-        <li className="text-sm">Transaction 'XYZ-123' completed.</li>
-        <li className="text-sm">New item 'Product C' registered.</li>
+        {reportItems.map((item, index) => (
+          <li
+            key={index}
+            className="text-sm text-gray-300 border-b border-white/10 pb-1"
+          >
+            <span className="text-gray-400 mr-2">{`[10:4${
+              7 - index
+            } AM]`}</span>
+            {item}
+          </li>
+        ))}
       </ul>
     </div>
   );

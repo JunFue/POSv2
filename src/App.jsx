@@ -1,13 +1,14 @@
 import "./index.css";
 import { POS } from "./components/POS/POS.jsx";
 import { Nav } from "./shared-components/nav/Nav";
-import { Dashboard } from "./pages/dashboard-contents/Dashboard.jsx";
+
 import { Cashout } from "./pages/cashout-contents/Cashout.jsx";
 import { Inventory } from "./pages/Inventory";
 import { Transactions } from "./pages/Transactions";
 import { Routes, Route } from "react-router";
 import React from "react";
 import { AppProviders } from "./context/Provider.jsx";
+import { Dashboard } from "./pages/dashboard-contents/Dashboard.jsx";
 
 function App() {
   return (
