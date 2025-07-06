@@ -1,8 +1,8 @@
-import React, { useState } from "react";
-import { BsThreeDotsVertical } from "react-icons/bs";
+import React from "react";
+// BsThreeDotsVertical is no longer needed and has been removed.
 
 export function DashboardCard({ children, title, ...props }) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  // The state for the dropdown menu has been removed.
 
   return (
     <div
@@ -12,30 +12,10 @@ export function DashboardCard({ children, title, ...props }) {
       {/* Card Header */}
       <div className="drag-handle flex justify-between items-center p-4 text-white cursor-grab">
         <h3 className="font-bold text-lg">{title}</h3>
-        <div className="relative">
-          <button
-            onClick={() => setIsDropdownOpen((prev) => !prev)}
-            className="p-1 rounded-full hover:bg-white/20"
-          >
-            <BsThreeDotsVertical />
-          </button>
-          {isDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-48 bg-white/80 backdrop-blur-xl rounded-md shadow-xl z-10 text-gray-800">
-              <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-200">
-                Option 1
-              </a>
-              <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-200">
-                Option 2
-              </a>
-              <a href="#" className="block px-4 py-2 text-sm hover:bg-gray-200">
-                Settings
-              </a>
-            </div>
-          )}
-        </div>
+        {/* The entire div for the three-dots menu has been removed from here. */}
       </div>
 
-      {/* Card Content - Scrolling has been removed from this container. */}
+      {/* Card Content */}
       <div className="flex-grow text-white px-4 pb-4 overflow-hidden">
         {children}
       </div>

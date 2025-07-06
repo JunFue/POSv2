@@ -85,7 +85,8 @@ export function FlashInfo() {
   const visibleCards = cards.filter((card) => card.isVisible);
 
   return (
-    <div className="w-full h-full flex flex-col relative">
+    // The 'relative' class has been removed from this container.
+    <div className="w-full h-full flex flex-col">
       <style>
         {`
           .scrollbar-hide::-webkit-scrollbar {
@@ -97,8 +98,8 @@ export function FlashInfo() {
           }
         `}
       </style>
-      {/* Settings Dropdown */}
-      <div className="absolute top-0 right-0 z-20">
+      {/* Settings Dropdown - Now positioned relative to the parent DashboardCard */}
+      <div className="absolute top-4 right-3 z-20">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
           className="p-2 text-gray-300 hover:text-white"
