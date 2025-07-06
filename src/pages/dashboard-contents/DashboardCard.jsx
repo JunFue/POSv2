@@ -4,27 +4,13 @@ import { BsThreeDotsVertical } from "react-icons/bs";
 export function DashboardCard({ children, title, ...props }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // The props from react-grid-layout (style, className, event handlers)
-  // must be passed directly to the root element.
   return (
     <div
-      {...props} // This spreads style, className, AND the necessary event handlers
+      {...props}
       className={`${props.className} bg-white/10 backdrop-blur-lg border border-white/20 shadow-lg rounded-xl p-1 !overflow-hidden flex flex-col`}
     >
-      {/* This style block hides the scrollbar on Webkit and Firefox browsers */}
-      <style>
-        {`
-          .scrollbar-hide::-webkit-scrollbar {
-            display: none;
-          }
-          .scrollbar-hide {
-            -ms-overflow-style: none;  /* IE and Edge */
-            scrollbar-width: none;  /* Firefox */
-          }
-        `}
-      </style>
       {/* Card Header */}
-      <div className="flex justify-between items-center p-4 text-white cursor-grab">
+      <div className="drag-handle flex justify-between items-center p-4 text-white cursor-grab">
         <h3 className="font-bold text-lg">{title}</h3>
         <div className="relative">
           <button
@@ -49,8 +35,8 @@ export function DashboardCard({ children, title, ...props }) {
         </div>
       </div>
 
-      {/* Card Content */}
-      <div className="flex-grow overflow-y-auto text-white px-4 pb-4 scrollbar-hide">
+      {/* Card Content - Scrolling has been removed from this container. */}
+      <div className="flex-grow text-white px-4 pb-4 overflow-hidden">
         {children}
       </div>
     </div>

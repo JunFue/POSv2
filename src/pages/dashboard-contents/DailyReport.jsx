@@ -13,12 +13,24 @@ export function DailyReport() {
     "User 'test@test.com' failed login attempt.",
     "Server performance metrics are normal.",
     "Daily backup completed.",
+    "User 'support@example.com' resolved ticket #5421.",
+    "New feature 'Dark Mode' has been enabled.",
   ];
 
   return (
-    // The "overflow-y-auto" class has been removed from this div.
-    // Scrolling is now handled entirely by the parent DashboardCard.
-    <div className="w-full h-full">
+    // This component now handles its own scrolling and hides the scrollbar.
+    <div className="w-full h-full overflow-y-auto scrollbar-hide">
+      <style>
+        {`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+          }
+        `}
+      </style>
       <ul className="space-y-2">
         {reportItems.map((item, index) => (
           <li

@@ -28,6 +28,18 @@ export function CashFlow() {
 
   return (
     <div className="w-full h-full flex flex-col text-white">
+      {/* This style block hides the scrollbar on Webkit and Firefox browsers */}
+      <style>
+        {`
+          .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+          }
+          .scrollbar-hide {
+            -ms-overflow-style: none;  /* IE and Edge */
+            scrollbar-width: none;  /* Firefox */
+          }
+        `}
+      </style>
       {/* Mini Header Cards */}
       <div className="grid grid-cols-3 gap-2 mb-3 text-center">
         <div className="bg-green-500/20 p-2 rounded-lg">
@@ -44,8 +56,8 @@ export function CashFlow() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="flex-grow overflow-auto">
+      {/* Table - Added 'scrollbar-hide' to the scrollable container */}
+      <div className="flex-grow overflow-auto scrollbar-hide">
         <table className="w-full text-sm text-left">
           <thead className="sticky top-0 bg-white/10 backdrop-blur-sm">
             <tr>
