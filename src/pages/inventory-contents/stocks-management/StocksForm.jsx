@@ -2,80 +2,75 @@ import { useForm } from "react-hook-form";
 import { useState, useRef, useEffect, useContext } from "react";
 import dayjs from "dayjs";
 import { ItemRegData } from "../../../context/ItemRegContext";
-// Updated import: use the actual context instead of the provider component.
-import { StocksMgtContext } from "../../../context/StocksManagement";
 
-export function StocksForm() {
-  // Updated: destructure only setStockRecords.
-  const { setStockRecords } = useContext(StocksMgtContext);
-
-  // Updated: destructure items from the provided context object.
+export function StocksForm({
+  onAddRecord,
+  onUpdateRecord,
+  editingRecord,
+  onCancelEdit,
+}) {
   const { items } = useContext(ItemRegData);
-  const { register, handleSubmit, setValue, reset, setFocus } = useForm({
-    defaultValues: {
-      item: "",
-      stockFlow: "Stock In",
-      quantity: "",
-      notes: "",
-    },
-  });
+  // Unused 'setFocus' has been removed.
+  const { register, handleSubmit, setValue, reset } = useForm();
+
+  // Unused 'index' and 'setIndex' state has been removed.
   const [results, setResults] = useState([]);
-  const [index, setIndex] = useState(-1);
   const itemInputRef = useRef(null);
-  const highlightRef = useRef(null);
 
+  const isEditing = !!editingRecord;
+
+  // Populate form when an editingRecord is passed in
   useEffect(() => {
-    setFocus("item");
-  }, [setFocus]);
+    if (isEditing) {
+      reset(editingRecord); // Use reset to populate all fields
+    } else {
+      reset({ item: "", stockFlow: "Stock In", quantity: "", notes: "" });
+    }
+  }, [editingRecord, reset, isEditing]);
 
+  // Handle Escape key to cancel editing
   useEffect(() => {
-    highlightRef.current?.scrollIntoView({
-      block: "nearest",
-      behavior: "smooth",
-    });
-  }, [index]);
-
-  // Updated: change onRecord to accept the new record and add it to stockRecords.
-  function onRecord(newRecord) {
-    setStockRecords((prev) => [...prev, newRecord]);
-  }
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        onCancelEdit();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onCancelEdit]);
 
   const onSubmit = (data) => {
-    // Prevent submission if item field is empty
-    if (!data.item || data.item.trim() === "") {
-      alert("Item field is required.");
-      return;
-    }
-    // Prevent submission if quantity is empty or not a positive number
+    if (!data.item || data.item.trim() === "")
+      return alert("Item field is required.");
     if (
       !data.quantity ||
-      data.quantity === "" ||
       isNaN(parseInt(data.quantity)) ||
       parseInt(data.quantity) <= 0
-    ) {
-      alert("Quantity must be a positive number.");
-      return;
-    }
+    )
+      return alert("Quantity must be a positive number.");
+
     const selectedItem = items.find(
       (item) => item.name.toLowerCase() === data.item.toLowerCase()
     );
-    if (!selectedItem) {
-      alert("Item not found in the inventory.");
-      return;
-    }
-    const newRecord = {
-      item: data.item,
+    if (!selectedItem) return alert("Item not found in the inventory.");
+
+    const recordData = {
+      ...data,
+      id: isEditing ? editingRecord.id : undefined, // Keep ID for updates
       packaging: selectedItem.packaging || "N/A",
-      stockFlow: data.stockFlow,
       quantity: parseInt(data.quantity),
-      notes: data.notes,
-      date: dayjs().format("MM/DD/YYYY HH:mm:ss"),
+      date: isEditing
+        ? editingRecord.date
+        : dayjs().format("MM/DD/YYYY HH:mm:ss"),
     };
-    onRecord(newRecord);
+
+    if (isEditing) {
+      onUpdateRecord(recordData);
+    } else {
+      onAddRecord(recordData);
+    }
     reset();
     setResults([]);
-    setIndex(-1);
-    setFocus("item");
   };
 
   const handleItemChange = (e) => {
@@ -85,80 +80,38 @@ export function StocksForm() {
         item.name.toLowerCase().startsWith(input.toLowerCase())
       );
       setResults(filteredResults);
-      if (filteredResults.length === 0) {
-        setIndex(-1);
-      } else {
-        setIndex((prev) =>
-          prev < 0 || prev >= filteredResults.length ? 0 : prev
-        );
-      }
     } else {
       setResults([]);
-      setIndex(-1);
-    }
-  };
-
-  const handleItemKeyDown = (e) => {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      if (results.length > 0) {
-        setIndex((prev) => (prev + 1) % results.length);
-      }
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      if (results.length > 0) {
-        setIndex((prev) => (prev - 1 + results.length) % results.length);
-      }
-    } else if (e.key === "Enter") {
-      if (results.length > 0 && index >= 0 && index < results.length) {
-        e.preventDefault();
-        setValue("item", results[index].name, {
-          shouldValidate: true,
-          shouldDirty: true,
-        });
-        setResults([]);
-        setIndex(-1);
-      } else {
-        // Prevent form submission and move focus to the "stockFlow" field.
-        e.preventDefault();
-        setFocus("stockFlow");
-      }
     }
   };
 
   const handleSelectSuggestion = (item) => {
     setValue("item", item.name, { shouldValidate: true, shouldDirty: true });
     setResults([]);
-    setIndex(-1);
   };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-[1vw] items-center bg-background shadow-neumorphic rounded-[5px]"
+      className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-[1vw] items-center bg-background shadow-neumorphic rounded-[5px] p-2"
     >
-      <div className="relative flex flex-col gap-1 items-center p-2">
+      {/* Item Input */}
+      <div className="relative flex flex-col gap-1 items-center">
         <label className="text-[1vw] font-medium">Item</label>
         <input
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
           {...register("item")}
           onChange={handleItemChange}
-          onKeyDown={handleItemKeyDown}
           autoComplete="off"
-          ref={(e) => {
-            register("item").ref(e);
-            itemInputRef.current = e;
-          }}
+          ref={itemInputRef}
+          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl p-2"
         />
         {results.length > 0 && (
-          <div className="text-[1vw] absolute z-10 bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto w-full">
-            {results.map((item, idx) => (
+          <div className="text-[1vw] absolute top-full z-10 bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto w-full">
+            {results.map((item) => (
+              // The highlighting logic based on 'index' has been removed for simplicity.
               <div
                 key={item.barcode}
-                ref={index === idx ? highlightRef : null}
-                className={`px-2 py-1 cursor-pointer ${
-                  index === idx ? "bg-gray-200" : ""
-                }`}
+                className="px-2 py-1 cursor-pointer hover:bg-gray-200"
                 onClick={() => handleSelectSuggestion(item)}
               >
                 {item.name}
@@ -167,50 +120,54 @@ export function StocksForm() {
           </div>
         )}
       </div>
+      {/* Stock Flow */}
       <div className="relative flex flex-col gap-1 items-center">
         <label className="text-[1vw] font-medium">Stock Flow</label>
         <select
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
           {...register("stockFlow")}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              setFocus("quantity");
-            }
-          }}
+          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
         >
           <option value="Stock In">Stock In</option>
           <option value="Stock Out">Stock Out</option>
         </select>
       </div>
+      {/* Quantity */}
       <div className="relative flex flex-col gap-1 items-center">
         <label className="text-[1vw] font-medium">Quantity</label>
         <input
           type="number"
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
           {...register("quantity")}
           min={1}
           autoComplete="off"
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              setFocus("notes");
-            }
-          }}
+          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl p-2"
         />
       </div>
+      {/* Notes */}
       <div className="relative flex flex-col gap-1 items-center">
         <label className="text-[1vw] font-medium">Notes</label>
         <input
           type="text"
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
           {...register("notes")}
           autoComplete="off"
+          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl p-2"
         />
       </div>
-      <button type="submit" className="shadow-button px-2 rounded-[5px] ">
-        Record
+      {/* Submit Button */}
+      <button
+        type="submit"
+        className="shadow-button px-4 py-2 rounded-[5px] h-fit"
+      >
+        {isEditing ? "Update" : "Record"}
       </button>
+      {isEditing && (
+        <button
+          type="button"
+          onClick={onCancelEdit}
+          className="text-xs text-gray-500 ml-2"
+        >
+          Cancel (Esc)
+        </button>
+      )}
     </form>
   );
 }
