@@ -23,7 +23,6 @@ export function Stocks() {
   // GET Stocks
   const fetchStocks = useCallback(async () => {
     console.log("API CALL: GET /stocks", { token });
-    // Simulate API call
     await new Promise((res) => setTimeout(res, 500));
     const localData = getLocalStocks() || [];
     const syncedData = localData.map((r) => ({
@@ -58,56 +57,66 @@ export function Stocks() {
       isOriginal: true,
     };
 
-    // Optimistic UI update
-    setStockRecords((prev) => [optimisticRecord, ...prev]);
-    saveLocalStocks([optimisticRecord, ...stockRecords]);
+    // Use functional update to get the latest state and prevent race conditions
+    setStockRecords((prevRecords) => {
+      const updatedRecords = [optimisticRecord, ...prevRecords];
+      saveLocalStocks(updatedRecords); // Save the correct, updated list
+      return updatedRecords;
+    });
 
     console.log("API CALL: POST /stocks", { data: newRecord, token });
-    // Simulate API call
     try {
-      await new Promise((res) => setTimeout(res, 1500)); // Simulate network delay
-      // On success, update status to 'synced'
-      setStockRecords((prev) =>
-        prev.map((r) => (r.id === tempId ? { ...r, status: "synced" } : r))
-      );
+      await new Promise((res) => setTimeout(res, 1500));
+      setStockRecords((prev) => {
+        const syncedRecords = prev.map((r) =>
+          r.id === tempId ? { ...r, status: "synced" } : r
+        );
+        saveLocalStocks(syncedRecords); // Also save the synced status
+        return syncedRecords;
+      });
       console.log("POST successful. Row synced.");
-      // Optional: Refetch all data to ensure consistency
-      // await fetchStocks();
     } catch (error) {
       console.error("API CALL FAILED: POST /stocks", error);
-      // On failure, update status to 'failed'
-      setStockRecords((prev) =>
-        prev.map((r) => (r.id === tempId ? { ...r, status: "failed" } : r))
-      );
+      setStockRecords((prev) => {
+        const failedRecords = prev.map((r) =>
+          r.id === tempId ? { ...r, status: "failed" } : r
+        );
+        saveLocalStocks(failedRecords); // Save the failed status
+        return failedRecords;
+      });
     }
   };
 
   // UPDATE a stock record
   const updateRecord = async (updatedRecord) => {
-    const originalRecords = [...stockRecords]; // Keep a copy in case of failure
-    // Optimistic UI update
-    setStockRecords((prev) =>
-      prev.map((r) =>
+    const originalRecords = getLocalStocks(); // Get a fresh copy for rollback
+
+    setStockRecords((prev) => {
+      const updatedRecords = prev.map((r) =>
         r.id === updatedRecord.id
           ? { ...updatedRecord, status: "pending", isOriginal: false }
           : r
-      )
-    );
-    setEditingRecord(null); // Exit editing mode
+      );
+      saveLocalStocks(updatedRecords);
+      return updatedRecords;
+    });
+    setEditingRecord(null);
 
     console.log("API CALL: UPDATE /stocks", { data: updatedRecord, token });
     try {
       await new Promise((res) => setTimeout(res, 1500));
-      setStockRecords((prev) =>
-        prev.map((r) =>
+      setStockRecords((prev) => {
+        const syncedRecords = prev.map((r) =>
           r.id === updatedRecord.id ? { ...r, status: "synced" } : r
-        )
-      );
+        );
+        saveLocalStocks(syncedRecords);
+        return syncedRecords;
+      });
       console.log("UPDATE successful. Row synced.");
     } catch (error) {
       console.error("API CALL FAILED: UPDATE /stocks", error);
-      // Revert to original state on failure
       setStockRecords(originalRecords);
+      saveLocalStocks(originalRecords);
     }
   };
 
@@ -115,20 +124,25 @@ export function Stocks() {
   const deleteRecord = async (id) => {
     if (!window.confirm("Are you sure you want to delete this record?")) return;
 
-    const originalRecords = [...stockRecords];
-    // Optimistic UI update
-    setStockRecords((prev) => prev.filter((r) => r.id !== id));
+    const originalRecords = getLocalStocks(); // Get a fresh copy for rollback
+
+    // Use functional update to ensure we have the latest state before filtering
+    setStockRecords((prevRecords) => {
+      const updatedRecords = prevRecords.filter((r) => r.id !== id);
+      saveLocalStocks(updatedRecords); // Save the correctly filtered list
+      return updatedRecords;
+    });
 
     console.log("API CALL: DELETE /stocks", { id, token });
     try {
       await new Promise((res) => setTimeout(res, 1000));
       console.log("DELETE successful.");
-      // Remove from local storage as well
-      saveLocalStocks(stockRecords.filter((r) => r.id !== id));
+      // On success, the state is already correct, no action needed.
     } catch (error) {
       console.error("API CALL FAILED: DELETE /stocks", error);
       // Revert on failure
       setStockRecords(originalRecords);
+      saveLocalStocks(originalRecords);
     }
   };
 

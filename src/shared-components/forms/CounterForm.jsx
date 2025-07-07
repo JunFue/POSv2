@@ -15,9 +15,7 @@ import { useTransactionHandler } from "./hooks/useTransactionHandler";
 import { generateTransactionNo } from "../../utils/transactionNumberGenerator";
 import { CartContext } from "../../context/CartContext";
 import { ItemRegData } from "../../context/ItemRegContext";
-
-// --- 1. Import the useAuth hook ---
-import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../features/pos-features/authentication/hooks/useAuth";
 
 export const CounterForm = forwardRef((props, ref) => {
   const { cartData } = useContext(CartContext);

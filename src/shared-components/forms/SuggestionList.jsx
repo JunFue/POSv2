@@ -1,42 +1,40 @@
 import React, { useEffect, useRef } from "react";
 
 export function SuggestionList({ suggestions, highlightedIndex, onSelect }) {
-  // 1. Create a ref for the scrollable container.
   const scrollContainerRef = useRef(null);
 
-  // 2. Create an effect that runs whenever the highlighted item changes.
+  // This effect ensures the highlighted item is always visible within the list.
   useEffect(() => {
     if (highlightedIndex < 0 || !scrollContainerRef.current) {
       return;
     }
-
-    // Find the currently highlighted list item element.
     const highlightedItem =
       scrollContainerRef.current.children[highlightedIndex];
-
     if (highlightedItem) {
-      // 3. If the item exists, scroll it into view.
       highlightedItem.scrollIntoView({
-        block: "nearest", // Prevents unnecessary scrolling if the item is already visible.
-        behavior: "smooth", // Provides a smooth scrolling animation.
+        block: "nearest",
+        behavior: "smooth",
       });
     }
   }, [highlightedIndex]);
 
   return (
-    // 4. Attach the ref to the scrollable div.
+    // The className has been updated for more robust, relative positioning.
     <div
       ref={scrollContainerRef}
-      className="w-fit px-1 absolute z-1 top-[60%] left-[19%] md:top-[60%] md:left-[18%] lg:top-[60%] lg:left-[17%] xl:top-[60%] xl:left-[18%] bg-background shadow-neumorphic rounded max-h-40 overflow-y-auto no-scrollbar"
+      className="absolute top-full left-0 w-full mt-1 bg-background shadow-neumorphic rounded max-h-40 overflow-y-auto no-scrollbar z-10"
     >
       {suggestions.map((item, idx) => (
         <p
           key={item.id || item.barcode || idx}
-          className={`text-[1vw] px-1 ${
-            highlightedIndex === idx ? "bg-cyan-600 " : ""
+          className={`text-[1vw] px-2 py-1 cursor-pointer ${
+            highlightedIndex === idx
+              ? "bg-cyan-600 text-white"
+              : "hover:bg-gray-500/20"
           }`}
-          onClick={() => onSelect(item)}
-          style={{ cursor: "pointer" }}
+          // The key fix: using onMouseDown instead of onClick.
+          // This prevents the input's blur event from interfering with the selection.
+          onMouseDown={() => onSelect(item)}
         >
           {item.name}
         </p>

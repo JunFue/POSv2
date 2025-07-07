@@ -1,8 +1,14 @@
 import { useForm } from "react-hook-form";
-import { useState, useRef, useEffect, useContext } from "react";
+import { useEffect, useContext } from "react";
 import dayjs from "dayjs";
+
+import { ItemInputController } from "./form/ItemInputController"; // Updated import
+import { FormInput, FormSelect } from "./form/FormInputs";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
+/**
+ * The main form component, now using the ItemInputController.
+ */
 export function StocksForm({
   onAddRecord,
   onUpdateRecord,
@@ -10,25 +16,20 @@ export function StocksForm({
   onCancelEdit,
 }) {
   const { items } = useContext(ItemRegData);
-  // Unused 'setFocus' has been removed.
   const { register, handleSubmit, setValue, reset } = useForm();
-
-  // Unused 'index' and 'setIndex' state has been removed.
-  const [results, setResults] = useState([]);
-  const itemInputRef = useRef(null);
 
   const isEditing = !!editingRecord;
 
-  // Populate form when an editingRecord is passed in
+  // Populates the form with data when editing begins.
   useEffect(() => {
     if (isEditing) {
-      reset(editingRecord); // Use reset to populate all fields
+      reset(editingRecord);
     } else {
       reset({ item: "", stockFlow: "Stock In", quantity: "", notes: "" });
     }
-  }, [editingRecord, reset, isEditing]);
+  }, [editingRecord, reset]);
 
-  // Handle Escape key to cancel editing
+  // Allows canceling an edit by pressing the Escape key.
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Escape") {
@@ -39,6 +40,7 @@ export function StocksForm({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onCancelEdit]);
 
+  // Handles form submission, validation, and data formatting.
   const onSubmit = (data) => {
     if (!data.item || data.item.trim() === "")
       return alert("Item field is required.");
@@ -56,7 +58,7 @@ export function StocksForm({
 
     const recordData = {
       ...data,
-      id: isEditing ? editingRecord.id : undefined, // Keep ID for updates
+      id: isEditing ? editingRecord.id : undefined,
       packaging: selectedItem.packaging || "N/A",
       quantity: parseInt(data.quantity),
       date: isEditing
@@ -70,104 +72,52 @@ export function StocksForm({
       onAddRecord(recordData);
     }
     reset();
-    setResults([]);
-  };
-
-  const handleItemChange = (e) => {
-    const input = e.target.value;
-    if (input) {
-      const filteredResults = items.filter((item) =>
-        item.name.toLowerCase().startsWith(input.toLowerCase())
-      );
-      setResults(filteredResults);
-    } else {
-      setResults([]);
-    }
-  };
-
-  const handleSelectSuggestion = (item) => {
-    setValue("item", item.name, { shouldValidate: true, shouldDirty: true });
-    setResults([]);
   };
 
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-[1vw] items-center bg-background shadow-neumorphic rounded-[5px] p-2"
+      className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-[1vw] items-end bg-background shadow-neumorphic rounded-[5px] p-2"
     >
-      {/* Item Input */}
-      <div className="relative flex flex-col gap-1 items-center">
-        <label className="text-[1vw] font-medium">Item</label>
-        <input
-          {...register("item")}
-          onChange={handleItemChange}
-          autoComplete="off"
-          ref={itemInputRef}
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl p-2"
-        />
-        {results.length > 0 && (
-          <div className="text-[1vw] absolute top-full z-10 bg-white border border-gray-300 rounded shadow-md max-h-40 overflow-y-auto w-full">
-            {results.map((item) => (
-              // The highlighting logic based on 'index' has been removed for simplicity.
-              <div
-                key={item.barcode}
-                className="px-2 py-1 cursor-pointer hover:bg-gray-200"
-                onClick={() => handleSelectSuggestion(item)}
-              >
-                {item.name}
-              </div>
-            ))}
-          </div>
+      <ItemInputController
+        name="item"
+        register={register}
+        setValue={setValue}
+        isEditing={isEditing}
+      />
+
+      <FormSelect name="stockFlow" label="Stock Flow" register={register}>
+        <option value="Stock In">Stock In</option>
+        <option value="Stock Out">Stock Out</option>
+      </FormSelect>
+
+      <FormInput
+        name="quantity"
+        label="Quantity"
+        type="number"
+        register={register}
+        min={1}
+      />
+
+      <FormInput name="notes" label="Notes" type="text" register={register} />
+
+      <div className="flex items-center">
+        <button
+          type="submit"
+          className="shadow-button px-4 py-2 rounded-[5px] h-fit"
+        >
+          {isEditing ? "Update" : "Record"}
+        </button>
+        {isEditing && (
+          <button
+            type="button"
+            onClick={onCancelEdit}
+            className="text-xs text-gray-500 ml-2"
+          >
+            Cancel (Esc)
+          </button>
         )}
       </div>
-      {/* Stock Flow */}
-      <div className="relative flex flex-col gap-1 items-center">
-        <label className="text-[1vw] font-medium">Stock Flow</label>
-        <select
-          {...register("stockFlow")}
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl"
-        >
-          <option value="Stock In">Stock In</option>
-          <option value="Stock Out">Stock Out</option>
-        </select>
-      </div>
-      {/* Quantity */}
-      <div className="relative flex flex-col gap-1 items-center">
-        <label className="text-[1vw] font-medium">Quantity</label>
-        <input
-          type="number"
-          {...register("quantity")}
-          min={1}
-          autoComplete="off"
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl p-2"
-        />
-      </div>
-      {/* Notes */}
-      <div className="relative flex flex-col gap-1 items-center">
-        <label className="text-[1vw] font-medium">Notes</label>
-        <input
-          type="text"
-          {...register("notes")}
-          autoComplete="off"
-          className="text-[1vw] h-[1.5vw] w-full max-w-[150px] shadow-input rounded-2xl p-2"
-        />
-      </div>
-      {/* Submit Button */}
-      <button
-        type="submit"
-        className="shadow-button px-4 py-2 rounded-[5px] h-fit"
-      >
-        {isEditing ? "Update" : "Record"}
-      </button>
-      {isEditing && (
-        <button
-          type="button"
-          onClick={onCancelEdit}
-          className="text-xs text-gray-500 ml-2"
-        >
-          Cancel (Esc)
-        </button>
-      )}
     </form>
   );
 }
