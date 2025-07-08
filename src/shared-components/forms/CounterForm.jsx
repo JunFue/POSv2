@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
 
 import { CounterFormFields } from "./CounterFormFields";
+// 1. Import the SuggestionList component
 import { SuggestionList } from "./SuggestionList";
 import { useItemSuggestions } from "./hooks/useItemSuggestions";
 import { useTransactionHandler } from "./hooks/useTransactionHandler";
@@ -20,12 +21,10 @@ import { useAuth } from "../../features/pos-features/authentication/hooks/useAut
 export const CounterForm = forwardRef((props, ref) => {
   const { cartData } = useContext(CartContext);
   const { items: regItems } = useContext(ItemRegData);
-  // --- 2. Get the user from the auth context ---
   const { user } = useAuth();
 
   const form = useForm({
     defaultValues: {
-      // --- 3. Remove the hardcoded name ---
       cashierName: "",
       transactionTime: "",
       payment: "",
@@ -103,10 +102,8 @@ export const CounterForm = forwardRef((props, ref) => {
     return () => clearInterval(interval);
   }, [setValue]);
 
-  // --- 4. Add a useEffect to set the cashier's name when the user logs in ---
   useEffect(() => {
     if (user) {
-      // Use the full name from user metadata, or fall back to the email
       const name = user.user_metadata?.fullName || user.email;
       setValue("cashierName", name);
     } else {
@@ -132,18 +129,24 @@ export const CounterForm = forwardRef((props, ref) => {
     <div className="relative shiny-gradient p-1 text-accent-100">
       <CounterFormFields
         ref={{ costumerNameRef, barcodeRef, quantityRef, discountRef }}
-        // --- Pass the main register function directly ---
         register={register}
         handleSubmit={handleSubmit(addToCart)}
-        // --- Pass the original handler from the hook ---
         onBarcodeChange={handleBarcodeChange}
         onBarcodeKeyDown={handleBarcodeKeyDown}
-      />
-      <SuggestionList
         suggestions={suggestions}
         highlightedIndex={highlightedIndex}
-        onSelect={handleSelectSuggestion}
+        onSelectSuggestion={handleSelectSuggestion}
       />
+      {/* 2. Render the SuggestionList when there are suggestions */}
+      {suggestions.length > 0 && (
+        <SuggestionList
+          suggestions={suggestions}
+          highlightedIndex={highlightedIndex}
+          onSelect={handleSelectSuggestion}
+          // 3. Pass different classes for a dark theme that matches the counter form
+          className="w-fit px-1 absolute z-1 top-[60%] left-[19%] md:top-[60%] md:left-[18%] lg:top-[60%] lg:left-[17%] xl:top-[60%] xl:left-[18%] bg-background shadow-neumorphic rounded max-h-40 overflow-y-auto no-scrollbar"
+        />
+      )}
       <div
         id="item-description"
         className="text-center body-text-media shadow-input rounded-sm"

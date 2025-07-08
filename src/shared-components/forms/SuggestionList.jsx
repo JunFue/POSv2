@@ -1,6 +1,15 @@
 import React, { useEffect, useRef } from "react";
 
-export function SuggestionList({ suggestions, highlightedIndex, onSelect }) {
+/**
+ * A reusable list component for showing suggestions.
+ * @param {string} [className=""] - Allows passing additional CSS classes from the parent for custom styling.
+ */
+export function SuggestionList({
+  suggestions,
+  highlightedIndex,
+  onSelect,
+  className = "", // Accept a className prop with a default empty string
+}) {
   const scrollContainerRef = useRef(null);
 
   // This effect ensures the highlighted item is always visible within the list.
@@ -18,12 +27,10 @@ export function SuggestionList({ suggestions, highlightedIndex, onSelect }) {
     }
   }, [highlightedIndex]);
 
+  // Combine the default classes with any custom classes passed in the `className` prop.
+
   return (
-    // The className has been updated for more robust, relative positioning.
-    <div
-      ref={scrollContainerRef}
-      className="absolute top-full left-0 w-full mt-1 bg-background shadow-neumorphic rounded max-h-40 overflow-y-auto no-scrollbar z-10"
-    >
+    <div ref={scrollContainerRef} className={className}>
       {suggestions.map((item, idx) => (
         <p
           key={item.id || item.barcode || idx}
@@ -32,8 +39,6 @@ export function SuggestionList({ suggestions, highlightedIndex, onSelect }) {
               ? "bg-cyan-600 text-white"
               : "hover:bg-gray-500/20"
           }`}
-          // The key fix: using onMouseDown instead of onClick.
-          // This prevents the input's blur event from interfering with the selection.
           onMouseDown={() => onSelect(item)}
         >
           {item.name}

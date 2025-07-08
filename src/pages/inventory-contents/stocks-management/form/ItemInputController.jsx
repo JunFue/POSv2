@@ -102,6 +102,9 @@ export function ItemInputController({ register, setValue, name, isEditing }) {
           suggestions={suggestions}
           highlightedIndex={highlightedIndex}
           onSelect={handleSelect}
+          // Pass custom classes for this specific context.
+          // For example, a light theme for this form.
+          className="absolute top-full left-0 w-full mt-1 bg-background shadow-neumorphic rounded max-h-40 overflow-y-auto no-scrollbar z-10"
         />
       )}
     </div>
