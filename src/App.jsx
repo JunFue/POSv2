@@ -15,7 +15,7 @@ function App() {
     <AppProviders>
       <div className="flex flex-col lg:flex-row w-screen h-screen bg-background text-body-text gap-[0.3vw] p-[0.5vw] overflow-hidden">
         <POS></POS>
-        <div className="flex flex-col gap-[0.3vw] flex-grow p-[0.2vw] rounded-2xl basis-0 min-w-0">
+        <div className="flex flex-col gap-[0.3vw] flex-grow p-[0.2vw] rounded-2xl basis-0 min-w-0 mb-[10px]">
           <Nav />
           <div className="shadow-neumorphic overflow-y-scroll">
             <Routes>

@@ -7,7 +7,7 @@ import { FormInput, FormSelect } from "./form/FormInputs";
 import { ItemRegData } from "../../../context/ItemRegContext";
 
 /**
- * The main form component, now using the ItemInputController.
+ * The main form component, now with enhanced keyboard navigation.
  */
 export function StocksForm({
   onAddRecord,
@@ -16,9 +16,13 @@ export function StocksForm({
   onCancelEdit,
 }) {
   const { items } = useContext(ItemRegData);
-  const { register, handleSubmit, setValue, reset } = useForm();
+  // --- MODIFICATION: Get setFocus from useForm ---
+  const { register, handleSubmit, setValue, reset, setFocus } = useForm();
 
   const isEditing = !!editingRecord;
+
+  // An array defining the tab order of the form fields
+  const fieldOrder = ["item", "stockFlow", "quantity", "notes"];
 
   // Populates the form with data when editing begins.
   useEffect(() => {
@@ -39,6 +43,45 @@ export function StocksForm({
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [onCancelEdit]);
+
+  // --- NEW: Handles all keyboard navigation within the form ---
+  const handleFormKeyDown = (e) => {
+    // On Shift+Enter, trigger form submission
+    if (e.key === "Enter" && e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(onSubmit)();
+      return;
+    }
+
+    // On Enter (without Shift), move focus to the next field
+    if (e.key === "Enter") {
+      // Let the ItemInputController handle Enter if its suggestion list is active
+      if (
+        e.target.name === "item" &&
+        document.querySelector('[role="listbox"]')
+      ) {
+        // The suggestion list's own onKeyDown will handle selection.
+        // After it runs, this code will proceed to move focus.
+      }
+
+      e.preventDefault(); // Prevent default form submission
+
+      const activeElement = document.activeElement;
+      if (!activeElement) return;
+
+      const currentFieldIndex = fieldOrder.indexOf(activeElement.name);
+
+      // If the current field is found and it's not the last one, focus the next one
+      if (currentFieldIndex > -1 && currentFieldIndex < fieldOrder.length - 1) {
+        const nextFieldName = fieldOrder[currentFieldIndex + 1];
+        setFocus(nextFieldName);
+      }
+      // If it's the last field, loop back to the first one
+      else if (currentFieldIndex === fieldOrder.length - 1) {
+        setFocus(fieldOrder[0]);
+      }
+    }
+  };
 
   // Handles form submission, validation, and data formatting.
   const onSubmit = (data) => {
@@ -76,6 +119,8 @@ export function StocksForm({
 
   return (
     <form
+      // --- MODIFICATION: Add the onKeyDown handler to the form ---
+      onKeyDown={handleFormKeyDown}
       onSubmit={handleSubmit(onSubmit)}
       className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-[1vw] items-end bg-background shadow-neumorphic rounded-[5px] p-2"
     >
