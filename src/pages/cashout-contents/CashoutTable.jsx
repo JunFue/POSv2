@@ -12,42 +12,35 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 
+// --- NEW: Skeleton loader component ---
+const SkeletonRow = ({ columns }) => (
+  <tr className="flex w-full">
+    {columns.map((column) => (
+      <td
+        key={column.id || column.accessorKey}
+        className="border-b border-gray-200 px-4 py-2 flex items-center"
+        style={{ width: `${column.size}px` }}
+      >
+        <div className="h-4 bg-gray-200 rounded-md animate-pulse w-full"></div>
+      </td>
+    ))}
+  </tr>
+);
+
 export function CashoutTable({ data, loading, onDelete }) {
   const [sorting, setSorting] = React.useState([]);
 
   const columns = useMemo(
     () => [
-      {
-        accessorKey: "category",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Category</SortableHeader>
-        ),
-        size: 150,
-      },
+      { accessorKey: "category", header: "Category", size: 150 },
       {
         accessorKey: "amount",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Amount</SortableHeader>
-        ),
-        cell: (info) => {
-          const value = parseFloat(info.getValue());
-          return isNaN(value) ? "N/A" : `$${value.toFixed(2)}`;
-        },
+        header: "Amount",
+        cell: (info) => `$${parseFloat(info.getValue()).toFixed(2)}`,
         size: 120,
       },
-      {
-        accessorKey: "notes",
-        header: "Notes",
-        size: 250,
-      },
-      {
-        // --- FIX: Change accessorKey to match the database column name ---
-        accessorKey: "receipt_no",
-        header: ({ column }) => (
-          <SortableHeader column={column}>Receipt No.</SortableHeader>
-        ),
-        size: 120,
-      },
+      { accessorKey: "notes", header: "Notes", size: 250 },
+      { accessorKey: "receipt_no", header: "Receipt No.", size: 120 },
       {
         id: "actions",
         header: "Actions",
@@ -86,8 +79,40 @@ export function CashoutTable({ data, loading, onDelete }) {
     overscan: 5,
   });
 
+  // --- UPDATED: Loading state now shows a skeleton loader ---
   if (loading) {
-    return <div className="text-center p-4">Loading data...</div>;
+    return (
+      <div
+        ref={tableContainerRef}
+        className="overflow-auto rounded-lg bg-background shadow-input h-[500px]"
+      >
+        <table className="w-full text-[0.8vw]" style={{ tableLayout: "fixed" }}>
+          <thead className="bg-background shadow-neumorphic sticky top-0 z-10">
+            {table.getHeaderGroups().map((headerGroup) => (
+              <tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <th
+                    key={header.id}
+                    className="text-left px-4 py-2 font-semibold text-head-text"
+                    style={{ width: `${header.getSize()}px` }}
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </th>
+                ))}
+              </tr>
+            ))}
+          </thead>
+          <tbody>
+            {[...Array(10)].map((_, i) => (
+              <SkeletonRow key={i} columns={columns} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
   }
 
   if (!loading && data.length === 0) {
@@ -103,10 +128,7 @@ export function CashoutTable({ data, loading, onDelete }) {
       ref={tableContainerRef}
       className="overflow-auto rounded-lg bg-background shadow-input h-[500px]"
     >
-      <table
-        className="w-full text-[0.8vw] rounded-2xl"
-        style={{ tableLayout: "fixed" }}
-      >
+      <table className="w-full text-[0.8vw]" style={{ tableLayout: "fixed" }}>
         <thead className="bg-background shadow-neumorphic sticky top-0 z-10">
           {table.getHeaderGroups().map((headerGroup) => (
             <tr key={headerGroup.id}>
@@ -116,17 +138,25 @@ export function CashoutTable({ data, loading, onDelete }) {
                   className="text-left px-4 py-2 font-semibold text-head-text"
                   style={{ width: `${header.getSize()}px` }}
                 >
-                  {flexRender(
-                    header.column.columnDef.header,
-                    header.getContext()
-                  )}
+                  <div
+                    onClick={header.column.getToggleSortingHandler()}
+                    className="flex items-center cursor-pointer"
+                  >
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                    <span className="ml-2">
+                      {{ asc: "🔼", desc: "🔽" }[header.column.getIsSorted()] ??
+                        "⇅"}
+                    </span>
+                  </div>
                 </th>
               ))}
             </tr>
           ))}
         </thead>
         <tbody
-          className="shadow-input bg-background rounded-2xl"
           style={{
             height: `${rowVirtualizer.getTotalSize()}px`,
             position: "relative",
@@ -166,20 +196,6 @@ export function CashoutTable({ data, loading, onDelete }) {
   );
 }
 
-// Helper component for sortable headers
-const SortableHeader = ({ column, children }) => (
-  <div
-    onClick={column.getToggleSortingHandler()}
-    className="flex items-center cursor-pointer"
-  >
-    {children}
-    <span className="ml-2">
-      {{ asc: "🔼", desc: "🔽" }[column.getIsSorted()] ?? "⇅"}
-    </span>
-  </div>
-);
-
-// Helper component for status icons
 const StatusIcon = ({ status }) => {
   switch (status) {
     case "pending":

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { CashoutCalendar } from "./CashoutCalendar";
 import { CashoutForm } from "./CashoutForm";
 import { CashoutTable } from "./CashoutTable";
@@ -7,16 +7,14 @@ import { useAuth } from "../../features/pos-features/authentication/hooks/Useaut
 export function Cashout() {
   const [selection, setSelection] = useState({ date: new Date() });
   const [cashouts, setCashouts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true); // Set initial loading to true
   const { session } = useAuth();
 
   const handleFilter = useCallback(
     async (currentSelection) => {
       if (!session) return;
 
-      // Update the component's state with the new selection from the calendar
       setSelection(currentSelection);
-
       setLoading(true);
 
       const params = new URLSearchParams();
@@ -44,7 +42,6 @@ export function Cashout() {
       }
 
       try {
-        // Use the correct singular endpoint
         const response = await fetch(
           `http://localhost:3000/api/cashout?${params.toString()}`,
           {
@@ -64,19 +61,23 @@ export function Cashout() {
     [session]
   );
 
+  // --- NEW: Fetch data when the component mounts ---
+  useEffect(() => {
+    if (session) {
+      handleFilter(selection);
+    }
+  }, [session, handleFilter]); // Dependencies ensure this runs when session is ready
+
   const handleAddCashout = (newCashoutWithTempId) => {
-    // This function correctly receives the temporary ID from the form
     setCashouts((prevCashouts) => [newCashoutWithTempId, ...prevCashouts]);
   };
 
   const handleDeleteCashout = async (idToDelete) => {
     const originalCashouts = [...cashouts];
-    // Optimistically remove from UI
     setCashouts((prev) => prev.filter((c) => c.id !== idToDelete));
 
     try {
       if (!session) throw new Error("Not authenticated");
-      // Don't try to delete temporary client-side items from the DB
       if (String(idToDelete).startsWith("temp-")) {
         return;
       }
@@ -96,7 +97,6 @@ export function Cashout() {
       }
     } catch (error) {
       console.error("Failed to delete cashout:", error);
-      // If the delete fails, revert the UI to its original state
       setCashouts(originalCashouts);
       alert("Failed to delete the record. Please try again.");
     }
@@ -137,3 +137,4 @@ export function Cashout() {
     </div>
   );
 }
+  

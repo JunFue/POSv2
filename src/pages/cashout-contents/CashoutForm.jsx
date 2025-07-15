@@ -205,7 +205,12 @@ export function CashoutForm({
 
   return (
     <div className="bg-background p-4 rounded-lg shadow-md">
-      <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
+      <form
+        onSubmit={handleSubmit(onSubmit)}
+        noValidate
+        className="space-y-4"
+        autoComplete="off"
+      >
         <div>
           <label htmlFor="category" className="block text-sm font-medium">
             Category

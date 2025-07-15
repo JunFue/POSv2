@@ -27,7 +27,7 @@ export function CashoutCalendar({ onFilter }) {
   useEffect(() => {
     handleReset();
   }, [mode]);
-
+  console.log(selectedDate);
   const handleDayClick = (day) => {
     if (mode === "single") {
       setSelectedDate(day);

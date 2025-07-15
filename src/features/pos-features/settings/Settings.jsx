@@ -1,8 +1,9 @@
 import { useContext } from "react";
 import { SettingsContext } from "../../../context/SettingsContext";
 import { ThemeContext } from "../../../context/ThemeContext";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth"; // Import useAuth
+// Import useAuth
 import { supabase } from "../../../utils/supabaseClient"; // Import supabase for logout
+import { useAuth } from "../authentication/hooks/Useauth";
 
 // The base URL for your API.
 const API_URL = "http://localhost:3000/api/admin";
