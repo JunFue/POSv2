@@ -1,72 +1,45 @@
-// src/components/Dashboard/FlashInfo.jsx
-
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { FaCog } from "react-icons/fa";
-import { MiniCard } from "./MiniCard";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
-import { io } from "socket.io-client";
+
+// 1. Import the new, individual card components
+import { TodaysGrossSalesCard } from "./cards/TodaysGrossSalesCard";
+import { DailyIncomeCard } from "./cards/DailyIncomeCard";
+import { MonthlyIncomeCard } from "./cards/MonthlyIncomeCard";
+// ... import other card components as you create them
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-const allMiniCards = [
+// 2. The state now only defines the metadata for each card
+const initialCards = [
   {
     id: "todays-gross-sales",
     title: "Today's Gross Sales",
-    value: "Loading...",
     isVisible: true,
     layout: { x: 0, y: 0, w: 2, h: 1 },
   },
   {
     id: "daily-income",
     title: "Daily Income",
-    value: "$1,250",
-    isVisible: true,
-    layout: { x: 0, y: 0, w: 2, h: 1 },
-  },
-  {
-    id: "monthly-income",
-    title: "Monthly Income",
-    value: "$25,600",
     isVisible: true,
     layout: { x: 2, y: 0, w: 2, h: 1 },
   },
   {
-    id: "daily-expenses",
-    title: "Daily Expenses",
-    value: "$430",
+    id: "monthly-income",
+    title: "Monthly Income",
     isVisible: true,
     layout: { x: 4, y: 0, w: 2, h: 1 },
   },
-  {
-    id: "discounts",
-    title: "Discounts Given",
-    value: "$180",
-    isVisible: true,
-    layout: { x: 0, y: 1, w: 2, h: 1 },
-  },
-  {
-    id: "quantity-sold",
-    title: "Items Sold Today",
-    value: "152",
-    isVisible: true,
-    layout: { x: 2, y: 1, w: 2, h: 1 },
-  },
-  {
-    id: "top-selling",
-    title: "Top Selling",
-    value: "Product A",
-    isVisible: false,
-    layout: { x: 4, y: 1, w: 2, h: 1 },
-  },
-  {
-    id: "low-stock",
-    title: "Low Stock Items",
-    value: "3",
-    isVisible: false,
-    layout: { x: 0, y: 2, w: 2, h: 1 },
-  },
+  // ... add other card metadata here
 ];
+
+// 3. A map to easily link a card ID to its component
+const cardComponentMap = {
+  "todays-gross-sales": TodaysGrossSalesCard,
+  "daily-income": DailyIncomeCard,
+  "monthly-income": MonthlyIncomeCard,
+  // ... add other card components here
+};
 
 const generateLayouts = (cards) => {
   const layouts = {};
@@ -77,90 +50,9 @@ const generateLayouts = (cards) => {
 };
 
 export function FlashInfo() {
-  const [cards, setCards] = useState(allMiniCards);
-  const [layouts, setLayouts] = useState(generateLayouts(allMiniCards));
+  const [cards, setCards] = useState(initialCards);
+  const [layouts, setLayouts] = useState(generateLayouts(initialCards));
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { session } = useAuth();
-  const token = session?.access_token;
-
-  const fetchTotalSales = useCallback(async () => {
-    if (!token) {
-      console.log("FlashInfo: Waiting for auth token...");
-      return;
-    }
-    try {
-      const today = new Date().toISOString().slice(0, 10);
-      const url = `http://localhost:3000/api/flash-info/today?date=${today}`;
-
-      console.log(`FlashInfo: Fetching total sales from ${url}.`);
-
-      const response = await fetch(url, {
-        method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(
-          `HTTP Error: ${response.status} ${response.statusText}`
-        );
-      }
-
-      const data = await response.json();
-      const { totalSales } = data;
-      const formattedSales = new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-      }).format(totalSales);
-
-      setCards((currentCards) =>
-        currentCards.map((card) =>
-          card.id === "todays-gross-sales"
-            ? { ...card, value: formattedSales }
-            : card
-        )
-      );
-    } catch (error) {
-      console.error("FlashInfo: Error fetching total sales:", error);
-      setCards((currentCards) =>
-        currentCards.map((card) =>
-          card.id === "todays-gross-sales" ? { ...card, value: "Error" } : card
-        )
-      );
-    }
-  }, [token]);
-
-  // This useEffect now ONLY handles the initial data fetch when the component loads
-  // or when the fetch function itself changes (i.e., when the token changes).
-  useEffect(() => {
-    fetchTotalSales();
-  }, [fetchTotalSales]);
-
-  // --- FIX ---
-  // This new, separate useEffect ONLY handles the Socket.IO connection.
-  // It runs just once when the component mounts.
-  useEffect(() => {
-    const socket = io("http://localhost:3000");
-
-    socket.on("connect", () => {
-      console.log("FlashInfo: Socket connected!");
-    });
-
-    socket.on("payment_update", (data) => {
-      console.log("FlashInfo: Received 'payment_update' event!", data);
-      // We call fetchTotalSales directly here. It will use the latest token
-      // because of how useCallback works.
-      fetchTotalSales();
-    });
-
-    // The cleanup function runs when the component is unmounted.
-    return () => {
-      console.log("FlashInfo: Disconnecting socket.");
-      socket.disconnect();
-    };
-  }, [fetchTotalSales]); // The dependency ensures the listener always has the latest fetch function.
 
   const handleToggleVisibility = (cardId) => {
     setCards(
@@ -227,18 +119,18 @@ export function FlashInfo() {
           margin={[10, 10]}
           draggableHandle=".mini-drag-handle"
         >
-          {visibleCards.map((card) => (
-            <div
-              key={card.id}
-              data-grid={layouts.lg.find((l) => l.i === card.id) || card.layout}
-            >
-              <MiniCard
-                title={card.title}
-                value={card.value}
-                onHide={() => handleToggleVisibility(card.id)}
-              />
-            </div>
-          ))}
+          {visibleCards.map((card) => {
+            const CardComponent = cardComponentMap[card.id];
+            if (!CardComponent) return null;
+
+            return (
+              // --- FIX: Removed the problematic data-grid prop ---
+              // The library will now correctly handle the layout based on the key.
+              <div key={card.id}>
+                <CardComponent onHide={() => handleToggleVisibility(card.id)} />
+              </div>
+            );
+          })}
         </ResponsiveGridLayout>
       </div>
     </div>
