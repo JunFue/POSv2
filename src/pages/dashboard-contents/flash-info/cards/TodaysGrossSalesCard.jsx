@@ -16,7 +16,8 @@ export function TodaysGrossSalesCard({ onHide }) {
     }
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const url = `http://localhost:3000/api/flash-info/today?date=${today}`;
+      // FIX: Update URL to be more specific
+      const url = `http://localhost:3000/api/flash-info/today-gross-sales?date=${today}`;
 
       const response = await fetch(url, {
         method: "GET",
