@@ -6,6 +6,7 @@ import { FaCog } from "react-icons/fa";
 import { TodaysGrossSalesCard } from "./cards/TodaysGrossSalesCard";
 import { DailyIncomeCard } from "./cards/DailyIncomeCard";
 import { MonthlyIncomeCard } from "./cards/MonthlyIncomeCard";
+import { DailyExpensesCard } from "./cards/DailyExpensesCard";
 // ... import other card components as you create them
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -30,6 +31,12 @@ const initialCards = [
     isVisible: true,
     layout: { x: 4, y: 0, w: 2, h: 1 },
   },
+  {
+    id: "daily-expenses",
+    title: "Daily Expenses",
+    isVisible: true,
+    layout: { x: 4, y: 0, w: 2, h: 1 },
+  },
   // ... add other card metadata here
 ];
 
@@ -38,6 +45,7 @@ const cardComponentMap = {
   "todays-gross-sales": TodaysGrossSalesCard,
   "daily-income": DailyIncomeCard,
   "monthly-income": MonthlyIncomeCard,
+  "daily-expenses": DailyExpensesCard,
   // ... add other card components here
 };
 
