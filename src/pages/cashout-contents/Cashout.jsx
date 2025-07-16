@@ -1,13 +1,13 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { CashoutCalendar } from "./CashoutCalendar";
-import { CashoutForm } from "./CashoutForm";
+import { CashoutForm } from "./cashout-form/CashoutForm";
 import { CashoutTable } from "./CashoutTable";
 import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
 
 export function Cashout() {
   const [selection, setSelection] = useState({ date: new Date() });
   const [cashouts, setCashouts] = useState([]);
-  const [loading, setLoading] = useState(true); // Set initial loading to true
+  const [loading, setLoading] = useState(true);
   const { session } = useAuth();
 
   const handleFilter = useCallback(
@@ -18,24 +18,32 @@ export function Cashout() {
       setLoading(true);
 
       const params = new URLSearchParams();
+
+      // --- FIX: Manually format the date to avoid timezone conversion ---
       if (currentSelection.date) {
-        params.append(
-          "date",
-          currentSelection.date.toISOString().split("T")[0]
-        );
+        const date = currentSelection.date;
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
+        const day = String(date.getDate()).padStart(2, "0");
+        params.append("date", `${year}-${month}-${day}`);
       } else if (
         currentSelection.range &&
         currentSelection.range.from &&
         currentSelection.range.to
       ) {
-        params.append(
-          "startDate",
-          currentSelection.range.from.toISOString().split("T")[0]
-        );
-        params.append(
-          "endDate",
-          currentSelection.range.to.toISOString().split("T")[0]
-        );
+        const from = currentSelection.range.from;
+        const to = currentSelection.range.to;
+
+        const fromYear = from.getFullYear();
+        const fromMonth = String(from.getMonth() + 1).padStart(2, "0");
+        const fromDay = String(from.getDate()).padStart(2, "0");
+
+        const toYear = to.getFullYear();
+        const toMonth = String(to.getMonth() + 1).padStart(2, "0");
+        const toDay = String(to.getDate()).padStart(2, "0");
+
+        params.append("startDate", `${fromYear}-${fromMonth}-${fromDay}`);
+        params.append("endDate", `${toYear}-${toMonth}-${toDay}`);
       } else {
         setLoading(false);
         return;
@@ -137,4 +145,3 @@ export function Cashout() {
     </div>
   );
 }
-  

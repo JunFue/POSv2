@@ -63,6 +63,8 @@ export function CashoutCalendar({ onFilter }) {
     setSelectedDate(today);
     setCurrentMonth(today);
     setRange({ from: null, to: null });
+    // Also filter by today's date on reset
+    onFilter({ date: today });
   };
 
   const renderHeader = () => (
@@ -87,8 +89,8 @@ export function CashoutCalendar({ onFilter }) {
 
   const renderDays = () => (
     <div className="grid grid-cols-7 text-center font-semibold text-sm text-gray-600">
-      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-        <div key={day}>{day}</div>
+      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
+        <div key={index}>{day}</div>
       ))}
     </div>
   );
