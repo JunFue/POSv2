@@ -7,6 +7,7 @@ import { TodaysGrossSalesCard } from "./cards/TodaysGrossSalesCard";
 import { DailyIncomeCard } from "./cards/DailyIncomeCard";
 import { MonthlyIncomeCard } from "./cards/MonthlyIncomeCard";
 import { DailyExpensesCard } from "./cards/DailyExpensesCard";
+import { LowStocksCard } from "./cards/LowStocksCard";
 // ... import other card components as you create them
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -37,6 +38,12 @@ const initialCards = [
     isVisible: true,
     layout: { x: 4, y: 0, w: 2, h: 1 },
   },
+  {
+    id: "low-stocks",
+    title: "Low Stocks",
+    isVisible: true,
+    layout: { x: 4, y: 0, w: 2, h: 1 },
+  },
   // ... add other card metadata here
 ];
 
@@ -46,6 +53,7 @@ const cardComponentMap = {
   "daily-income": DailyIncomeCard,
   "monthly-income": MonthlyIncomeCard,
   "daily-expenses": DailyExpensesCard,
+  "low-stocks": LowStocksCard,
   // ... add other card components here
 };
 
