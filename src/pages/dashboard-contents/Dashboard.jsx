@@ -3,7 +3,7 @@ import { Responsive, WidthProvider } from "react-grid-layout";
 import { DashboardCard } from "./DashboardCard";
 import { FlashInfo } from "./flash-info/FlashInfo";
 import { DailyReport } from "./DailyReport";
-import { CashoutReport } from "./CashoutReport";
+import { CashoutReport } from "./cashout-report/CashoutReport";
 import { CashFlow } from "./CashFlow";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
