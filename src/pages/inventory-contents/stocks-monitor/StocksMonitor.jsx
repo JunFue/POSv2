@@ -1,30 +1,52 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
-// You'll need to install socket.io-client: npm install socket.io-client
 import { io } from "socket.io-client";
+import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
+// 1. --- Import the useAuth hook ---
 
-// The URL of your backend server
-const BACKEND_URL = "http://localhost:3000"; // Your backend is on port 3000
+const BACKEND_URL = "http://localhost:3000";
 
 export function StocksMonitor() {
   const [inventory, setInventory] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // 2. --- Get the session from the context via the hook ---
+  const { session } = useAuth();
+
   useEffect(() => {
-    // --- 1. Initial Data Fetch from Backend API ---
+    // This function will now be defined inside the useEffect
+    // to have access to the `session` from the hook.
     const fetchInitialInventory = async () => {
+      // 3. --- Check if the session and token exist before fetching ---
+      if (!session?.access_token) {
+        // Don't try to fetch if the user isn't logged in.
+        // You might want to set an error or just show nothing.
+        setError("You must be logged in to view inventory.");
+        setLoading(false);
+        return;
+      }
+
       try {
-        setLoading(true);
-        const response = await fetch(`${BACKEND_URL}/api/inventory`);
+        // No need to set loading(true) here as it's set initially
+        const response = await fetch(`${BACKEND_URL}/api/inventory`, {
+          headers: {
+            // 4. --- Use the token from the session provided by the hook ---
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        });
+
         if (!response.ok) {
-          throw new Error("Network response was not ok");
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Network response was not ok");
         }
+
         const data = await response.json();
         setInventory(data);
+        setError(null); // Clear any previous errors
       } catch (err) {
         console.error("Error fetching initial inventory:", err);
-        setError("Failed to load inventory. Is the backend server running?");
+        setError(err.message || "Failed to load inventory.");
       } finally {
         setLoading(false);
       }
@@ -32,25 +54,20 @@ export function StocksMonitor() {
 
     fetchInitialInventory();
 
-    // --- 2. Establish WebSocket Connection ---
     const socket = io(BACKEND_URL);
 
-    // --- 3. Listen for Real-time Updates ---
     socket.on("inventory_update", (updatedItem) => {
       console.log("Received real-time update:", updatedItem);
       setInventory((prevInventory) => {
-        // Find if the item already exists in our list
         const itemIndex = prevInventory.findIndex(
           (item) => item.id === updatedItem.id
         );
 
         if (itemIndex > -1) {
-          // If it exists, update it
           const newInventory = [...prevInventory];
           newInventory[itemIndex] = updatedItem;
           return newInventory;
         } else {
-          // If it's a new item, add it and re-sort
           const newInventory = [...prevInventory, updatedItem];
           return newInventory.sort((a, b) =>
             a.item_name.localeCompare(b.item_name)
@@ -59,12 +76,12 @@ export function StocksMonitor() {
       });
     });
 
-    // --- 4. Cleanup ---
-    // Disconnect the socket when the component unmounts
     return () => {
       socket.disconnect();
     };
-  }, []);
+    // 5. --- Add `session` as a dependency ---
+    // This ensures the effect re-runs if the user logs in or out.
+  }, [session]);
 
   if (loading) {
     return (
