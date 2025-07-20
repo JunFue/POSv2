@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 
-const API_BASE_URL = "http://localhost:3000/api/reports";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const API_BASE_URL = `${BACKEND_URL}/api/reports`;
 
 /**
  * A helper function to handle authenticated fetch requests.

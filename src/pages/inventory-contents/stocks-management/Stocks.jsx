@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { StocksForm } from "./StocksForm";
 import { StocksTable } from "./StocksTable";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth";
+import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
 
-// The base URL for your API. Make sure this matches your server's address.
-const API_URL = "http://localhost:3000/api";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const API_URL = `${BACKEND_URL}/api`;
 
 export function Stocks() {
   // --- FIX: Get the session object and extract the access_token from it ---

@@ -4,6 +4,8 @@ import { CashoutForm } from "./cashout-form/CashoutForm";
 import { CashoutTable } from "./CashoutTable";
 import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function Cashout() {
   const [selection, setSelection] = useState({ date: new Date() });
   const [cashouts, setCashouts] = useState([]);
@@ -51,7 +53,7 @@ export function Cashout() {
 
       try {
         const response = await fetch(
-          `http://localhost:3000/api/cashout?${params.toString()}`,
+          `${BACKEND_URL}/api/cashout?${params.toString()}`,
           {
             headers: { Authorization: `Bearer ${session.access_token}` },
           }
@@ -90,15 +92,12 @@ export function Cashout() {
         return;
       }
 
-      const response = await fetch(
-        `http://localhost:3000/api/cashout/${idToDelete}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        }
-      );
+      const response = await fetch(`${BACKEND_URL}/api/cashout/${idToDelete}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
 
       if (!response.ok) {
         throw new Error("Failed to delete on server");

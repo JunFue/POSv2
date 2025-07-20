@@ -4,6 +4,8 @@ import { MiniCard } from "../MiniCard"; // Adjust path if MiniCard is located el
 import { io } from "socket.io-client";
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/Useauth";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function TodaysGrossSalesCard({ onHide }) {
   const [salesValue, setSalesValue] = useState("Loading...");
   const { session } = useAuth();
@@ -17,7 +19,7 @@ export function TodaysGrossSalesCard({ onHide }) {
     try {
       const today = new Date().toISOString().slice(0, 10);
       // FIX: Update URL to be more specific
-      const url = `http://localhost:3000/api/flash-info/today-gross-sales?date=${today}`;
+      const url = `${BACKEND_URL}/api/flash-info/today-gross-sales?date=${today}`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -49,7 +51,7 @@ export function TodaysGrossSalesCard({ onHide }) {
 
   // Effect for the Socket.IO connection
   useEffect(() => {
-    const socket = io("http://localhost:3000");
+    const socket = io(BACKEND_URL);
 
     socket.on("payment_update", () => {
       console.log(

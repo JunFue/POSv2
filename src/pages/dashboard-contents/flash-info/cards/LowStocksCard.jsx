@@ -5,6 +5,8 @@ import { io } from "socket.io-client";
 import { FaCog, FaExclamationTriangle } from "react-icons/fa";
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/Useauth";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function LowStocksCard({ onHide }) {
   const [items, setItems] = useState([]);
   const [limit, setLimit] = useState(5); // Default limit
@@ -19,7 +21,7 @@ export function LowStocksCard({ onHide }) {
       setIsLoading(true);
 
       try {
-        const url = `http://localhost:3000/api/flash-info/low-stocks?limit=${currentLimit}`;
+        const url = `${BACKEND_URL}/api/flash-info/low-stocks?limit=${currentLimit}`;
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -45,7 +47,7 @@ export function LowStocksCard({ onHide }) {
 
   // Real-time updates via Socket.IO
   useEffect(() => {
-    const socket = io("http://localhost:3000");
+    const socket = io(BACKEND_URL);
 
     // Your server already emits 'inventory_update'
     socket.on("inventory_update", () => {

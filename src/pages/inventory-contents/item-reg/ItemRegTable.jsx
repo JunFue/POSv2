@@ -7,7 +7,9 @@ import {
 } from "@tanstack/react-table";
 import { ItemRegData } from "../../../context/ItemRegContext";
 // --- 1. Import the Supabase client ---
-import { supabase } from "../../../utils/supabaseClient"; // Adjust path if needed
+import { supabase } from "../../../utils/supabaseClient";
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function ItemRegTable() {
   const { items, refreshItems, loading } = useContext(ItemRegData);
@@ -60,7 +62,7 @@ export function ItemRegTable() {
 
               // --- 3. Add the Authorization header to the fetch request ---
               await fetch(
-                `http://localhost:3000/api/item-delete/${row.original.barcode}`,
+                `${BACKEND_URL}/api/item-delete/${row.original.barcode}`,
                 {
                   method: "DELETE",
                   headers: {

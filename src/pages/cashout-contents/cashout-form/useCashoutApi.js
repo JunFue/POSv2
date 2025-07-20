@@ -9,6 +9,9 @@ import { useAuth } from "../../../features/pos-features/authentication/hooks/Use
  * @param {function} props.setCashoutFailed - Callback to handle a failed submission.
  * @returns {{addCashout: function}} - Function to trigger the cashout submission.
  */
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function useCashoutApi({
   onAddCashout,
   updateCashoutStatus,
@@ -46,7 +49,7 @@ export function useCashoutApi({
     try {
       if (!session) throw new Error("Not authenticated");
 
-      const response = await fetch("http://localhost:3000/api/cashout", {
+      const response = await fetch(`${BACKEND_URL}/api/cashout`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

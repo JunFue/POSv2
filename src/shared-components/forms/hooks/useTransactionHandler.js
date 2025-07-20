@@ -8,6 +8,8 @@ import { PaymentContext } from "../../../context/PaymentContext";
 import { ItemSoldContext } from "../../../context/ItemSoldContext";
 import { generateTransactionNo } from "../../../utils/transactionNumberGenerator";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export const useTransactionHandler = (formMethods, refs) => {
   const { cartData, setCartData } = useContext(CartContext);
   const { items: regItems } = useContext(ItemRegData);
@@ -170,7 +172,7 @@ export const useTransactionHandler = (formMethods, refs) => {
       let offline = false;
       try {
         const requests = soldItems.map((item) =>
-          fetch("http://localhost:3000/api/transactions", {
+          fetch(`${BACKEND_URL}/api/transactions`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
@@ -181,7 +183,7 @@ export const useTransactionHandler = (formMethods, refs) => {
         );
 
         requests.push(
-          fetch("http://localhost:3000/api/payments", {
+          fetch(`${BACKEND_URL}/api/payments`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

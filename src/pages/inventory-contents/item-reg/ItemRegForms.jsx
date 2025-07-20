@@ -3,6 +3,8 @@ import { useContext, useEffect, useRef } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 import { supabase } from "../../../utils/supabaseClient";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export const ItemRegForm = () => {
   const { serverOnline, refreshItems, items } = useContext(ItemRegData);
   const form = useForm();
@@ -74,7 +76,7 @@ export const ItemRegForm = () => {
       }
       const token = session.access_token;
 
-      const res = await fetch("http://localhost:3000/api/item-reg", {
+      const res = await fetch(`${BACKEND_URL}/api/item-reg`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

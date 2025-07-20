@@ -6,7 +6,8 @@ import { supabase } from "../../../utils/supabaseClient"; // Import supabase for
 import { useAuth } from "../authentication/hooks/Useauth";
 
 // The base URL for your API.
-const API_URL = "http://localhost:3000/api/admin";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const API_URL = `${BACKEND_URL}/api/admin`;
 
 export function Settings() {
   const { setShowSettings } = useContext(SettingsContext);

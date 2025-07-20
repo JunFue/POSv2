@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function PaymentsFilter({
   onFilter,
   currentPage,
@@ -50,7 +52,7 @@ export function PaymentsFilter({
         params.set("transactionNo", transNo);
       }
 
-      const url = `http://localhost:3000/api/payments?${params.toString()}`;
+      const url = `${BACKEND_URL}/api/payments?${params.toString()}`;
       const response = await fetch(url, {
         headers: {
           Authorization: `Bearer ${token}`,

@@ -4,7 +4,7 @@ import { io } from "socket.io-client";
 import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
 // 1. --- Import the useAuth hook ---
 
-const BACKEND_URL = "http://localhost:3000";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function StocksMonitor() {
   const [inventory, setInventory] = useState([]);

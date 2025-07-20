@@ -6,6 +6,8 @@ import { IncomeRangeCalendar } from "./IncomeRangeCalendar";
 import { startOfMonth, endOfMonth, format } from "date-fns";
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/Useauth";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function MonthlyIncomeCard({ onHide }) {
   const [incomeValue, setIncomeValue] = useState("Loading...");
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -27,7 +29,7 @@ export function MonthlyIncomeCard({ onHide }) {
         const startDate = format(range.from, "yyyy-MM-dd");
         const endDate = format(range.to, "yyyy-MM-dd");
 
-        const url = `http://localhost:3000/api/flash-info/net-income-range?startDate=${startDate}&endDate=${endDate}`;
+        const url = `${BACKEND_URL}/api/flash-info/net-income-range?startDate=${startDate}&endDate=${endDate}`;
 
         const response = await fetch(url, {
           method: "GET",

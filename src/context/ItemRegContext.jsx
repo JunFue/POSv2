@@ -3,6 +3,7 @@ import { supabase } from "../utils/supabaseClient";
 import { AuthContext } from "./AuthContext"; // 2. Import AuthContext
 
 const ItemRegData = createContext();
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function ItemRegProvider({ children }) {
   const [items, setItems] = useState(() => {
@@ -32,7 +33,7 @@ export function ItemRegProvider({ children }) {
       }
       const token = session.access_token;
 
-      const res = await fetch("http://localhost:3000/api/items", {
+      const res = await fetch(`${BACKEND_URL}/api/items`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

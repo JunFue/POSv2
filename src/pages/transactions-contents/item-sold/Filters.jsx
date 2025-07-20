@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
-// --- Step 1: Import the useAuth hook ---
+
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function Filters({
   onFilter,
@@ -63,7 +64,7 @@ export function Filters({
       params.append("page", page);
       params.append("limit", limit);
 
-      const url = `http://localhost:3000/api/transactions?${params.toString()}`;
+      const url = `${BACKEND_URL}/api/transactions?${params.toString()}`;
       // Add the Authorization header to the fetch options
       const response = await fetch(url, {
         headers: {

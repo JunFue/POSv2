@@ -4,6 +4,8 @@ import { MiniCard } from "../MiniCard";
 import { io } from "socket.io-client";
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/Useauth";
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
 export function DailyExpensesCard({ onHide }) {
   const [expensesValue, setExpensesValue] = useState("Loading...");
   const { session } = useAuth();
@@ -16,7 +18,7 @@ export function DailyExpensesCard({ onHide }) {
     }
     try {
       const today = new Date().toISOString().slice(0, 10);
-      const url = `http://localhost:3000/api/flash-info/today-daily-expenses?date=${today}`;
+      const url = `${BACKEND_URL}/api/flash-info/today-daily-expenses?date=${today}`;
 
       const response = await fetch(url, {
         method: "GET",
@@ -46,7 +48,7 @@ export function DailyExpensesCard({ onHide }) {
   }, [fetchDailyExpenses]);
 
   useEffect(() => {
-    const socket = io("http://localhost:3000");
+    const socket = io(BACKEND_URL);
 
     // Listen for a new 'cashout_update' event
     socket.on("cashout_update", () => {
