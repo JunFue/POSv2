@@ -12,7 +12,7 @@ import { LoginBtn } from "./buttons/LoginBtn";
 import { SettingsBtn } from "./buttons/SettingsBtn";
 
 import { LogoutButton } from "./buttons/LogoutButton";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth";
 import { NewCustomerBtn } from "./buttons/NewCostumerBtn";
 
 export function POSContents() {

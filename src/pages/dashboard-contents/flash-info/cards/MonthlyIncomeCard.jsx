@@ -4,7 +4,7 @@ import { MiniCard } from "../MiniCard";
 import { FaCalendarAlt } from "react-icons/fa";
 import { IncomeRangeCalendar } from "./IncomeRangeCalendar";
 import { startOfMonth, endOfMonth, format } from "date-fns";
-import { useAuth } from "../../../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../../../features/pos-features/authentication/hooks/useAuth";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 

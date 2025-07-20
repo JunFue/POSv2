@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect } from "react";
 import { CashoutCalendar } from "./CashoutCalendar";
 import { CashoutForm } from "./cashout-form/CashoutForm";
 import { CashoutTable } from "./CashoutTable";
-import { useAuth } from "../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../features/pos-features/authentication/hooks/useAuth";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 

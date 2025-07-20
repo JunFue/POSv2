@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth";
 import { format, addDays, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { FaCalendarAlt, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import {

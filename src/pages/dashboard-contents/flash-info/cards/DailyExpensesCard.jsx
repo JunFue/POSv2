@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { MiniCard } from "../MiniCard";
 
 import { io } from "socket.io-client";
-import { useAuth } from "../../../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../../../features/pos-features/authentication/hooks/useAuth";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 

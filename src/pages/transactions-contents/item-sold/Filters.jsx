@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 

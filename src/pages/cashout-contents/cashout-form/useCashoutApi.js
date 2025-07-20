@@ -1,4 +1,4 @@
-import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth";
 
 /**
  * Custom hook to manage API interactions for cashouts using a robust

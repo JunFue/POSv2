@@ -2,8 +2,8 @@ import { useContext } from "react";
 import { SettingsContext } from "../../../context/SettingsContext";
 import { ThemeContext } from "../../../context/ThemeContext";
 // Import useAuth
-import { supabase } from "../../../utils/supabaseClient"; // Import supabase for logout
-import { useAuth } from "../authentication/hooks/Useauth";
+import { supabase } from "../../../utils/supabaseClient";
+import { useAuth } from "../authentication/hooks/useAuth";
 
 // The base URL for your API.
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;

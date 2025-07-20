@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { StocksForm } from "./StocksForm";
 import { StocksTable } from "./StocksTable";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const API_URL = `${BACKEND_URL}/api`;

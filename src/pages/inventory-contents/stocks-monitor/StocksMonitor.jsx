@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import dayjs from "dayjs";
 import { io } from "socket.io-client";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/Useauth";
+import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth";
 // 1. --- Import the useAuth hook ---
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
