@@ -10,6 +10,9 @@ import "react-resizable/css/styles.css";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
+// A key to store and retrieve the layout from localStorage
+const LAYOUT_STORAGE_KEY = "dashboard-layouts-v1";
+
 const initialCards = [
   { id: "1", title: "Flash Info", component: <FlashInfo /> },
   { id: "2", title: "Daily Report", component: <DailyReport /> },
@@ -17,6 +20,7 @@ const initialCards = [
   { id: "4", title: "Cash Flow", component: <CashFlow /> },
 ];
 
+// This function generates the default layout if none is saved
 const generateLayout = () => {
   return initialCards.map((card, index) => ({
     i: card.id,
@@ -28,10 +32,25 @@ const generateLayout = () => {
 };
 
 export function Dashboard() {
-  const [layouts, setLayouts] = useState({ lg: generateLayout() });
+  // The state now attempts to load from localStorage on initial render
+  const [layouts, setLayouts] = useState(() => {
+    try {
+      const savedLayouts = localStorage.getItem(LAYOUT_STORAGE_KEY);
+      return savedLayouts ? JSON.parse(savedLayouts) : { lg: generateLayout() };
+    } catch (error) {
+      console.error("Error loading layout from localStorage:", error);
+      return { lg: generateLayout() };
+    }
+  });
 
+  // This function now saves the new layout to localStorage on every change
   const handleLayoutChange = (layout, allLayouts) => {
-    setLayouts(allLayouts);
+    try {
+      localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(allLayouts));
+      setLayouts(allLayouts);
+    } catch (error) {
+      console.error("Error saving layout to localStorage:", error);
+    }
   };
 
   return (
