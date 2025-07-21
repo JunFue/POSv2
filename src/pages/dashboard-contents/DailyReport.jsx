@@ -18,8 +18,8 @@ export function DailyReport() {
   ];
 
   return (
-    // This component now handles its own scrolling and hides the scrollbar.
-    <div className="w-full h-full overflow-y-auto scrollbar-hide">
+    // The root container is now a flex column that fills the available height.
+    <div className="flex flex-col h-full">
       <style>
         {`
           .scrollbar-hide::-webkit-scrollbar {
@@ -31,11 +31,15 @@ export function DailyReport() {
           }
         `}
       </style>
-      <ul className="space-y-2">
+
+      {/* The list now grows to fill the space, handles its own scrolling,
+        and has a minimum height to prevent any initial collapse.
+      */}
+      <ul className="space-y-2 flex-grow overflow-y-auto scrollbar-hide pr-2 min-h-[100px]">
         {reportItems.map((item, index) => (
           <li
             key={index}
-            className="text-sm text-gray-300 border-b border-white/10 pb-1"
+            className="text-sm text-head-text border-b border-white/10 pb-1"
           >
             <span className="text-gray-400 mr-2">{`[10:4${
               7 - index

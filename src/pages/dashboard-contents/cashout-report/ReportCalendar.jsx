@@ -87,7 +87,7 @@ export function ReportCalendar({ onSet, initialRange, closeCalendar }) {
           "p-1 text-center h-8 w-8 flex items-center justify-center text-xs cursor-pointer transition-colors duration-200 rounded-full";
 
         if (!isSameMonth(day, monthStart)) {
-          cellClasses += " text-gray-600"; // Dim days not in the current month
+          cellClasses += " text-head-text"; // Dim days not in the current month
         } else {
           const { from, to } = range;
           const isFrom = from && isSameDay(day, from);
@@ -107,7 +107,7 @@ export function ReportCalendar({ onSet, initialRange, closeCalendar }) {
           }
 
           if (isFrom || isTo) {
-            cellClasses += " bg-blue-500 text-white";
+            cellClasses += " bg-blue-500 text-body-text";
           } else if (inRange) {
             cellClasses += " bg-blue-400 bg-opacity-40";
           } else if (inHoverRange) {
@@ -148,7 +148,7 @@ export function ReportCalendar({ onSet, initialRange, closeCalendar }) {
   };
 
   return (
-    <div className="absolute top-0 right-0 z-30 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4 w-72 text-white">
+    <div className="absolute top-0 right-0 z-30 bg-gray-800 border border-gray-700 rounded-lg shadow-2xl p-4 w-72 text-body-text">
       {renderHeader()}
       {renderDaysOfWeek()}
       {renderCells()}

@@ -98,13 +98,13 @@ export function StocksMonitor() {
       <table className="min-w-full divide-y divide-gray-200 text-sm">
         <thead className="bg-gray-50">
           <tr>
-            <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+            <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-head-text">
               Item Name
             </th>
-            <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+            <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-head-text">
               Stocks Available
             </th>
-            <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-gray-900">
+            <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-head-text">
               Recent Restock Date
             </th>
           </tr>
@@ -112,10 +112,10 @@ export function StocksMonitor() {
         <tbody className="divide-y divide-gray-200 bg-white">
           {inventory.map((item) => (
             <tr key={item.id} className="hover:bg-gray-50">
-              <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900">
+              <td className="whitespace-nowrap px-4 py-2 font-medium text-head-text">
                 {item.item_name}
               </td>
-              <td className="whitespace-nowrap px-4 py-2 text-gray-700">
+              <td className="whitespace-nowrap px-4 py-2 text-body-text">
                 <span
                   className={
                     item.quantity_available <= 10
@@ -126,7 +126,7 @@ export function StocksMonitor() {
                   {item.quantity_available}
                 </span>
               </td>
-              <td className="whitespace-nowrap px-4 py-2 text-gray-700">
+              <td className="whitespace-nowrap px-4 py-2 text-body-text">
                 {item.last_restock_date
                   ? dayjs(item.last_restock_date).format("MMMM D, YYYY")
                   : "N/A"}

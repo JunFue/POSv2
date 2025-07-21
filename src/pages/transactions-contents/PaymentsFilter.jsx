@@ -130,7 +130,7 @@ export function PaymentsFilter({
         <div>
           <label
             htmlFor="fromDate"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-body-text"
           >
             From:
           </label>
@@ -145,7 +145,7 @@ export function PaymentsFilter({
         <div>
           <label
             htmlFor="toDate"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-body-text"
           >
             To:
           </label>
@@ -161,7 +161,7 @@ export function PaymentsFilter({
       <div>
         <label
           htmlFor="transactionNo"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-body-text"
         >
           Transaction No:
         </label>

@@ -115,7 +115,7 @@ export function CategoryDropdown({
             <div
               key={cat}
               onClick={() => handleSelect(cat)}
-              className={`flex justify-between items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer ${
+              className={`flex justify-between items-center px-4 py-2 text-sm text-body-text hover:bg-gray-100 cursor-pointer ${
                 highlightedIndex === idx ? "bg-blue-100" : ""
               }`}
             >

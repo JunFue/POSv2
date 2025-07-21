@@ -101,9 +101,9 @@ export function IncomeRangeCalendar({ onSet, initialRange }) {
           }
 
           if (isFrom || isTo) {
-            cellClasses += " bg-blue-500 text-white";
+            cellClasses += " bg-blue-500 text-body-text";
           } else if (inRange) {
-            cellClasses += " bg-blue-400 bg-opacity-40 text-white";
+            cellClasses += " bg-blue-400 bg-opacity-40 text-body-text";
           } else if (inHoverRange) {
             cellClasses += " bg-gray-600";
           } else {
@@ -142,7 +142,7 @@ export function IncomeRangeCalendar({ onSet, initialRange }) {
   };
 
   return (
-    <div className="absolute top-10 right-0 z-30 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-3 w-64 text-white">
+    <div className="absolute top-10 right-0 z-30 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-3 w-64 text-body-text">
       {renderHeader()}
       {renderDaysOfWeek()}
       {renderCells()}

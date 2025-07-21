@@ -27,7 +27,7 @@ export function CashFlow() {
   const tableData = generateDummyData(31);
 
   return (
-    <div className="w-full h-full flex flex-col text-white">
+    <div className="w-full h-full flex flex-col text-body-text">
       {/* This style block hides the scrollbar on Webkit and Firefox browsers */}
       <style>
         {`
@@ -43,15 +43,15 @@ export function CashFlow() {
       {/* Mini Header Cards */}
       <div className="grid grid-cols-3 gap-2 mb-3 text-center">
         <div className="bg-green-500/20 p-2 rounded-lg">
-          <p className="text-xs text-gray-300">Inflow</p>
+          <p className="text-xs text-head-text">Inflow</p>
           <p className="font-bold text-md">$12,450.78</p>
         </div>
         <div className="bg-red-500/20 p-2 rounded-lg">
-          <p className="text-xs text-gray-300">Outflow</p>
+          <p className="text-xs text-head-text">Outflow</p>
           <p className="font-bold text-md">$8,231.45</p>
         </div>
         <div className="bg-blue-500/20 p-2 rounded-lg">
-          <p className="text-xs text-gray-300">Net Flow</p>
+          <p className="text-xs text-head-text">Net Flow</p>
           <p className="font-bold text-md">$4,219.33</p>
         </div>
       </div>

@@ -33,11 +33,11 @@ a {
 }
 
 :root {
-  --color-background: #f3f4f6;
-  --color-body-text: #4a5568;
+  --color-background: #e8e8e8;
+  --color-body-text: #292c31;
   --color-head-text: #38b2ac;
   --color-highlight-text: #f97316;
-  --shadow-neumorphic: 8px 8px 16px #d1d9e6, -8px -8px 16px #ffffff;
+  --shadow-neumorphic: 8px 8px 16px #c5cdda, -8px -8px 16px #f0ebeb;
   --shadow-input: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
   --shadow-button: 4px 4px 8px #d1d9e6, -4px -4px 8px #ffffff;
   --shadow-button-inset: inset 4px 4px 8px #d1d9e6, inset -4px -4px 8px #ffffff;
@@ -110,6 +110,31 @@ a {
     appearance: none;
   }
   
+  .traditional-glass {
+    background-color: rgba(255, 255, 255, 0.3);     
+    backdrop-filter: blur(16px);               
+    border: 1px solid rgba(50, 50, 50, 0.2); 
+    border-radius: 0.75rem;                   
+    padding: 1.5rem;                           
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+                0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .glass-button {
+    background-color: rgba(255, 255, 255, 0.2); /* bg-white/20 */
+    color: #ffffff;                             /* text-white */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* border-white/30 */
+    backdrop-filter: blur(12px);               /* backdrop-blur-md */
+    padding: 0.5rem 1rem;                       /* px-4 py-2 */
+    border-radius: 0.5rem;                      /* rounded-lg */
+    transition: background-color 0.3s ease;     /* transition */
+  }
+  
+  .glass-button:hover {
+    background-color: rgba(255, 255, 255, 0.3); /* hover:bg-white/30 */
+  }
+  
+
   .traditional-input:focus {
     outline: 2px solid transparent;
     outline-offset: 2px;
@@ -126,4 +151,6 @@ a {
     -ms-overflow-style: none; /* IE and Edge */
     scrollbar-width: none;    /* Firefox */
   }
+
+  
 }

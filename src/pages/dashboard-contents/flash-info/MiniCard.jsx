@@ -12,13 +12,13 @@ export function MiniCard({ title, value, onHide, ...props }) {
     >
       {/* Added 'mini-drag-handle' class to make this the draggable area */}
       <div className="mini-drag-handle cursor-grab">
-        <h4 className="text-xs text-gray-300 font-semibold">{title}</h4>
-        <p className="text-xl font-bold text-white">{value}</p>
+        <h4 className="text-xs text-head-text font-semibold">{title}</h4>
+        <p className="text-xl font-bold text-body-text">{value}</p>
       </div>
       {children}
       <button
         onClick={onHide}
-        className="absolute top-1 right-1 p-1 text-gray-400 hover:text-white"
+        className="absolute top-1 right-1 p-1 text-gray-400 hover:text-body-text"
         title="Hide Card"
       >
         <FaTimes size={12} />

@@ -72,7 +72,7 @@ export function MonthlyIncomeCard({ onHide }) {
       <MiniCard title="Monthly Income" value={incomeValue} onHide={onHide}>
         <button
           onClick={() => setIsCalendarOpen(!isCalendarOpen)}
-          className="absolute top-1 right-8 p-1 text-gray-400 hover:text-white"
+          className="absolute top-1 right-8 p-1 text-gray-400 hover:text-body-text"
           title="Select Date Range"
         >
           <FaCalendarAlt size={12} />

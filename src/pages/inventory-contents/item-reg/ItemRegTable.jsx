@@ -103,7 +103,7 @@ export function ItemRegTable() {
   return (
     <div className="flex flex-col bg-background rounded-lg p-4">
       {loading ? (
-        <div className="text-center text-gray-700 text-[1vw] py-4">
+        <div className="text-center text-body-text text-[1vw] py-4">
           Loading...
         </div>
       ) : (

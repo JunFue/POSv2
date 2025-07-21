@@ -71,7 +71,7 @@ function ColumnFilterDropdown({
           onClick={() => handleSort("asc")}
           className={`text-sm p-1 rounded w-full text-center ${
             tempFilter.sort === "asc"
-              ? "bg-blue-500 text-white"
+              ? "bg-blue-500 text-body-text"
               : "hover:bg-gray-100"
           }`}
         >
@@ -81,7 +81,7 @@ function ColumnFilterDropdown({
           onClick={() => handleSort("desc")}
           className={`text-sm p-1 rounded w-full text-center ml-1 ${
             tempFilter.sort === "desc"
-              ? "bg-blue-500 text-white"
+              ? "bg-blue-500 text-body-text"
               : "hover:bg-gray-100"
           }`}
         >
@@ -124,13 +124,13 @@ function ColumnFilterDropdown({
       <div className="flex justify-end mt-2">
         <button
           onClick={handleCancel}
-          className="mr-2 text-sm text-gray-600 px-3 py-1 rounded hover:bg-gray-100"
+          className="mr-2 text-sm text-head-text px-3 py-1 rounded hover:bg-gray-100"
         >
           Cancel
         </button>
         <button
           onClick={handleApply}
-          className="text-sm text-white bg-green-600 px-3 py-1 rounded hover:bg-green-700"
+          className="text-sm text-body-text bg-green-600 px-3 py-1 rounded hover:bg-green-700"
         >
           OK
         </button>

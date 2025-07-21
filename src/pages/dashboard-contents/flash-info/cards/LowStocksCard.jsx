@@ -68,7 +68,7 @@ export function LowStocksCard({ onHide }) {
       {/* FIX: Pass the onHide prop down to the MiniCard component */}
       <MiniCard title="Low Stocks" value="" onHide={onHide}>
         <div
-          className="absolute top-1 right-8 p-1 text-gray-400 hover:text-white cursor-pointer"
+          className="absolute top-1 right-8 p-1 text-gray-400 hover:text-body-text cursor-pointer"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           <FaCog size={12} />
@@ -101,7 +101,7 @@ export function LowStocksCard({ onHide }) {
       </MiniCard>
 
       {isMenuOpen && (
-        <div className="absolute top-10 right-0 z-30 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-2 w-28 text-white">
+        <div className="absolute top-10 right-0 z-30 bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-2 w-28 text-body-text">
           <p className="text-xs font-bold text-center mb-2">Show Items</p>
           <div className="grid grid-cols-2 gap-1">
             {Array.from({ length: 10 }, (_, i) => i + 1).map((num) => (

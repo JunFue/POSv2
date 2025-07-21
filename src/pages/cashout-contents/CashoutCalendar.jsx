@@ -88,7 +88,7 @@ export function CashoutCalendar({ onFilter }) {
   );
 
   const renderDays = () => (
-    <div className="grid grid-cols-7 text-center font-semibold text-sm text-gray-600">
+    <div className="grid grid-cols-7 text-center font-semibold text-sm text-head-text">
       {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
         <div key={index}>{day}</div>
       ))}
@@ -110,11 +110,11 @@ export function CashoutCalendar({ onFilter }) {
         let cellClasses =
           "p-2 text-center h-10 flex items-center justify-center text-sm cursor-pointer transition-colors duration-200";
 
-        if (!isSameMonth(day, monthStart)) cellClasses += " text-gray-300";
+        if (!isSameMonth(day, monthStart)) cellClasses += " text-head-text";
         else cellClasses += " hover:bg-blue-100";
 
         if (mode === "single" && isSameDay(day, selectedDate)) {
-          cellClasses += " bg-blue-500 text-white rounded-full";
+          cellClasses += " bg-blue-500 text-body-text rounded-full";
         } else if (mode === "range") {
           const { from, to } = range;
           const isFrom = from && isSameDay(day, from);
@@ -135,7 +135,7 @@ export function CashoutCalendar({ onFilter }) {
           }
 
           if (isFrom || isTo) {
-            cellClasses += " bg-blue-500 text-white rounded-full";
+            cellClasses += " bg-blue-500 text-body-text rounded-full";
           } else if (inRange) {
             cellClasses += " bg-blue-200";
           } else if (inHoverRange) {
@@ -177,7 +177,9 @@ export function CashoutCalendar({ onFilter }) {
           <button
             onClick={() => setMode("single")}
             className={`p-2 rounded-full ${
-              mode === "single" ? "bg-blue-500 text-white" : "hover:bg-gray-200"
+              mode === "single"
+                ? "bg-blue-500 text-body-text"
+                : "hover:bg-gray-200"
             }`}
             title="Single Day Mode"
           >
@@ -186,7 +188,9 @@ export function CashoutCalendar({ onFilter }) {
           <button
             onClick={() => setMode("range")}
             className={`p-2 rounded-full ${
-              mode === "range" ? "bg-blue-500 text-white" : "hover:bg-gray-200"
+              mode === "range"
+                ? "bg-blue-500 text-body-text"
+                : "hover:bg-gray-200"
             }`}
             title="Date Range Mode"
           >

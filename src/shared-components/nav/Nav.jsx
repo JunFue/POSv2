@@ -89,7 +89,7 @@ export function Nav() {
           >
             {link.label}
           </Link>
-          <div className="absolute top-[1vw] left-1/2 transform -translate-x-1/2 mt-2 w-max bg-gray-200 text-black text-sm p-2 rounded shadow-lg hidden group-hover:block">
+          <div className="absolute top-[1vw] left-1/2 transform -translate-x-1/2 mt-2 w-max bg-background traditional-glass text-body-text text-sm md:text-[15px] lg:text-[18px] xl:text-[20px] p-2 rounded shadow-lg hidden group-hover:block z-2">
             {link.flyoutText}
           </div>
         </div>

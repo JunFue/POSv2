@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { FaCog } from "react-icons/fa";
 
@@ -11,6 +11,11 @@ import { LowStocksCard } from "./cards/LowStocksCard";
 // ... import other card components as you create them
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
+
+// --- START: Added localStorage keys ---
+const LAYOUTS_STORAGE_KEY = "flashinfo-layouts";
+const CARDS_STORAGE_KEY = "flashinfo-cards";
+// --- END: Added localStorage keys ---
 
 // 2. The state now only defines the metadata for each card
 const initialCards = [
@@ -36,13 +41,13 @@ const initialCards = [
     id: "daily-expenses",
     title: "Daily Expenses",
     isVisible: true,
-    layout: { x: 4, y: 0, w: 2, h: 1 },
+    layout: { x: 0, y: 1, w: 2, h: 1 },
   },
   {
     id: "low-stocks",
     title: "Low Stocks",
     isVisible: true,
-    layout: { x: 4, y: 0, w: 2, h: 1 },
+    layout: { x: 2, y: 1, w: 2, h: 1 },
   },
   // ... add other card metadata here
 ];
@@ -66,9 +71,39 @@ const generateLayouts = (cards) => {
 };
 
 export function FlashInfo() {
-  const [cards, setCards] = useState(initialCards);
-  const [layouts, setLayouts] = useState(generateLayouts(initialCards));
+  // --- START: Load state from localStorage ---
+  const [cards, setCards] = useState(() => {
+    try {
+      const storedCards = localStorage.getItem(CARDS_STORAGE_KEY);
+      return storedCards ? JSON.parse(storedCards) : initialCards;
+    } catch (error) {
+      console.error("Error parsing cards from localStorage", error);
+      return initialCards;
+    }
+  });
+
+  const [layouts, setLayouts] = useState(() => {
+    try {
+      const storedLayouts = localStorage.getItem(LAYOUTS_STORAGE_KEY);
+      return storedLayouts ? JSON.parse(storedLayouts) : generateLayouts(cards);
+    } catch (error) {
+      console.error("Error parsing layouts from localStorage", error);
+      return generateLayouts(cards);
+    }
+  });
+  // --- END: Load state from localStorage ---
+
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  // --- START: Save cards state to localStorage on change ---
+  useEffect(() => {
+    try {
+      localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(cards));
+    } catch (error) {
+      console.error("Error saving cards to localStorage", error);
+    }
+  }, [cards]);
+  // --- END: Save cards state to localStorage on change ---
 
   const handleToggleVisibility = (cardId) => {
     setCards(
@@ -79,7 +114,14 @@ export function FlashInfo() {
   };
 
   const onLayoutChange = (layout, newLayouts) => {
-    setLayouts(newLayouts);
+    // --- START: Save layouts to localStorage on change ---
+    try {
+      localStorage.setItem(LAYOUTS_STORAGE_KEY, JSON.stringify(newLayouts));
+      setLayouts(newLayouts);
+    } catch (error) {
+      console.error("Error saving layouts to localStorage", error);
+    }
+    // --- END: Save layouts to localStorage on change ---
   };
 
   const visibleCards = cards.filter((card) => card.isVisible);
@@ -95,20 +137,20 @@ export function FlashInfo() {
       <div className="absolute top-4 right-3 z-20">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="p-2 text-gray-300 hover:text-white"
+          className="p-2 text-head-text hover:text-body-text"
         >
           <FaCog />
         </button>
         {isDropdownOpen && (
           <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg">
-            <p className="p-3 text-sm font-bold text-white border-b border-gray-700">
+            <p className="p-3 text-sm font-bold text-body-text border-b border-gray-700">
               Show/Hide Cards
             </p>
             <ul className="p-1 max-h-48 overflow-y-auto scrollbar-hide">
               {cards.map((card) => (
                 <li
                   key={card.id}
-                  className="flex items-center p-2 text-sm text-white rounded hover:bg-gray-700"
+                  className="flex items-center p-2 text-sm text-body-text rounded hover:bg-gray-700"
                 >
                   <input
                     type="checkbox"
@@ -140,8 +182,6 @@ export function FlashInfo() {
             if (!CardComponent) return null;
 
             return (
-              // --- FIX: Removed the problematic data-grid prop ---
-              // The library will now correctly handle the layout based on the key.
               <div key={card.id}>
                 <CardComponent onHide={() => handleToggleVisibility(card.id)} />
               </div>

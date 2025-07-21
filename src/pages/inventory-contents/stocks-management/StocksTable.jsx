@@ -92,7 +92,7 @@ export function StocksTable({
                 setActiveMenu(activeMenu === row.id ? null : row.id)
               }
             >
-              <FaCog className="text-head-text hover:text-gray-800" />
+              <FaCog className="text-head-text hover:text-body-text" />
             </button>
             {activeMenu === row.id && (
               <div className="absolute right-0 z-10 w-24 bg-background border rounded">
@@ -101,7 +101,7 @@ export function StocksTable({
                     onEdit(row.original);
                     setActiveMenu(null);
                   }}
-                  className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                  className="block w-full text-left px-4 py-2 text-sm text-body-text hover:bg-gray-100"
                 >
                   Edit
                 </button>

@@ -36,7 +36,7 @@ export function SuggestionList({
           key={item.id || item.barcode || idx}
           className={`text-[1vw] px-2 py-1 cursor-pointer ${
             highlightedIndex === idx
-              ? "bg-cyan-600 text-white"
+              ? "bg-cyan-600 text-body-text"
               : "hover:bg-gray-500/20"
           }`}
           onMouseDown={() => onSelect(item)}

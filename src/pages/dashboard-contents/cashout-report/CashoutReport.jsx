@@ -106,7 +106,7 @@ export function CashoutReport() {
   };
 
   return (
-    <div className="w-full h-full p-4 bg-gray-800 text-white rounded-lg flex flex-col gap-6">
+    <div className="w-full h-full p-4 bg-gray-800 text-body-text rounded-lg flex flex-col gap-6">
       {/* Header and Stats */}
       <div className="flex justify-end items-start">
         <div className="flex gap-4">
@@ -219,7 +219,7 @@ export function CashoutReport() {
                         <td className="px-4 py-2 font-medium">
                           {item.category}
                         </td>
-                        <td className="px-4 py-2 text-gray-300">
+                        <td className="px-4 py-2 text-head-text">
                           {item.notes}
                         </td>
                         <td className="px-4 py-2 text-right font-mono">

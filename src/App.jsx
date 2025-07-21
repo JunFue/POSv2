@@ -17,7 +17,7 @@ function App() {
         <POS></POS>
         <div className="flex flex-col gap-[0.3vw] flex-grow p-[0.2vw] rounded-2xl basis-0 min-w-0 mb-[10px]">
           <Nav />
-          <div className="shadow-neumorphic overflow-y-scroll">
+          <div className="shadow-neumorphic overflow-y-scroll md:min-h-[80vh]">
             <Routes>
               <Route path="/*" element={<Dashboard />} />
               <Route path="dashboard/*" element={<Dashboard />} />
