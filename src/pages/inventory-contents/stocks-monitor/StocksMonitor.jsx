@@ -1,98 +1,28 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import dayjs from "dayjs";
-import { io } from "socket.io-client";
-import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth";
-// 1. --- Import the useAuth hook ---
+import { useInventory } from "../../../context/InventoryContext";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
+/**
+ * A component that displays the current inventory levels in a table.
+ * It consumes the shared inventory state from the `InventoryContext`.
+ */
 export function StocksMonitor() {
-  const [inventory, setInventory] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  // Get shared state (inventory data, loading status, errors) from the new context.
+  const { inventory, loading, error } = useInventory();
 
-  // 2. --- Get the session from the context via the hook ---
-  const { session } = useAuth();
-
-  useEffect(() => {
-    // This function will now be defined inside the useEffect
-    // to have access to the `session` from the hook.
-    const fetchInitialInventory = async () => {
-      // 3. --- Check if the session and token exist before fetching ---
-      if (!session?.access_token) {
-        // Don't try to fetch if the user isn't logged in.
-        // You might want to set an error or just show nothing.
-        setError("You must be logged in to view inventory.");
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // No need to set loading(true) here as it's set initially
-        const response = await fetch(`${BACKEND_URL}/api/inventory`, {
-          headers: {
-            // 4. --- Use the token from the session provided by the hook ---
-            Authorization: `Bearer ${session.access_token}`,
-          },
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(errorData.error || "Network response was not ok");
-        }
-
-        const data = await response.json();
-        setInventory(data);
-        setError(null); // Clear any previous errors
-      } catch (err) {
-        console.error("Error fetching initial inventory:", err);
-        setError(err.message || "Failed to load inventory.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchInitialInventory();
-
-    const socket = io(BACKEND_URL);
-
-    socket.on("inventory_update", (updatedItem) => {
-      console.log("Received real-time update:", updatedItem);
-      setInventory((prevInventory) => {
-        const itemIndex = prevInventory.findIndex(
-          (item) => item.id === updatedItem.id
-        );
-
-        if (itemIndex > -1) {
-          const newInventory = [...prevInventory];
-          newInventory[itemIndex] = updatedItem;
-          return newInventory;
-        } else {
-          const newInventory = [...prevInventory, updatedItem];
-          return newInventory.sort((a, b) =>
-            a.item_name.localeCompare(b.item_name)
-          );
-        }
-      });
-    });
-
-    return () => {
-      socket.disconnect();
-    };
-    // 5. --- Add `session` as a dependency ---
-    // This ensures the effect re-runs if the user logs in or out.
-  }, [session]);
-
+  // Display a loading message while data is being fetched.
   if (loading) {
     return (
       <div className="p-4 text-center">Loading stock levels from server...</div>
     );
   }
 
+  // Display an error message if fetching failed.
   if (error) {
     return <div className="p-4 text-center text-red-500">{error}</div>;
   }
 
+  // Render the inventory table.
   return (
     <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <table className="min-w-full divide-y divide-gray-200 text-sm">
@@ -118,6 +48,7 @@ export function StocksMonitor() {
               <td className="whitespace-nowrap px-4 py-2 text-body-text">
                 <span
                   className={
+                    // Highlight stock level if it's 10 or less.
                     item.quantity_available <= 10
                       ? "font-bold text-red-600"
                       : ""

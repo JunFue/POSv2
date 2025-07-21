@@ -4,12 +4,12 @@ import React, {
   useContext,
   useEffect,
   useRef,
+  useState,
 } from "react";
 import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
 
 import { CounterFormFields } from "./CounterFormFields";
-// 1. Import the SuggestionList component
 import { SuggestionList } from "./SuggestionList";
 import { useItemSuggestions } from "./hooks/useItemSuggestions";
 import { useTransactionHandler } from "./hooks/useTransactionHandler";
@@ -22,6 +22,8 @@ export const CounterForm = forwardRef((props, ref) => {
   const { cartData } = useContext(CartContext);
   const { items: regItems } = useContext(ItemRegData);
   const { user } = useAuth();
+
+  const [alertMessage, setAlertMessage] = useState(null);
 
   const form = useForm({
     defaultValues: {
@@ -60,6 +62,30 @@ export const CounterForm = forwardRef((props, ref) => {
     inputRefs
   );
 
+  /**
+   * --- FIX ---
+   * This function now correctly handles a numeric `stockValue`.
+   * The .trim() call, which caused the error, has been removed.
+   */
+  const handleAddToCartWithStockCheck = (data) => {
+    // Get the value, which could be a number (e.g., 50) or a string (e.g., "N/A").
+    const stockValue = getValues("availableStocks");
+
+    // parseFloat will correctly handle both numbers and string representations of numbers.
+    const stockNumber = parseFloat(stockValue);
+
+    // Check if the result is not a valid number (e.g., from "N/A") or if stock is zero or less.
+    if (isNaN(stockNumber) || stockNumber <= 0) {
+      setAlertMessage(
+        "This item is out of stock and cannot be added to the cart."
+      );
+      return; // Stop the function here
+    }
+
+    // If stock is valid, call the original addToCart function
+    addToCart(data);
+  };
+
   useImperativeHandle(ref, () => ({
     regenerateTransactionNo: () =>
       setValue("transactionNo", generateTransactionNo()),
@@ -83,7 +109,7 @@ export const CounterForm = forwardRef((props, ref) => {
         };
       });
     },
-    submitAddToCart: handleSubmit(addToCart),
+    submitAddToCart: handleSubmit(handleAddToCartWithStockCheck),
   }));
 
   const payment = watch("payment");
@@ -130,21 +156,19 @@ export const CounterForm = forwardRef((props, ref) => {
       <CounterFormFields
         ref={{ costumerNameRef, barcodeRef, quantityRef, discountRef }}
         register={register}
-        handleSubmit={handleSubmit(addToCart)}
+        handleSubmit={handleSubmit(handleAddToCartWithStockCheck)}
         onBarcodeChange={handleBarcodeChange}
         onBarcodeKeyDown={handleBarcodeKeyDown}
         suggestions={suggestions}
         highlightedIndex={highlightedIndex}
         onSelectSuggestion={handleSelectSuggestion}
       />
-      {/* 2. Render the SuggestionList when there are suggestions */}
       {suggestions.length > 0 && (
         <SuggestionList
           suggestions={suggestions}
           highlightedIndex={highlightedIndex}
           onSelect={handleSelectSuggestion}
-          // 3. Pass different classes for a dark theme that matches the counter form
-          className="w-fit px-1 absolute z-1 top-[60%] left-[19%] md:top-[60%] md:left-[18%] lg:top-[60%] lg:left-[17%] xl:top-[60%] xl:left-[18%] bg-background shadow-neumorphic rounded max-h-40 overflow-y-auto no-scrollbar"
+          className="w-fit px-1 absolute z-10 top-[60%] left-[19%] md:top-[60%] md:left-[18%] lg:top-[60%] lg:left-[17%] xl:top-[60%] xl:left-[18%] bg-background shadow-neumorphic rounded max-h-40 overflow-y-auto no-scrollbar"
         />
       )}
       <div
@@ -160,6 +184,21 @@ export const CounterForm = forwardRef((props, ref) => {
           <p>NO PRODUCTS AVAILABLE</p>
         )}
       </div>
+
+      {alertMessage && (
+        <div className="absolute inset-0 bg-black/60 flex items-center justify-center z-50">
+          <div className="bg-gray-800 border border-teal-500 p-6 rounded-lg shadow-lg text-white max-w-sm text-center">
+            <h3 className="font-bold text-xl mb-4">Out of Stock</h3>
+            <p className="py-2">{alertMessage}</p>
+            <button
+              onClick={() => setAlertMessage(null)}
+              className="mt-4 px-4 py-2 bg-teal-600 hover:bg-teal-500 rounded-md font-bold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 });

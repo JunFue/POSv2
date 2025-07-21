@@ -8,7 +8,6 @@ export const CounterFormFields = forwardRef((props, ref) => {
   const barcodeRegistration = register("barcode");
   const quantityRegistration = register("quantity");
   const costumerNameRegistration = register("costumerName");
-  // --- 1. Get the registration props for the discount field ---
   const discountRegistration = register("discount");
 
   return (
@@ -16,6 +15,8 @@ export const CounterFormFields = forwardRef((props, ref) => {
       onSubmit={handleSubmit}
       className="[&>*]:body-text-media grid grid-cols-[1fr_1fr_1fr_1fr_1fr_1fr] gap-[0.5vw] [&>*]:overflow-hidden [&>*]:text-ellipsis [&>*]:text-nowrap p-[0.3vh]"
     >
+      {/* ... other input fields remain the same ... */}
+
       <label title="Cashier Name">Cashier Name:</label>
       <input
         className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
@@ -85,11 +86,10 @@ export const CounterFormFields = forwardRef((props, ref) => {
       <input
         className="w-full text-primary-900 bg-background text-[1vw]  rounded-[15px] pl-[0.6vw] shadow-input 
          focus:outline-none focus:ring-2 focus:ring-teal-300 transition-all"
-        // --- 2. Apply the ref merging fix to the discount input ---
         {...discountRegistration}
         ref={(e) => {
-          discountRegistration.ref(e); // Required for react-hook-form
-          discountRef.current = e; // Required for our focus management
+          discountRegistration.ref(e);
+          discountRef.current = e;
         }}
         type="number"
         step="any"
@@ -149,7 +149,11 @@ export const CounterFormFields = forwardRef((props, ref) => {
         onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            handleSubmit();
+            // --- FIX ---
+            // Instead of calling handleSubmit directly, we find the parent <form>
+            // element and ask it to submit itself. This correctly triggers
+            // the form's onSubmit event and the whole react-hook-form validation pipeline.
+            e.currentTarget.form.requestSubmit();
           }
         }}
         autoComplete="off"

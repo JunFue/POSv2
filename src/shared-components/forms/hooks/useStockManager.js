@@ -1,35 +1,21 @@
-import { useContext, useCallback } from "react";
-import { StocksMgtContext } from "../../../context/StocksManagement";
+import { useInventory } from "../../../context/InventoryContext";
 
+/**
+ * A hook that provides a function to get the net quantity of an item
+ * directly from the live, centralized inventory context.
+ */
 export const useStockManager = () => {
-  const { stockRecords } = useContext(StocksMgtContext);
+  // Consume the new context to get the live quantity function.
+  const { getLiveQuantity } = useInventory();
 
-  const getNetQuantity = useCallback(
-    (itemName) => {
-      if (!stockRecords || stockRecords.length === 0) {
-        return "N/A";
-      }
-
-      const filtered = stockRecords.filter(
-        (r) => r.item.toLowerCase() === itemName.toLowerCase()
-      );
-
-      if (filtered.length === 0) {
-        return "N/A";
-      }
-
-      const stockIn = filtered
-        .filter((r) => r.stockFlow === "Stock In")
-        .reduce((sum, r) => sum + r.quantity, 0);
-
-      const stockOut = filtered
-        .filter((r) => r.stockFlow === "Stock Out")
-        .reduce((sum, r) => sum + r.quantity, 0);
-
-      return stockIn - stockOut;
-    },
-    [stockRecords]
-  );
+  /**
+   * Retrieves the definitive quantity for a given item name from the global inventory state.
+   * @param {string} itemName - The name of the item.
+   * @returns {number|string} The available quantity or a status message.
+   */
+  const getNetQuantity = (itemName) => {
+    return getLiveQuantity(itemName);
+  };
 
   return { getNetQuantity };
 };
