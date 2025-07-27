@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useEffect, useRef, useState } from "react"; // updated import
 import { ItemRegData } from "../../../context/ItemRegContext";
 import { supabase } from "../../../utils/supabaseClient";
 
@@ -15,6 +15,16 @@ export const ItemRegForm = () => {
   const priceRef = useRef(null);
   const packagingRef = useRef(null);
   const categoryRef = useRef(null);
+
+  // New state for editable categories
+  const [categories, setCategories] = useState([
+    "DETOX",
+    "OTC",
+    "Services",
+    "Others",
+  ]);
+  const [isEditingCategories, setIsEditingCategories] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
 
   // This useEffect is for focus management and can be kept as is.
   useEffect(() => {
@@ -97,6 +107,26 @@ export const ItemRegForm = () => {
     }
   };
 
+  // Handler to add a new category
+  const handleAddCategory = () => {
+    if (!newCategory.trim()) return;
+    if (categories.includes(newCategory.trim())) {
+      alert("Category already exists.");
+      return;
+    }
+    const updatedCategories = [...categories, newCategory.trim()];
+    setCategories(updatedCategories);
+    console.log("Placeholder API call to add category:", newCategory.trim());
+    setNewCategory("");
+  };
+
+  // Handler to delete a category
+  const handleDeleteCategory = (cat) => {
+    const updatedCategories = categories.filter((c) => c !== cat);
+    setCategories(updatedCategories);
+    console.log("Placeholder API call to delete category:", cat);
+  };
+
   return (
     <div className="bg-background p-4 rounded-lg shadow-neumorphic">
       {!serverOnline && (
@@ -168,7 +198,7 @@ export const ItemRegForm = () => {
           id="packaging"
           {...register("packaging", { required: "Identify a packaging type" })}
           placeholder={errors.packaging ? errors.packaging.message : undefined}
-          className={`traditional-input
+          className={`traditional-input 
             ${errors.packaging ? "border-red-500" : ""}`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
@@ -189,10 +219,11 @@ export const ItemRegForm = () => {
             ${errors.category ? "border-red-500" : ""}`}
         >
           <option value="">Select category</option>
-          <option value="DETOX">DETOX</option>
-          <option value="OTC">OTC</option>
-          <option value="Services">Services</option>
-          <option value="Others">Others</option>
+          {categories.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
         </select>
 
         <button
@@ -220,6 +251,62 @@ export const ItemRegForm = () => {
         >
           Register
         </button>
+
+        {/* New button to toggle category management */}
+        <button
+          type="button"
+          className="traditional-button mt-2 w-fit h-fit"
+          onClick={() => setIsEditingCategories(!isEditingCategories)}
+        >
+          {isEditingCategories
+            ? "Close Categories Manager"
+            : "Manage Categories"}
+        </button>
+
+        {/* Conditionally render the editable categories section */}
+        {isEditingCategories && (
+          <div className="mt-2 p-2 border rounded">
+            <div className="grid grid-cols-2 gap-2 mb-2">
+              <input
+                type="text"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleAddCategory();
+                  }
+                }}
+                placeholder="New category"
+                className="traditional-input"
+              />
+              <button
+                type="button"
+                className="traditional-button"
+                onClick={handleAddCategory}
+              >
+                Add Category
+              </button>
+            </div>
+            <div>
+              {categories.map((cat) => (
+                <div
+                  key={cat}
+                  className="grid grid-cols-2 gap-2 place-items-center"
+                >
+                  <span>{cat}</span>
+                  <button
+                    type="button"
+                    className="traditional-button text-sm"
+                    onClick={() => handleDeleteCategory(cat)}
+                  >
+                    Delete
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );
