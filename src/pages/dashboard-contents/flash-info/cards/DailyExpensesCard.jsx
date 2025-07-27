@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { MiniCard } from "../MiniCard";
-
-import { io } from "socket.io-client";
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/useAuth";
+import { supabase } from "../../../../utils/supabaseClient";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -12,16 +11,12 @@ export function DailyExpensesCard({ onHide }) {
   const token = session?.access_token;
 
   const fetchDailyExpenses = useCallback(async () => {
-    if (!token) {
-      console.log("DailyExpensesCard: Waiting for auth token...");
-      return;
-    }
+    if (!token) return;
     try {
       const today = new Date().toISOString().slice(0, 10);
       const url = `${BACKEND_URL}/api/flash-info/today-daily-expenses?date=${today}`;
 
       const response = await fetch(url, {
-        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -45,21 +40,25 @@ export function DailyExpensesCard({ onHide }) {
 
   useEffect(() => {
     fetchDailyExpenses();
-  }, [fetchDailyExpenses]);
 
-  useEffect(() => {
-    const socket = io(BACKEND_URL);
+    // --- REVISED: Supabase Real-time Subscription ---
+    const channel = supabase
+      .channel("public:cashouts")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "cashouts" },
+        () => {
+          console.log(
+            "DailyExpensesCard: Cashout change detected, refetching expenses."
+          );
+          fetchDailyExpenses();
+        }
+      )
+      .subscribe();
 
-    // Listen for a new 'cashout_update' event
-    socket.on("cashout_update", () => {
-      console.log(
-        "DailyExpensesCard: Received 'cashout_update', refetching expenses."
-      );
-      fetchDailyExpenses();
-    });
-
+    // Cleanup subscription on component unmount
     return () => {
-      socket.disconnect();
+      supabase.removeChannel(channel);
     };
   }, [fetchDailyExpenses]);
 

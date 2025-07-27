@@ -1,15 +1,14 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { MiniCard } from "../MiniCard";
-
-import { io } from "socket.io-client";
 import { FaCog, FaExclamationTriangle } from "react-icons/fa";
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/useAuth";
+import { supabase } from "../../../../utils/supabaseClient";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function LowStocksCard({ onHide }) {
   const [items, setItems] = useState([]);
-  const [limit, setLimit] = useState(5); // Default limit
+  const [limit, setLimit] = useState(5);
   const [isLoading, setIsLoading] = useState(true);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { session } = useAuth();
@@ -32,7 +31,7 @@ export function LowStocksCard({ onHide }) {
         setItems(data);
       } catch (error) {
         console.error("LowStocksCard: Error fetching data:", error);
-        setItems([]); // Clear items on error
+        setItems([]);
       } finally {
         setIsLoading(false);
       }
@@ -40,32 +39,35 @@ export function LowStocksCard({ onHide }) {
     [token]
   );
 
-  // Initial fetch and fetch when limit changes
   useEffect(() => {
     fetchLowStocks(limit);
-  }, [fetchLowStocks, limit]);
 
-  // Real-time updates via Socket.IO
-  useEffect(() => {
-    const socket = io(BACKEND_URL);
+    // --- REVISED: Supabase Real-time Subscription ---
+    const channel = supabase
+      .channel("public:item_inventory:low_stocks") // Use a unique channel name
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "item_inventory" },
+        () => {
+          console.log("LowStocksCard: Inventory change detected, refetching.");
+          fetchLowStocks(limit);
+        }
+      )
+      .subscribe();
 
-    // Your server already emits 'inventory_update'
-    socket.on("inventory_update", () => {
-      console.log("LowStocksCard: Received 'inventory_update', refetching.");
-      fetchLowStocks(limit);
-    });
-
-    return () => socket.disconnect();
+    // Cleanup subscription on component unmount
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchLowStocks, limit]);
 
   const handleLimitChange = (newLimit) => {
     setLimit(newLimit);
-    setIsMenuOpen(false); // Close menu after selection
+    setIsMenuOpen(false);
   };
 
   return (
     <div className="relative w-full h-full">
-      {/* FIX: Pass the onHide prop down to the MiniCard component */}
       <MiniCard title="Low Stocks" value="" onHide={onHide}>
         <div
           className="absolute top-1 right-8 p-1 text-gray-400 hover:text-body-text cursor-pointer"

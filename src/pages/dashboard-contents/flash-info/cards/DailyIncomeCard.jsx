@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { MiniCard } from "../MiniCard";
-
-import { io } from "socket.io-client";
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/useAuth";
+import { supabase } from "../../../../utils/supabaseClient";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -12,17 +11,12 @@ export function DailyIncomeCard({ onHide }) {
   const token = session?.access_token;
 
   const fetchDailyIncome = useCallback(async () => {
-    if (!token) {
-      console.log("DailyIncomeCard: Waiting for auth token...");
-      return;
-    }
+    if (!token) return;
     try {
       const today = new Date().toISOString().slice(0, 10);
-      // Use the new endpoint
       const url = `${BACKEND_URL}/api/flash-info/today-daily-income?date=${today}`;
 
       const response = await fetch(url, {
-        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -44,24 +38,27 @@ export function DailyIncomeCard({ onHide }) {
     }
   }, [token]);
 
-  // Effect for the initial fetch
   useEffect(() => {
     fetchDailyIncome();
-  }, [fetchDailyIncome]);
 
-  // Effect for the Socket.IO connection
-  useEffect(() => {
-    const socket = io(BACKEND_URL);
+    // --- REVISED: Supabase Real-time Subscription ---
+    const channel = supabase
+      .channel("public:payments:income") // Use a unique channel name
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payments" },
+        () => {
+          console.log(
+            "DailyIncomeCard: Payment change detected, refetching income."
+          );
+          fetchDailyIncome();
+        }
+      )
+      .subscribe();
 
-    socket.on("payment_update", () => {
-      console.log(
-        "DailyIncomeCard: Received 'payment_update', refetching income."
-      );
-      fetchDailyIncome();
-    });
-
+    // Cleanup subscription on component unmount
     return () => {
-      socket.disconnect();
+      supabase.removeChannel(channel);
     };
   }, [fetchDailyIncome]);
 

@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { MiniCard } from "../MiniCard"; // Adjust path if MiniCard is located elsewhere
-
-import { io } from "socket.io-client";
+import { MiniCard } from "../MiniCard";
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/useAuth";
+import { supabase } from "../../../../utils/supabaseClient";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -12,17 +11,12 @@ export function TodaysGrossSalesCard({ onHide }) {
   const token = session?.access_token;
 
   const fetchTotalSales = useCallback(async () => {
-    if (!token) {
-      console.log("GrossSalesCard: Waiting for auth token...");
-      return;
-    }
+    if (!token) return;
     try {
       const today = new Date().toISOString().slice(0, 10);
-      // FIX: Update URL to be more specific
       const url = `${BACKEND_URL}/api/flash-info/today-gross-sales?date=${today}`;
 
       const response = await fetch(url, {
-        method: "GET",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
@@ -44,24 +38,27 @@ export function TodaysGrossSalesCard({ onHide }) {
     }
   }, [token]);
 
-  // Effect for the initial fetch
   useEffect(() => {
     fetchTotalSales();
-  }, [fetchTotalSales]);
 
-  // Effect for the Socket.IO connection
-  useEffect(() => {
-    const socket = io(BACKEND_URL);
+    // --- REVISED: Supabase Real-time Subscription ---
+    const channel = supabase
+      .channel("public:payments:sales") // Use a unique channel name
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payments" },
+        () => {
+          console.log(
+            "GrossSalesCard: Payment change detected, refetching sales."
+          );
+          fetchTotalSales();
+        }
+      )
+      .subscribe();
 
-    socket.on("payment_update", () => {
-      console.log(
-        "GrossSalesCard: Received 'payment_update', refetching sales."
-      );
-      fetchTotalSales();
-    });
-
+    // Cleanup subscription on component unmount
     return () => {
-      socket.disconnect();
+      supabase.removeChannel(channel);
     };
   }, [fetchTotalSales]);
 
