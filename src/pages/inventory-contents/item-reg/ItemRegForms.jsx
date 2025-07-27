@@ -1,12 +1,18 @@
 import { useForm } from "react-hook-form";
-import { useContext, useEffect, useRef, useState } from "react"; // updated import
+import { useContext, useEffect, useRef, useState } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 import { supabase } from "../../../utils/supabaseClient";
+
+// A small helper to generate a temporary ID for optimistic updates
+const generateTemporaryId = () =>
+  `temp_${Math.random().toString(36).substr(2, 9)}`;
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const ItemRegForm = () => {
-  const { serverOnline, refreshItems, items } = useContext(ItemRegData);
+  // Destructure the new functions `addOptimisticItem` and `updateItemStatus` from context
+  const { serverOnline, items, addOptimisticItem, updateItemStatus } =
+    useContext(ItemRegData);
   const form = useForm();
   const { register, handleSubmit, formState, reset } = form;
   const { errors } = formState;
@@ -16,7 +22,6 @@ export const ItemRegForm = () => {
   const packagingRef = useRef(null);
   const categoryRef = useRef(null);
 
-  // New state for editable categories
   const [categories, setCategories] = useState([
     "DETOX",
     "OTC",
@@ -26,7 +31,6 @@ export const ItemRegForm = () => {
   const [isEditingCategories, setIsEditingCategories] = useState(false);
   const [newCategory, setNewCategory] = useState("");
 
-  // This useEffect is for focus management and can be kept as is.
   useEffect(() => {
     if (nameRef.current) {
       register("name").ref(nameRef.current);
@@ -42,25 +46,18 @@ export const ItemRegForm = () => {
     }
   }, [register]);
 
-  // --- 1. Add a useEffect to listen for the 'Shift + Enter' key combination ---
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Check if Shift and Enter are pressed simultaneously
       if (e.key === "Enter" && e.shiftKey) {
-        e.preventDefault(); // Prevent default browser actions
-        // Programmatically trigger the form submission
+        e.preventDefault();
         handleSubmit(addToRegistry)();
       }
     };
-
-    // Add the event listener to the whole document
     document.addEventListener("keydown", handleKeyDown);
-
-    // Cleanup function to remove the listener when the component unmounts
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [handleSubmit]); // Rerun effect if handleSubmit changes
+  }, [handleSubmit]);
 
   const addToRegistry = async (data) => {
     if (!serverOnline) {
@@ -76,12 +73,25 @@ export const ItemRegForm = () => {
       alert("An item with the same barcode or name already exists.");
       return;
     }
+
+    // --- Optimistic UI Change ---
+    // 1. Generate a temporary ID and add the item to the UI immediately.
+    const tempId = generateTemporaryId();
+    addOptimisticItem({ ...data, id: tempId, status: "pending" });
+    reset({ barcode: "", name: "", price: "", packaging: "", category: "" });
+    setTimeout(() => {
+      document.getElementById("barcode")?.focus();
+    }, 0);
+    // --- End of Optimistic UI Change ---
+
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
         alert("You must be logged in to register an item.");
+        // If auth fails, update the item status to 'failed'
+        updateItemStatus(tempId, { status: "failed" });
         return;
       }
       const token = session.access_token;
@@ -97,13 +107,18 @@ export const ItemRegForm = () => {
 
       if (!res.ok) throw new Error("Failed to register item");
 
-      await refreshItems();
-      reset({ barcode: "", name: "", price: "", packaging: "", category: "" });
-      setTimeout(() => {
-        document.getElementById("barcode")?.focus();
-      }, 0);
+      const savedItem = await res.json(); // Assuming the backend returns the saved item with the final ID
+
+      // 2. Update the item from 'pending' to 'synced' with the real data from the server
+      updateItemStatus(tempId, {
+        ...savedItem,
+        status: "synced",
+        id: savedItem.id,
+      });
     } catch (error) {
       alert(error.message);
+      // 3. If the request fails, update the item status to 'failed'
+      updateItemStatus(tempId, { status: "failed" });
     }
   };
 
@@ -132,7 +147,6 @@ export const ItemRegForm = () => {
       {!serverOnline && (
         <div className="text-red-500 font-bold mb-2">SERVER IS OFFLINE</div>
       )}
-      {/* --- 2. The onKeyDownCapture can be removed from the form tag --- */}
       <form
         onSubmit={handleSubmit(addToRegistry)}
         noValidate
@@ -252,7 +266,6 @@ export const ItemRegForm = () => {
           Register
         </button>
 
-        {/* New button to toggle category management */}
         <button
           type="button"
           className="traditional-button mt-2 w-fit h-fit"
@@ -263,7 +276,6 @@ export const ItemRegForm = () => {
             : "Manage Categories"}
         </button>
 
-        {/* Conditionally render the editable categories section */}
         {isEditingCategories && (
           <div className="mt-2 p-2 border rounded">
             <div className="grid grid-cols-2 gap-2 mb-2">
