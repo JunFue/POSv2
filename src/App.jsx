@@ -9,6 +9,7 @@ import { Routes, Route } from "react-router";
 import React from "react";
 import { AppProviders } from "./context/Provider.jsx";
 import { Dashboard } from "./pages/dashboard-contents/Dashboard.jsx";
+import { CategoryPage } from "./pages/dashboard-contents/categories/CategoryPage.jsx";
 
 function App() {
   return (
@@ -20,7 +21,12 @@ function App() {
           <div className="shadow-neumorphic overflow-y-scroll md:min-h-[80vh]">
             <Routes>
               <Route path="/*" element={<Dashboard />} />
-              <Route path="dashboard/*" element={<Dashboard />} />
+              <Route path="dashboard/" element={<Dashboard />} />
+              {/* --- NEW: Dynamic route for categories --- */}
+              <Route
+                path="dashboard/category/:categoryName"
+                element={<CategoryPage />}
+              />
               <Route path="cashout" element={<Cashout />} />
               <Route path="transactions/*" element={<Transactions />} />
               <Route path="inventory/*" element={<Inventory />} />
