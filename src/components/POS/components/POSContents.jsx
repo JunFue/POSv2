@@ -41,7 +41,7 @@ export function POSContents() {
     <div className="rounded-[20px] bg-background shadow-neumorphic p-3">
       <header className="flex flex-col items-center mb-1">
         {user ? (
-          <p className="text-xs md:text-[16px] text-green-600 font-bold">
+          <p className="text-xs md:text-[16px] text-head-text font-bold">
             Welcome, {user.email}!
           </p>
         ) : (
