@@ -1,7 +1,12 @@
 import { useForm } from "react-hook-form";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
 import { supabase } from "../../../utils/supabaseClient";
+import {
+  FaCheckCircle,
+  FaExclamationTriangle,
+  FaSpinner,
+} from "react-icons/fa";
 
 // A small helper to generate a temporary ID for optimistic updates
 const generateTemporaryId = () =>
@@ -9,12 +14,31 @@ const generateTemporaryId = () =>
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
+// Helper component for status icons
+const StatusIcon = ({ status }) => {
+  switch (status) {
+    case "pending":
+      return (
+        <FaSpinner className="animate-spin text-gray-500" title="Sending..." />
+      );
+    case "synced":
+      return <FaCheckCircle className="text-green-500" title="Synced" />;
+    case "failed":
+      return (
+        <FaExclamationTriangle
+          className="text-red-500"
+          title="Failed to save"
+        />
+      );
+    default:
+      return null;
+  }
+};
+
 export const ItemRegForm = () => {
-  // Destructure the new functions `addOptimisticItem` and `updateItemStatus` from context
   const { serverOnline, items, addOptimisticItem, updateItemStatus } =
     useContext(ItemRegData);
-  const form = useForm();
-  const { register, handleSubmit, formState, reset } = form;
+  const { register, handleSubmit, formState, reset } = useForm();
   const { errors } = formState;
 
   const nameRef = useRef(null);
@@ -22,30 +46,41 @@ export const ItemRegForm = () => {
   const packagingRef = useRef(null);
   const categoryRef = useRef(null);
 
-  const [categories, setCategories] = useState([
-    "DETOX",
-    "OTC",
-    "Services",
-    "Others",
-  ]);
+  // Categories state now holds objects {id, name, status}
+  const [categories, setCategories] = useState([]);
   const [isEditingCategories, setIsEditingCategories] = useState(false);
   const [newCategory, setNewCategory] = useState("");
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
+  // --- Function to fetch categories from the backend ---
+  const fetchCategories = useCallback(async () => {
+    setCategoryLoading(true);
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) return;
+      const token = session.access_token;
+      const res = await fetch(`${BACKEND_URL}/api/categories`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error("Could not fetch categories");
+      const data = await res.json();
+      setCategories(data.map((cat) => ({ ...cat, status: "synced" })));
+    } catch (error) {
+      console.error("Failed to fetch categories:", error);
+      alert(error.message);
+    } finally {
+      setCategoryLoading(false);
+    }
+  }, []);
+
+  // --- Fetch categories when the component mounts ---
   useEffect(() => {
-    if (nameRef.current) {
-      register("name").ref(nameRef.current);
-    }
-    if (priceRef.current) {
-      register("price").ref(priceRef.current);
-    }
-    if (packagingRef.current) {
-      register("packaging").ref(packagingRef.current);
-    }
-    if (categoryRef.current) {
-      register("category").ref(categoryRef.current);
-    }
-  }, [register]);
+    fetchCategories();
+  }, [fetchCategories]);
 
+  // This useEffect is for focus management and can be kept as is.
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Enter" && e.shiftKey) {
@@ -54,11 +89,10 @@ export const ItemRegForm = () => {
       }
     };
     document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleSubmit]);
 
+  // --- Main form submission logic ---
   const addToRegistry = async (data) => {
     if (!serverOnline) {
       alert("SERVER IS OFFLINE");
@@ -74,25 +108,20 @@ export const ItemRegForm = () => {
       return;
     }
 
-    // --- Optimistic UI Change ---
-    // 1. Generate a temporary ID and add the item to the UI immediately.
     const tempId = generateTemporaryId();
     addOptimisticItem({ ...data, id: tempId, status: "pending" });
     reset({ barcode: "", name: "", price: "", packaging: "", category: "" });
     setTimeout(() => {
       document.getElementById("barcode")?.focus();
     }, 0);
-    // --- End of Optimistic UI Change ---
 
     try {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!session) {
-        alert("You must be logged in to register an item.");
-        // If auth fails, update the item status to 'failed'
         updateItemStatus(tempId, { status: "failed" });
-        return;
+        throw new Error("You must be logged in to register an item.");
       }
       const token = session.access_token;
 
@@ -107,9 +136,7 @@ export const ItemRegForm = () => {
 
       if (!res.ok) throw new Error("Failed to register item");
 
-      const savedItem = await res.json(); // Assuming the backend returns the saved item with the final ID
-
-      // 2. Update the item from 'pending' to 'synced' with the real data from the server
+      const savedItem = await res.json();
       updateItemStatus(tempId, {
         ...savedItem,
         status: "synced",
@@ -117,29 +144,81 @@ export const ItemRegForm = () => {
       });
     } catch (error) {
       alert(error.message);
-      // 3. If the request fails, update the item status to 'failed'
       updateItemStatus(tempId, { status: "failed" });
     }
   };
 
-  // Handler to add a new category
-  const handleAddCategory = () => {
+  // --- Optimistic UI for adding a category ---
+  const handleAddCategory = async () => {
     if (!newCategory.trim()) return;
-    if (categories.includes(newCategory.trim())) {
-      alert("Category already exists.");
-      return;
-    }
-    const updatedCategories = [...categories, newCategory.trim()];
-    setCategories(updatedCategories);
-    console.log("Placeholder API call to add category:", newCategory.trim());
+    const tempId = generateTemporaryId();
+    const optimisticCategory = {
+      id: tempId,
+      name: newCategory.trim(),
+      status: "pending",
+    };
+
+    setCategories((prev) => [...prev, optimisticCategory]);
     setNewCategory("");
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("You must be logged in.");
+      const token = session.access_token;
+
+      const res = await fetch(`${BACKEND_URL}/api/categories`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: optimisticCategory.name }),
+      });
+
+      if (!res.ok) throw new Error("Server failed to save category.");
+
+      const savedCategory = await res.json();
+      setCategories((prev) =>
+        prev.map((cat) =>
+          cat.id === tempId ? { ...savedCategory, status: "synced" } : cat
+        )
+      );
+    } catch (error) {
+      console.error("Error adding category:", error);
+      alert(error.message);
+      setCategories((prev) =>
+        prev.map((cat) =>
+          cat.id === tempId ? { ...optimisticCategory, status: "failed" } : cat
+        )
+      );
+    }
   };
 
-  // Handler to delete a category
-  const handleDeleteCategory = (cat) => {
-    const updatedCategories = categories.filter((c) => c !== cat);
-    setCategories(updatedCategories);
-    console.log("Placeholder API call to delete category:", cat);
+  // --- Optimistic UI for deleting a category ---
+  const handleDeleteCategory = async (idToDelete) => {
+    const originalCategories = [...categories];
+    setCategories((prev) => prev.filter((c) => c.id !== idToDelete));
+
+    try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("You must be logged in.");
+      const token = session.access_token;
+
+      const res = await fetch(`${BACKEND_URL}/api/categories/${idToDelete}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) throw new Error("Server failed to delete category.");
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      alert(error.message);
+      setCategories(originalCategories);
+    }
   };
 
   return (
@@ -159,8 +238,9 @@ export const ItemRegForm = () => {
           id="barcode"
           {...register("barcode", { required: "Please set a barcode" })}
           placeholder={errors.barcode ? errors.barcode.message : undefined}
-          className={`traditional-input
-            ${errors.barcode ? "border-red-500" : ""}`}
+          className={`traditional-input ${
+            errors.barcode ? "border-red-500" : ""
+          }`}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
@@ -176,15 +256,14 @@ export const ItemRegForm = () => {
           id="name"
           {...register("name", { required: "Please set a product name" })}
           placeholder={errors.name ? errors.name.message : undefined}
-          className={`traditional-input
-            ${errors.name ? "border-red-500" : ""}`}
+          className={`traditional-input ${errors.name ? "border-red-500" : ""}`}
+          ref={nameRef}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
               priceRef.current?.focus();
             }
           }}
-          ref={nameRef}
         />
 
         <label>Price:</label>
@@ -194,15 +273,16 @@ export const ItemRegForm = () => {
           id="price"
           {...register("price", { required: "Please set a price" })}
           placeholder={errors.price ? errors.price.message : undefined}
-          className={`traditional-input
-            ${errors.price ? "border-red-500" : ""}`}
+          className={`traditional-input ${
+            errors.price ? "border-red-500" : ""
+          }`}
+          ref={priceRef}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
               packagingRef.current?.focus();
             }
           }}
-          ref={priceRef}
         />
 
         <label>Packaging:</label>
@@ -212,15 +292,16 @@ export const ItemRegForm = () => {
           id="packaging"
           {...register("packaging", { required: "Identify a packaging type" })}
           placeholder={errors.packaging ? errors.packaging.message : undefined}
-          className={`traditional-input 
-            ${errors.packaging ? "border-red-500" : ""}`}
+          className={`traditional-input ${
+            errors.packaging ? "border-red-500" : ""
+          }`}
+          ref={packagingRef}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               e.preventDefault();
               categoryRef.current?.focus();
             }
           }}
-          ref={packagingRef}
         />
 
         <label>Category:</label>
@@ -228,14 +309,14 @@ export const ItemRegForm = () => {
           id="category"
           {...register("category", { required: "Categorize your product" })}
           ref={categoryRef}
-          title={errors.category ? errors.category.message : undefined}
-          className={`traditional-input
-            ${errors.category ? "border-red-500" : ""}`}
+          className={`traditional-input ${
+            errors.category ? "border-red-500" : ""
+          }`}
         >
           <option value="">Select category</option>
           {categories.map((cat) => (
-            <option key={cat} value={cat}>
-              {cat}
+            <option key={cat.id} value={cat.name}>
+              {cat.name}
             </option>
           ))}
         </select>
@@ -271,14 +352,12 @@ export const ItemRegForm = () => {
           className="traditional-button mt-2 w-fit h-fit"
           onClick={() => setIsEditingCategories(!isEditingCategories)}
         >
-          {isEditingCategories
-            ? "Close Categories Manager"
-            : "Manage Categories"}
+          {isEditingCategories ? "Close" : "Manage Categories"}
         </button>
 
         {isEditingCategories && (
-          <div className="mt-2 p-2 border rounded">
-            <div className="grid grid-cols-2 gap-2 mb-2">
+          <div className="col-span-full mt-2 p-2 border rounded">
+            <div className="flex items-center gap-2 mb-2">
               <input
                 type="text"
                 value={newCategory}
@@ -289,33 +368,41 @@ export const ItemRegForm = () => {
                     handleAddCategory();
                   }
                 }}
-                placeholder="New category"
-                className="traditional-input"
+                placeholder="New category name"
+                className="traditional-input flex-grow"
               />
               <button
                 type="button"
                 className="traditional-button"
                 onClick={handleAddCategory}
               >
-                Add Category
+                Add
               </button>
             </div>
-            <div>
-              {categories.map((cat) => (
-                <div
-                  key={cat}
-                  className="grid grid-cols-2 gap-2 place-items-center"
-                >
-                  <span>{cat}</span>
-                  <button
-                    type="button"
-                    className="traditional-button text-sm"
-                    onClick={() => handleDeleteCategory(cat)}
+            <div className="space-y-1">
+              {categoryLoading ? (
+                <p>Loading categories...</p>
+              ) : (
+                categories.map((cat) => (
+                  <div
+                    key={cat.id}
+                    className="flex items-center justify-between p-1 rounded hover:bg-gray-100"
                   >
-                    Delete
-                  </button>
-                </div>
-              ))}
+                    <div className="flex items-center gap-2">
+                      <StatusIcon status={cat.status} />
+                      <span>{cat.name}</span>
+                    </div>
+                    <button
+                      type="button"
+                      className="text-red-500 hover:text-red-700 text-xs"
+                      onClick={() => handleDeleteCategory(cat.id)}
+                      title="Delete category"
+                    >
+                      ❌
+                    </button>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         )}
