@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useState, useEffect, useCallback } from "react";
 import { getCategories } from "../../api/categoryService";
 // --- NEW: Import the API service function ---
