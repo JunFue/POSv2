@@ -1,348 +1,112 @@
 import { useForm } from "react-hook-form";
-import { useContext, useEffect, useRef, useState, useCallback } from "react";
+import { useContext, useState, useCallback } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
-import {
-  FaCheckCircle,
-  FaExclamationTriangle,
-  FaSpinner,
-} from "react-icons/fa";
-
-// --- REFACTORED: Import from API service files ---
 import { registerItem } from "../../../api/itemService";
-import {
-  getCategories,
-  addCategory,
-  deleteCategory,
-} from "../../../api/categoryService";
+import { CategoryManager } from "./itemregforms-components/CategoryManager";
+import { RegistrationFormFields } from "./itemregforms-components/RegistrationFormField";
 
-// Helper to generate a temporary ID for optimistic UI updates
+// Helper to generate a temporary ID, still needed for optimistic updates
 const generateTemporaryId = () =>
   `temp_${Math.random().toString(36).substr(2, 9)}`;
-
-// Helper component for status icons
-const StatusIcon = ({ status }) => {
-  switch (status) {
-    case "pending":
-      return (
-        <FaSpinner className="animate-spin text-gray-500" title="Sending..." />
-      );
-    case "synced":
-      return <FaCheckCircle className="text-green-500" title="Synced" />;
-    case "failed":
-      return (
-        <FaExclamationTriangle
-          className="text-red-500"
-          title="Failed to save"
-        />
-      );
-    default:
-      return null;
-  }
-};
 
 export const ItemRegForm = () => {
   const { serverOnline, items, addOptimisticItem, updateItemStatus } =
     useContext(ItemRegData);
-  const { register, handleSubmit, formState, reset } = useForm();
-  const { errors } = formState;
-
-  const nameRef = useRef(null);
-  const priceRef = useRef(null);
-  const packagingRef = useRef(null);
-  const categoryRef = useRef(null);
-
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm();
   const [categories, setCategories] = useState([]);
-  const [isEditingCategories, setIsEditingCategories] = useState(false);
-  const [newCategory, setNewCategory] = useState("");
-  const [categoryLoading, setCategoryLoading] = useState(false);
 
-  // --- REFACTORED: Use categoryService ---
-  const fetchCategories = useCallback(async () => {
-    setCategoryLoading(true);
-    try {
-      const data = await getCategories();
-      setCategories(data.map((cat) => ({ ...cat, status: "synced" })));
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-      alert(error.message);
-    } finally {
-      setCategoryLoading(false);
-    }
+  // Callback to receive the category list from the CategoryManager child
+  const handleCategoriesChange = useCallback((loadedCategories) => {
+    setCategories(loadedCategories);
   }, []);
 
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
-
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Enter" && e.shiftKey) {
-        e.preventDefault();
-        handleSubmit(addToRegistry)();
-      }
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [handleSubmit]);
-
-  // --- REFACTORED: Use itemService ---
+  // --- MODIFIED: Form submission handler to use optimistic update correctly ---
   const addToRegistry = async (data) => {
-    if (!serverOnline) {
-      alert("SERVER IS OFFLINE");
-      return;
-    }
-    const duplicate = items.find(
-      (item) =>
-        item.barcode === data.barcode ||
-        item.name.toLowerCase() === data.name.toLowerCase()
-    );
-    if (duplicate) {
+    if (
+      items.find(
+        (item) =>
+          item.barcode === data.barcode ||
+          item.name.toLowerCase() === data.name.toLowerCase()
+      )
+    ) {
       alert("An item with the same barcode or name already exists.");
       return;
     }
 
     const tempId = generateTemporaryId();
+    // 1. Optimistically add the new item to the UI with a 'pending' status.
     addOptimisticItem({ ...data, id: tempId, status: "pending" });
-    reset({ barcode: "", name: "", price: "", packaging: "", category: "" });
+    reset();
     setTimeout(() => document.getElementById("barcode")?.focus(), 0);
 
     try {
+      // 2. Attempt to save the item to the server. We assume `registerItem` returns the saved item with its final ID.
       const savedItem = await registerItem(data);
-      updateItemStatus(tempId, {
-        ...savedItem,
-        status: "synced",
-        id: savedItem.id,
-      });
+
+      // 3. Instead of refreshing the whole table, just update the single item we added.
+      updateItemStatus(tempId, { ...savedItem, status: "synced" });
     } catch (error) {
       alert(error.message);
-      updateItemStatus(tempId, { status: "failed" });
+      // 4. If the save fails, update the item's status to 'failed'.
+      updateItemStatus(tempId, { ...data, id: tempId, status: "failed" });
     }
   };
 
-  // --- REFACTORED: Use categoryService ---
-  const handleAddCategory = async () => {
-    if (!newCategory.trim()) return;
-    const tempId = generateTemporaryId();
-    const optimisticCategory = {
-      id: tempId,
-      name: newCategory.trim(),
-      status: "pending",
-    };
+  // Event handler to manage 'Enter' key presses
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      const target = e.target;
+      const fieldOrder = ["barcode", "name", "price", "packaging", "category"];
 
-    setCategories((prev) => [...prev, optimisticCategory]);
-    setNewCategory("");
+      if (fieldOrder.includes(target.id)) {
+        e.preventDefault();
+        const currentFieldIndex = fieldOrder.indexOf(target.id);
+        const nextFieldIndex = currentFieldIndex + 1;
 
-    try {
-      const savedCategory = await addCategory(optimisticCategory.name);
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === tempId ? { ...savedCategory, status: "synced" } : cat
-        )
-      );
-    } catch (error) {
-      console.error("Error adding category:", error);
-      alert(error.message);
-      setCategories((prev) =>
-        prev.map((cat) =>
-          cat.id === tempId ? { ...optimisticCategory, status: "failed" } : cat
-        )
-      );
-    }
-  };
-
-  // --- REFACTORED: Use categoryService ---
-  const handleDeleteCategory = async (idToDelete) => {
-    const originalCategories = [...categories];
-    setCategories((prev) => prev.filter((c) => c.id !== idToDelete));
-
-    try {
-      await deleteCategory(idToDelete);
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      alert(error.message);
-      setCategories(originalCategories);
+        if (nextFieldIndex < fieldOrder.length) {
+          const nextFieldName = fieldOrder[nextFieldIndex];
+          const form = target.form;
+          const nextField = form.querySelector(`#${nextFieldName}`);
+          if (nextField) {
+            nextField.focus();
+          }
+        } else {
+          const form = target.form;
+          const submitButton = form.querySelector('button[type="submit"]');
+          if (submitButton) {
+            submitButton.focus();
+          }
+        }
+      }
     }
   };
 
   return (
     <div className="bg-background p-4 rounded-lg shadow-neumorphic">
       {!serverOnline && (
-        <div className="text-red-500 font-bold mb-2">SERVER IS OFFLINE</div>
+        <div className="text-red-500 font-bold mb-4">SERVER IS OFFLINE</div>
       )}
+
       <form
         onSubmit={handleSubmit(addToRegistry)}
+        onKeyDown={handleKeyDown}
         noValidate
-        className="gap-[1vw] [&>*]:text-[0.8vw] p-[1vw] mt-[1vw] mx-auto grid grid-cols-[0.3fr_0.5fr_0.3fr_0.5fr] rounded-lg bg-background shadow-neumorphic"
       >
-        {/* Input fields remain the same */}
-        <label>Barcode:</label>
-        <input
-          autoComplete="off"
-          type="text"
-          id="barcode"
-          {...register("barcode", { required: "Please set a barcode" })}
-          placeholder={errors.barcode ? errors.barcode.message : undefined}
-          className={`traditional-input ${
-            errors.barcode ? "border-red-500" : ""
-          }`}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              nameRef.current?.focus();
-            }
-          }}
+        <RegistrationFormFields
+          register={register}
+          errors={errors}
+          categories={categories}
+          serverOnline={serverOnline}
+          onReset={() => reset()}
         />
-
-        <label>Name:</label>
-        <input
-          autoComplete="off"
-          type="text"
-          id="name"
-          {...register("name", { required: "Please set a product name" })}
-          placeholder={errors.name ? errors.name.message : undefined}
-          className={`traditional-input ${errors.name ? "border-red-500" : ""}`}
-          ref={nameRef}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              priceRef.current?.focus();
-            }
-          }}
-        />
-
-        <label>Price:</label>
-        <input
-          autoComplete="off"
-          type="number"
-          id="price"
-          {...register("price", { required: "Please set a price" })}
-          placeholder={errors.price ? errors.price.message : undefined}
-          className={`traditional-input ${
-            errors.price ? "border-red-500" : ""
-          }`}
-          ref={priceRef}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              packagingRef.current?.focus();
-            }
-          }}
-        />
-
-        <label>Packaging:</label>
-        <input
-          autoComplete="off"
-          type="text"
-          id="packaging"
-          {...register("packaging", { required: "Identify a packaging type" })}
-          placeholder={errors.packaging ? errors.packaging.message : undefined}
-          className={`traditional-input ${
-            errors.packaging ? "border-red-500" : ""
-          }`}
-          ref={packagingRef}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              e.preventDefault();
-              categoryRef.current?.focus();
-            }
-          }}
-        />
-
-        <label>Category:</label>
-        <select
-          id="category"
-          {...register("category", { required: "Categorize your product" })}
-          ref={categoryRef}
-          className={`traditional-input ${
-            errors.category ? "border-red-500" : ""
-          }`}
-        >
-          <option value="">Select category</option>
-          {categories.map((cat) => (
-            <option key={cat.id} value={cat.name}>
-              {cat.name}
-            </option>
-          ))}
-        </select>
-
-        <button
-          type="button"
-          className="traditional-button"
-          onClick={() => {
-            reset();
-            document.getElementById("barcode")?.focus();
-          }}
-        >
-          Clear
-        </button>
-        <button
-          type="submit"
-          disabled={!serverOnline}
-          className="traditional-button"
-        >
-          Register
-        </button>
-
-        <button
-          type="button"
-          className="traditional-button mt-2 w-fit h-fit"
-          onClick={() => setIsEditingCategories(!isEditingCategories)}
-        >
-          {isEditingCategories ? "Close" : "Manage Categories"}
-        </button>
-
-        {isEditingCategories && (
-          <div className="col-span-full mt-2 p-2 border rounded">
-            <div className="flex items-center gap-2 mb-2">
-              <input
-                type="text"
-                value={newCategory}
-                onChange={(e) => setNewCategory(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddCategory();
-                  }
-                }}
-                placeholder="New category name"
-                className="traditional-input flex-grow"
-              />
-              <button
-                type="button"
-                className="traditional-button"
-                onClick={handleAddCategory}
-              >
-                Add
-              </button>
-            </div>
-            <div className="space-y-1">
-              {categoryLoading ? (
-                <p>Loading categories...</p>
-              ) : (
-                categories.map((cat) => (
-                  <div
-                    key={cat.id}
-                    className="flex items-center justify-between p-1 rounded hover:bg-gray-100"
-                  >
-                    <div className="flex items-center gap-2">
-                      <StatusIcon status={cat.status} />
-                      <span>{cat.name}</span>
-                    </div>
-                    <button
-                      type="button"
-                      className="text-red-500 hover:text-red-700 text-xs"
-                      onClick={() => handleDeleteCategory(cat.id)}
-                      title="Delete category"
-                    >
-                      ❌
-                    </button>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        )}
       </form>
+
+      <CategoryManager onCategoriesChange={handleCategoriesChange} />
     </div>
   );
 };
