@@ -1,4 +1,4 @@
-import { useState, useContext, useMemo } from "react";
+import { useState, useContext } from "react";
 import {
   getCoreRowModel,
   getSortedRowModel,
@@ -11,11 +11,9 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import { ItemRegData } from "../../../context/ItemRegContext";
-import { supabase } from "../../../utils/supabaseClient";
+import { deleteItem } from "../../../api/itemService";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
-// Helper component for status icons, similar to StocksTable
+// Helper component for status icons
 const StatusIcon = ({ status }) => {
   switch (status) {
     case "pending":
@@ -32,7 +30,7 @@ const StatusIcon = ({ status }) => {
         />
       );
     default:
-      // You might want to render nothing or a default state if status is not set
+      // Render nothing if status is not one of the above
       return null;
   }
 };
@@ -41,94 +39,67 @@ export function ItemRegTable() {
   const { items, refreshItems, loading } = useContext(ItemRegData);
   const [sorting, setSorting] = useState([]);
 
-  const columns = useMemo(
-    () => [
-      // --- 1. Add the Status column ---
-      {
-        accessorKey: "status",
-        header: "Sync",
-        cell: (props) => <StatusIcon status={props.row.original.status} />,
-        size: 40,
-      },
-      {
-        accessorKey: "barcode",
-        header: "Barcode",
-        cell: (props) => <p>{props.getValue()}</p>,
-      },
-      {
-        accessorKey: "name",
-        header: "Name",
-        cell: (props) => <p>{props.getValue()}</p>,
-      },
-      {
-        accessorKey: "price",
-        header: "Price",
-        cell: (props) => <p>{`₱${props.getValue()}`}</p>,
-      },
-      {
-        accessorKey: "packaging",
-        header: "Packaging",
-        cell: (props) => <p>{props.getValue()}</p>,
-      },
-      {
-        accessorKey: "category",
-        header: "Category",
-        cell: (props) => <p>{props.getValue()}</p>,
-      },
-      {
-        accessorKey: "remove",
-        header: "Remove",
-        enableSorting: false,
-        cell: ({ row }) => (
-          <button
-            onClick={async () => {
-              // Prevent deleting items that are still pending
-              if (row.original.status === "pending") {
-                alert(
-                  "Please wait for the item to finish syncing before deleting."
-                );
-                return;
-              }
+  const columns = [
+    // --- NEW: Sync status column ---
+    {
+      id: "status",
+      header: "Sync",
+      cell: ({ row }) => <StatusIcon status={row.original.status} />,
+      enableSorting: false,
+    },
+    {
+      accessorKey: "barcode",
+      header: "Barcode",
+      cell: (props) => <p>{props.getValue()}</p>,
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+      cell: (props) => <p>{props.getValue()}</p>,
+    },
+    {
+      accessorKey: "price",
+      header: "Price",
+      cell: (props) => <p>₱{props.getValue()}</p>,
+    },
+    {
+      accessorKey: "packaging",
+      header: "Packaging",
+      cell: (props) => <p>{props.getValue()}</p>,
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: (props) => <p>{props.getValue()}</p>,
+    },
+    {
+      accessorKey: "remove",
+      header: "Remove",
+      enableSorting: false,
+      cell: ({ row }) => (
+        <button
+          onClick={async () => {
+            if (
+              window.confirm(
+                `Are you sure you want to delete ${row.original.name}?`
+              )
+            ) {
               try {
-                const {
-                  data: { session },
-                } = await supabase.auth.getSession();
-                if (!session) {
-                  alert("You must be logged in to delete an item.");
-                  return;
-                }
-                const token = session.access_token;
-
-                // Use the correct ID for deletion
-                const idToDelete = row.original.barcode;
-
-                await fetch(`${BACKEND_URL}/api/item-delete/${idToDelete}`, {
-                  method: "DELETE",
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                });
+                await deleteItem(row.original.barcode);
                 refreshItems();
               } catch (error) {
                 alert(error.message);
               }
-            }}
-            style={{
-              border: "none",
-              background: "none",
-              cursor: "pointer",
-              fontSize: "1vw",
-              color: "red",
-            }}
-            title="Delete Row"
-          >
-            ❌
-          </button>
-        ),
-      },
-    ],
-    [refreshItems]
-  ); // Dependency array for useMemo
+            }
+          }}
+          className="text-red-500 hover:text-red-700"
+          title="Delete Row"
+        >
+          ❌
+        </button>
+      ),
+    },
+  ];
 
   const table = useReactTable({
     data: items,
@@ -137,13 +108,11 @@ export function ItemRegTable() {
     onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
-    // Make sure row IDs are unique, especially with temp IDs
-    getRowId: (row) => row.id,
   });
 
   return (
     <div className="flex flex-col bg-background rounded-lg p-4">
-      {loading && items.length === 0 ? (
+      {loading ? (
         <div className="text-center text-body-text text-[1vw] py-4">
           Loading...
         </div>
@@ -157,31 +126,18 @@ export function ItemRegTable() {
                     <th
                       key={header.id}
                       className="text-head-text sticky top-0 cursor-pointer bg-background p-2"
-                      onClick={
-                        header.column.getCanSort()
-                          ? header.column.getToggleSortingHandler()
-                          : undefined
-                      }
+                      onClick={header.column.getToggleSortingHandler()}
                     >
-                      {header.isPlaceholder ? null : (
-                        <>
-                          {flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                          {header.column.id !== "remove" &&
-                            header.column.getCanSort() && (
-                              <span className="ml-1 text-[0.8vw] text-gray-500">
-                                ⇅
-                              </span>
-                            )}
-                          {header.column.id !== "remove" &&
-                            (header.column.getIsSorted() === "asc"
-                              ? " 🔼"
-                              : header.column.getIsSorted() === "desc"
-                              ? " 🔽"
-                              : "")}
-                        </>
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext()
+                      )}
+                      {header.column.getCanSort() && (
+                        <span>
+                          {header.column.getIsSorted() === "asc"
+                            ? " 🔼"
+                            : " 🔽"}
+                        </span>
                       )}
                     </th>
                   ))}

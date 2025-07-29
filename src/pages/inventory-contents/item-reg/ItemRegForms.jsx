@@ -1,18 +1,23 @@
 import { useForm } from "react-hook-form";
 import { useContext, useEffect, useRef, useState, useCallback } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
-import { supabase } from "../../../utils/supabaseClient";
 import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaSpinner,
 } from "react-icons/fa";
 
-// A small helper to generate a temporary ID for optimistic updates
+// --- REFACTORED: Import from API service files ---
+import { registerItem } from "../../../api/itemService";
+import {
+  getCategories,
+  addCategory,
+  deleteCategory,
+} from "../../../api/categoryService";
+
+// Helper to generate a temporary ID for optimistic UI updates
 const generateTemporaryId = () =>
   `temp_${Math.random().toString(36).substr(2, 9)}`;
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Helper component for status icons
 const StatusIcon = ({ status }) => {
@@ -46,26 +51,16 @@ export const ItemRegForm = () => {
   const packagingRef = useRef(null);
   const categoryRef = useRef(null);
 
-  // Categories state now holds objects {id, name, status}
   const [categories, setCategories] = useState([]);
   const [isEditingCategories, setIsEditingCategories] = useState(false);
   const [newCategory, setNewCategory] = useState("");
   const [categoryLoading, setCategoryLoading] = useState(false);
 
-  // --- Function to fetch categories from the backend ---
+  // --- REFACTORED: Use categoryService ---
   const fetchCategories = useCallback(async () => {
     setCategoryLoading(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return;
-      const token = session.access_token;
-      const res = await fetch(`${BACKEND_URL}/api/categories`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!res.ok) throw new Error("Could not fetch categories");
-      const data = await res.json();
+      const data = await getCategories();
       setCategories(data.map((cat) => ({ ...cat, status: "synced" })));
     } catch (error) {
       console.error("Failed to fetch categories:", error);
@@ -75,12 +70,10 @@ export const ItemRegForm = () => {
     }
   }, []);
 
-  // --- Fetch categories when the component mounts ---
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
 
-  // This useEffect is for focus management and can be kept as is.
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === "Enter" && e.shiftKey) {
@@ -92,7 +85,7 @@ export const ItemRegForm = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [handleSubmit]);
 
-  // --- Main form submission logic ---
+  // --- REFACTORED: Use itemService ---
   const addToRegistry = async (data) => {
     if (!serverOnline) {
       alert("SERVER IS OFFLINE");
@@ -111,32 +104,10 @@ export const ItemRegForm = () => {
     const tempId = generateTemporaryId();
     addOptimisticItem({ ...data, id: tempId, status: "pending" });
     reset({ barcode: "", name: "", price: "", packaging: "", category: "" });
-    setTimeout(() => {
-      document.getElementById("barcode")?.focus();
-    }, 0);
+    setTimeout(() => document.getElementById("barcode")?.focus(), 0);
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) {
-        updateItemStatus(tempId, { status: "failed" });
-        throw new Error("You must be logged in to register an item.");
-      }
-      const token = session.access_token;
-
-      const res = await fetch(`${BACKEND_URL}/api/item-reg`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(data),
-      });
-
-      if (!res.ok) throw new Error("Failed to register item");
-
-      const savedItem = await res.json();
+      const savedItem = await registerItem(data);
       updateItemStatus(tempId, {
         ...savedItem,
         status: "synced",
@@ -148,7 +119,7 @@ export const ItemRegForm = () => {
     }
   };
 
-  // --- Optimistic UI for adding a category ---
+  // --- REFACTORED: Use categoryService ---
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return;
     const tempId = generateTemporaryId();
@@ -162,24 +133,7 @@ export const ItemRegForm = () => {
     setNewCategory("");
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error("You must be logged in.");
-      const token = session.access_token;
-
-      const res = await fetch(`${BACKEND_URL}/api/categories`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ name: optimisticCategory.name }),
-      });
-
-      if (!res.ok) throw new Error("Server failed to save category.");
-
-      const savedCategory = await res.json();
+      const savedCategory = await addCategory(optimisticCategory.name);
       setCategories((prev) =>
         prev.map((cat) =>
           cat.id === tempId ? { ...savedCategory, status: "synced" } : cat
@@ -196,24 +150,13 @@ export const ItemRegForm = () => {
     }
   };
 
-  // --- Optimistic UI for deleting a category ---
+  // --- REFACTORED: Use categoryService ---
   const handleDeleteCategory = async (idToDelete) => {
     const originalCategories = [...categories];
     setCategories((prev) => prev.filter((c) => c.id !== idToDelete));
 
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) throw new Error("You must be logged in.");
-      const token = session.access_token;
-
-      const res = await fetch(`${BACKEND_URL}/api/categories/${idToDelete}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Server failed to delete category.");
+      await deleteCategory(idToDelete);
     } catch (error) {
       console.error("Error deleting category:", error);
       alert(error.message);
@@ -231,6 +174,7 @@ export const ItemRegForm = () => {
         noValidate
         className="gap-[1vw] [&>*]:text-[0.8vw] p-[1vw] mt-[1vw] mx-auto grid grid-cols-[0.3fr_0.5fr_0.3fr_0.5fr] rounded-lg bg-background shadow-neumorphic"
       >
+        {/* Input fields remain the same */}
         <label>Barcode:</label>
         <input
           autoComplete="off"
@@ -325,16 +269,8 @@ export const ItemRegForm = () => {
           type="button"
           className="traditional-button"
           onClick={() => {
-            reset({
-              barcode: "",
-              name: "",
-              price: "",
-              packaging: "",
-              category: "",
-            });
-            setTimeout(() => {
-              document.getElementById("barcode")?.focus();
-            }, 0);
+            reset();
+            document.getElementById("barcode")?.focus();
           }}
         >
           Clear
