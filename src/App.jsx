@@ -20,14 +20,24 @@ function App() {
           <Nav />
           <div className="shadow-neumorphic overflow-y-scroll md:min-h-[80vh]">
             <Routes>
+              {/* Default route */}
               <Route path="/*" element={<Dashboard />} />
-              <Route path="dashboard/" element={<Dashboard />} />
-              {/* --- NEW: Dynamic route for categories --- */}
+
+              {/* Specific Dashboard Routes */}
+              <Route path="dashboard" element={<Dashboard />} />
               <Route
                 path="dashboard/category/:categoryName"
                 element={<CategoryPage />}
               />
+
+              {/* Specific Cashout Routes */}
               <Route path="cashout" element={<Cashout />} />
+              <Route
+                path="cashout/category/:categoryName"
+                element={<Cashout />}
+              />
+
+              {/* Other top-level routes */}
               <Route path="transactions/*" element={<Transactions />} />
               <Route path="inventory/*" element={<Inventory />} />
             </Routes>

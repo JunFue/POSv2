@@ -1,31 +1,17 @@
-import { Link } from "react-router";
+import { Link } from "react-router-dom";
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "../../utils/supabaseClient";
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+import { getCategories } from "../../api/categoryService";
+// --- NEW: Import the API service function ---
 
 export function Nav() {
-  // --- NEW: State to hold the dynamic categories ---
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // --- NEW: Function to fetch categories from the API ---
+  // Fetch categories using the new service
   const fetchCategories = useCallback(async () => {
     setLoading(true);
     try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session) return; // Don't fetch if not logged in
-
-      const token = session.access_token;
-      const res = await fetch(`${BACKEND_URL}/api/categories`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-
-      if (!res.ok) throw new Error("Failed to fetch categories for nav");
-
-      const data = await res.json();
+      const data = await getCategories();
       setCategories(data);
     } catch (error) {
       console.error(error.message);
@@ -34,19 +20,16 @@ export function Nav() {
     }
   }, []);
 
-  // --- NEW: Fetch categories when the component mounts ---
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
 
-  // --- MODIFICATION: The links array is now built inside the component ---
   const links = [
     {
       path: "/dashboard",
       label: "Dashboard",
       flyoutText: (
         <>
-          {/* --- NEW: Hard-coded Overview link --- */}
           <div>
             <Link to="/dashboard" className="block hover:text-emerald-700">
               Overview
@@ -70,7 +53,28 @@ export function Nav() {
         </>
       ),
     },
-    { path: "/cashout", label: "Cashout", flyoutText: "Manage Cashout" },
+    {
+      path: "/cashout",
+      label: "Cashout",
+      flyoutText: (
+        <>
+          {loading && <div>Loading...</div>}
+          {!loading && categories.length === 0 && (
+            <div>No categories found.</div>
+          )}
+          {categories.map((cat) => (
+            <div key={cat.id}>
+              <Link
+                to={`/cashout/category/${encodeURIComponent(cat.name)}`}
+                className="block hover:text-emerald-700"
+              >
+                {cat.name}
+              </Link>
+            </div>
+          ))}
+        </>
+      ),
+    },
     {
       path: "/transactions",
       label: "Transactions",
