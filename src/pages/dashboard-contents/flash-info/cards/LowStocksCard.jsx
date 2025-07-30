@@ -5,11 +5,12 @@ import { useAuth } from "../../../../features/pos-features/authentication/hooks/
 import { supabase } from "../../../../utils/supabaseClient";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const CACHE_KEY = "lowStocks";
 
 export function LowStocksCard({ onHide }) {
   const [items, setItems] = useState([]);
   const [limit, setLimit] = useState(5);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Will now be handled more carefully
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { session } = useAuth();
   const token = session?.access_token;
@@ -17,8 +18,7 @@ export function LowStocksCard({ onHide }) {
   const fetchLowStocks = useCallback(
     async (currentLimit) => {
       if (!token) return;
-      setIsLoading(true);
-
+      // --- FIXED: Do not set loading to true here ---
       try {
         const url = `${BACKEND_URL}/api/flash-info/low-stocks?limit=${currentLimit}`;
         const response = await fetch(url, {
@@ -29,10 +29,13 @@ export function LowStocksCard({ onHide }) {
 
         const data = await response.json();
         setItems(data);
+        // Cache the new list of items
+        localStorage.setItem(CACHE_KEY, JSON.stringify(data));
       } catch (error) {
         console.error("LowStocksCard: Error fetching data:", error);
-        setItems([]);
+        setItems([]); // Clear items on error
       } finally {
+        // --- NEW: Always set loading to false after a fetch attempt ---
         setIsLoading(false);
       }
     },
@@ -40,22 +43,29 @@ export function LowStocksCard({ onHide }) {
   );
 
   useEffect(() => {
+    // Load from cache on first mount
+    const cachedItems = localStorage.getItem(CACHE_KEY);
+    if (cachedItems) {
+      setItems(JSON.parse(cachedItems));
+      // If we have cached items, we are not in an initial loading state.
+      setIsLoading(false);
+    }
+
+    // Fetch latest data
     fetchLowStocks(limit);
 
-    // --- REVISED: Supabase Real-time Subscription ---
+    // Subscribe to real-time changes
     const channel = supabase
-      .channel("public:item_inventory:low_stocks") // Use a unique channel name
+      .channel("public:item_inventory:low_stocks")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "item_inventory" },
         () => {
-          console.log("LowStocksCard: Inventory change detected, refetching.");
           fetchLowStocks(limit);
         }
       )
       .subscribe();
 
-    // Cleanup subscription on component unmount
     return () => {
       supabase.removeChannel(channel);
     };

@@ -4,6 +4,7 @@ import { useAuth } from "../../../../features/pos-features/authentication/hooks/
 import { supabase } from "../../../../utils/supabaseClient";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const CACHE_KEY = "dailyExpenses";
 
 export function DailyExpensesCard({ onHide }) {
   const [expensesValue, setExpensesValue] = useState("Loading...");
@@ -32,6 +33,8 @@ export function DailyExpensesCard({ onHide }) {
       }).format(data.totalExpenses);
 
       setExpensesValue(formattedExpenses);
+      // Cache the new value
+      localStorage.setItem(CACHE_KEY, formattedExpenses);
     } catch (error) {
       console.error("DailyExpensesCard: Error fetching daily expenses:", error);
       setExpensesValue("Error");
@@ -39,24 +42,27 @@ export function DailyExpensesCard({ onHide }) {
   }, [token]);
 
   useEffect(() => {
+    // Load from cache on first mount
+    const cachedExpenses = localStorage.getItem(CACHE_KEY);
+    if (cachedExpenses) {
+      setExpensesValue(cachedExpenses);
+    }
+
+    // Fetch latest data
     fetchDailyExpenses();
 
-    // --- REVISED: Supabase Real-time Subscription ---
+    // Subscribe to real-time changes
     const channel = supabase
       .channel("public:cashouts")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "cashouts" },
         () => {
-          console.log(
-            "DailyExpensesCard: Cashout change detected, refetching expenses."
-          );
           fetchDailyExpenses();
         }
       )
       .subscribe();
 
-    // Cleanup subscription on component unmount
     return () => {
       supabase.removeChannel(channel);
     };

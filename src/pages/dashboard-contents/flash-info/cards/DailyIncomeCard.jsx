@@ -3,6 +3,8 @@ import { MiniCard } from "../MiniCard";
 import { supabase } from "../../../../utils/supabaseClient";
 import { getDailyIncome } from "../../../../api/dashboardService";
 
+const CACHE_KEY = "dailyIncome";
+
 export function DailyIncomeCard({ onHide }) {
   const [incomeValue, setIncomeValue] = useState("Loading...");
 
@@ -14,6 +16,8 @@ export function DailyIncomeCard({ onHide }) {
         currency: "PHP",
       }).format(data.totalNetIncome);
       setIncomeValue(formattedIncome);
+      // Cache the new value
+      localStorage.setItem(CACHE_KEY, formattedIncome);
     } catch (error) {
       console.error("DailyIncomeCard: Error fetching daily income:", error);
       setIncomeValue("Error");
@@ -21,7 +25,16 @@ export function DailyIncomeCard({ onHide }) {
   }, []);
 
   useEffect(() => {
+    // Load from cache on first mount
+    const cachedIncome = localStorage.getItem(CACHE_KEY);
+    if (cachedIncome) {
+      setIncomeValue(cachedIncome);
+    }
+
+    // Fetch latest data
     fetchIncome();
+
+    // Subscribe to real-time changes
     const channel = supabase
       .channel("public:payments:income")
       .on(
@@ -32,6 +45,7 @@ export function DailyIncomeCard({ onHide }) {
         }
       )
       .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
     };

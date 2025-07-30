@@ -4,6 +4,8 @@ import { FaCalendarAlt } from "react-icons/fa";
 import { IncomeRangeCalendar } from "./IncomeRangeCalendar";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { getMonthlyIncome } from "../../../../api/dashboardService";
+// --- NEW: Import the Supabase client ---
+import { supabase } from "../../../../utils/supabaseClient";
 
 export function MonthlyIncomeCard({ onHide }) {
   const [incomeValue, setIncomeValue] = useState("Loading...");
@@ -15,7 +17,7 @@ export function MonthlyIncomeCard({ onHide }) {
 
   const fetchIncome = useCallback(async (range) => {
     if (!range.from || !range.to) return;
-    setIncomeValue("Loading...");
+    // --- FIXED: Do not set to "Loading..." here if a cached value might be displayed ---
     try {
       const data = await getMonthlyIncome(range);
       const formattedIncome = new Intl.NumberFormat("en-PH", {
@@ -23,6 +25,10 @@ export function MonthlyIncomeCard({ onHide }) {
         currency: "PHP",
       }).format(data.totalNetIncome);
       setIncomeValue(formattedIncome);
+
+      // Cache the value with a dynamic key based on the date range
+      const cacheKey = `monthlyIncome-${range.from.toISOString()}-${range.to.toISOString()}`;
+      localStorage.setItem(cacheKey, formattedIncome);
     } catch (error) {
       console.error("MonthlyIncomeCard: Error fetching income:", error);
       setIncomeValue("Error");
@@ -30,7 +36,33 @@ export function MonthlyIncomeCard({ onHide }) {
   }, []);
 
   useEffect(() => {
+    // Load from cache on first mount
+    const cacheKey = `monthlyIncome-${dateRange.from.toISOString()}-${dateRange.to.toISOString()}`;
+    const cachedIncome = localStorage.getItem(cacheKey);
+    if (cachedIncome) {
+      setIncomeValue(cachedIncome);
+    }
+
+    // Fetch latest data in the background
     fetchIncome(dateRange);
+
+    // Subscribe to real-time changes
+    const channel = supabase
+      .channel("public:payments:monthly_income")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "payments" },
+        () => {
+          // Refetch data for the current date range when any payment changes
+          fetchIncome(dateRange);
+        }
+      )
+      .subscribe();
+
+    // Cleanup subscription
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [fetchIncome, dateRange]);
 
   const handleSetRange = (newRange) => {
