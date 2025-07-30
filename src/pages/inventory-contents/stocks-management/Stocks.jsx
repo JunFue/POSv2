@@ -18,7 +18,12 @@ export function Stocks() {
   const fetchStocks = useCallback(async () => {
     try {
       const data = await getStocks();
-      const syncedData = data.map((r) => ({ ...r, status: "synced" }));
+      // --- MODIFIED: Set isOriginal to true for all initially fetched records ---
+      const syncedData = data.map((r) => ({
+        ...r,
+        status: "synced",
+        isOriginal: true,
+      }));
       setStockRecords(syncedData);
     } catch (error) {
       console.error("API CALL FAILED: getStocks", error);
@@ -32,7 +37,13 @@ export function Stocks() {
   // --- REFACTORED: Use addStockRecord service ---
   const addRecord = async (newRecord) => {
     const tempId = crypto.randomUUID();
-    const optimisticRecord = { ...newRecord, id: tempId, status: "pending" };
+    // --- MODIFIED: New records are marked as 'Original' ---
+    const optimisticRecord = {
+      ...newRecord,
+      id: tempId,
+      status: "pending",
+      isOriginal: true,
+    };
 
     setStockRecords((prevRecords) => [optimisticRecord, ...prevRecords]);
 
@@ -40,7 +51,10 @@ export function Stocks() {
       const savedRecord = await addStockRecord(newRecord);
       setStockRecords((prev) =>
         prev.map((r) =>
-          r.id === tempId ? { ...savedRecord, status: "synced" } : r
+          // --- MODIFIED: Preserve the 'isOriginal' status after syncing ---
+          r.id === tempId
+            ? { ...savedRecord, status: "synced", isOriginal: true }
+            : r
         )
       );
     } catch (error) {
@@ -56,7 +70,10 @@ export function Stocks() {
     const originalRecords = [...stockRecords];
     setStockRecords((prev) =>
       prev.map((r) =>
-        r.id === updatedRecord.id ? { ...updatedRecord, status: "pending" } : r
+        // --- MODIFIED: Updated records are marked as not original ('Edited') ---
+        r.id === updatedRecord.id
+          ? { ...updatedRecord, status: "pending", isOriginal: false }
+          : r
       )
     );
     setEditingRecord(null);
@@ -65,7 +82,10 @@ export function Stocks() {
       const savedRecord = await updateStockRecord(updatedRecord);
       setStockRecords((prev) =>
         prev.map((r) =>
-          r.id === savedRecord.id ? { ...savedRecord, status: "synced" } : r
+          // --- MODIFIED: Preserve the 'isOriginal' status after syncing ---
+          r.id === savedRecord.id
+            ? { ...savedRecord, status: "synced", isOriginal: false }
+            : r
         )
       );
     } catch (error) {
@@ -76,6 +96,7 @@ export function Stocks() {
 
   // --- REFACTORED: Use deleteStockRecord service ---
   const deleteRecord = async (id) => {
+    // Using a custom modal/confirm dialog is recommended over window.confirm
     if (!window.confirm("Are you sure you want to delete this record?")) return;
 
     const originalRecords = [...stockRecords];
