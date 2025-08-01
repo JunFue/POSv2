@@ -4,12 +4,13 @@ import { SalesSummaryCard } from "./components/SalesSummaryCard.jsx";
 import { ItemsSoldTable } from "./components/ItemSoldTable.jsx";
 import { MonthlyLogTable } from "./components/MonthlyLogTable.jsx";
 import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth.js";
-import { supabase } from "../../../utils/supabaseClient"; // Import for real-time
-import { usePageVisibility } from "../../../hooks/usePageVisibility"; // Import the visibility hook
+import { supabase } from "../../../utils/supabaseClient";
+import { usePageVisibility } from "../../../hooks/usePageVisibility";
+// --- FIX: Import the new service ---
+import { getCategoricalSales } from "../../../api/categoryPageService";
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // Cache is valid for 5 minutes
+const CACHE_TTL_MS = 5 * 60 * 1000;
 
-// A simple debounce utility
 function debounce(func, delay) {
   let timeoutId;
   return (...args) => {
@@ -28,7 +29,7 @@ const LoadingSpinner = () => (
 
 export function CategoryPage() {
   const { categoryName } = useParams();
-  const { token, user } = useAuth();
+  const { user } = useAuth(); // We don't need the token directly anymore
   const isVisible = usePageVisibility();
 
   const today = new Date().toISOString().split("T")[0];
@@ -37,44 +38,27 @@ export function CategoryPage() {
   const [summaryData, setSummaryData] = useState({ grossSales: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
   const [dataForCategory, setDataForCategory] = useState(null);
 
   const fetchGrossSales = useCallback(async () => {
-    if (!categoryName || !token || !user?.id) {
-      return; // Prerequisites not met
-    }
-    try {
-      const queryParams = new URLSearchParams({
-        date: today,
-        classification: categoryName,
-        userId: user.id,
-      });
-      const url = `/api/categorical-sales?${queryParams.toString()}`;
+    if (!categoryName || !user?.id) return;
 
-      const response = await fetch(url, {
-        method: "GET",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.error || "Failed to fetch data");
+    try {
+      // --- FIX: Use the new service function ---
+      const result = await getCategoricalSales(today, categoryName, user.id);
 
       const newGrossSales = result.totalSales;
-
-      setSummaryData((prev) => ({ ...prev, grossSales: newGrossSales }));
+      setSummaryData({ grossSales: newGrossSales });
       setDataForCategory(categoryName);
 
-      const cacheData = {
-        value: newGrossSales,
-        timestamp: Date.now(),
-      };
+      const cacheData = { value: newGrossSales, timestamp: Date.now() };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
     } catch (err) {
       setError(err.message);
     } finally {
       setLoading(false);
     }
-  }, [categoryName, token, user, today, CACHE_KEY]);
+  }, [categoryName, user, today, CACHE_KEY]);
 
   const debouncedFetchRef = useRef(debounce(fetchGrossSales, 500));
 
@@ -92,29 +76,26 @@ export function CategoryPage() {
       }
     }
 
-    if (token && user?.id) {
+    if (user?.id) {
       fetchGrossSales();
     }
 
-    const channel = supabase.channel(`public:transactions:${categoryName}`).on(
-      "postgres_changes",
-      { event: "*", schema: "public", table: "transactions" },
-      // --- FIX ---
-      // The payload is intentionally not used. Re-fetching the aggregate ensures
-      // the data is always 100% accurate and consistent with the database.
-      () => {
-        debouncedFetchRef.current();
-      }
-    );
+    const channel = supabase
+      .channel(`public:transactions:${categoryName}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "transactions" },
+        () => {
+          debouncedFetchRef.current();
+        }
+      );
 
-    if (isVisible) {
-      channel.subscribe();
-    }
+    if (isVisible) channel.subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [categoryName, fetchGrossSales, isVisible, CACHE_KEY, token, user]);
+  }, [categoryName, fetchGrossSales, isVisible, CACHE_KEY, user]);
 
   return (
     <div className="p-6 bg-background min-h-screen">
