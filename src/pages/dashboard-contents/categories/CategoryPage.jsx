@@ -15,66 +15,86 @@ const LoadingSpinner = () => (
 
 export function CategoryPage() {
   const { categoryName } = useParams();
-  const { token } = useAuth(); // Use your custom hook to get the auth token
+  const { token, user } = useAuth();
 
-  // State to hold all summary card data. Initialize with default values.
   const [summaryData, setSummaryData] = useState({
     grossSales: 0,
-    totalQuantitySold: 0, // Placeholder
-    freeQuantity: 0, // Placeholder
-    netQuantity: 0, // Placeholder
+    totalQuantitySold: 0,
+    freeQuantity: 0,
+    netQuantity: 0,
   });
+  // Start in a loading state by default
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const fetchGrossSales = async () => {
-      // Only proceed if we have the necessary information
-      if (!categoryName || !token) {
-        setLoading(false);
+      console.log("[DEBUG] Checking prerequisites for fetch:", {
+        hasCategoryName: !!categoryName,
+        hasToken: !!token,
+        hasUserId: !!user?.id,
+      });
+
+      // Only proceed if we have all necessary information.
+      // If not, just wait for the next re-render when the auth data is ready.
+      if (!categoryName || !token || !user?.id) {
+        console.log(
+          "[DEBUG] Prerequisites not met. Waiting for auth details..."
+        );
+        // By not setting loading to false, we keep the spinner active.
         return;
       }
 
-      setLoading(true);
+      // We have the auth data, so now we can proceed with the fetch.
+      // No need to set setLoading(true) here since it's already true.
       setError(null);
-
-      // Get today's date in YYYY-MM-DD format
       const today = new Date().toISOString().split("T")[0];
 
       try {
-        const response = await fetch("/api/categorical-report/daily-sales", {
-          method: "POST",
+        const queryParams = new URLSearchParams({
+          date: today,
+          classification: categoryName,
+          userId: user.id,
+        });
+        const url = `/api/categorical-sales?${queryParams.toString()}`;
+
+        console.log(`[DEBUG] Attempting to fetch from URL: ${url}`);
+
+        const response = await fetch(url, {
+          method: "GET",
           headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`, // Use the token from the useAuth hook
+            Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({
-            date: today,
-            category: categoryName,
-          }),
         });
 
+        console.log(
+          `[DEBUG] Received response with status: ${response.status} ${response.statusText}`
+        );
         const result = await response.json();
+        console.log("[DEBUG] Parsed JSON response:", result);
 
         if (!response.ok) {
           throw new Error(result.error || "Failed to fetch data");
         }
 
-        // Update only the grossSales field with the fetched data
         setSummaryData((prevData) => ({
           ...prevData,
           grossSales: result.totalSales,
         }));
       } catch (err) {
-        console.error("Error fetching gross sales:", err.message);
+        console.error(
+          "[DEBUG] An error occurred in the fetchGrossSales function:",
+          err
+        );
         setError(err.message);
       } finally {
+        // Once the fetch is complete (or fails), stop loading.
         setLoading(false);
       }
     };
 
     fetchGrossSales();
-  }, [categoryName, token]); // Add token to the dependency array
+  }, [categoryName, token, user]); // The effect runs when any of these change
 
   return (
     <div className="p-6 bg-background min-h-screen">
@@ -85,15 +105,13 @@ export function CategoryPage() {
         Sales and logs for the current category.
       </p>
 
+      {/* The loading spinner will now correctly display until the fetch is attempted */}
       {loading && <LoadingSpinner />}
       {error && <p className="text-red-500 text-center">Error: {error}</p>}
 
       {!loading && !error && (
         <>
-          {/* SalesSummaryCard now uses state with the fetched gross sales */}
           <SalesSummaryCard data={summaryData} />
-
-          {/* The components below are given empty data until their endpoints are created */}
           <ItemsSoldTable data={[]} />
           <MonthlyLogTable data={[]} />
         </>

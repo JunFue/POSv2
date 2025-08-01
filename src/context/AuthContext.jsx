@@ -27,6 +27,9 @@ export function AuthProvider({ children }) {
   const value = {
     session,
     user: session?.user ?? null,
+    // --- FIX ---
+    // Expose the access_token from the session object as 'token'
+    token: session?.access_token ?? null,
     isSignOn,
     toggle,
   };
