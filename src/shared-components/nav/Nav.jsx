@@ -1,28 +1,87 @@
-import { Link } from "react-router";
-import { useState, useEffect, useCallback } from "react";
+import { Link } from "react-router"; // It's conventional to use react-router-dom
+import { useState, useEffect, useCallback, useRef } from "react";
 import { getCategories } from "../../api/categoryService";
-// --- NEW: Import the API service function ---
+import { supabase } from "../../utils/supabaseClient"; // Import supabase for real-time
+import { usePageVisibility } from "../../hooks/usePageVisibility"; // Import the visibility hook
+
+const CACHE_KEY = "navCategoriesData";
+const CACHE_TTL_MS = 15 * 60 * 1000; // Cache categories for 15 minutes
+
+// A simple debounce utility
+function debounce(func, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
 
 export function Nav() {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
+  const isVisible = usePageVisibility();
 
-  // Fetch categories using the new service
   const fetchCategories = useCallback(async () => {
-    setLoading(true);
+    // No need to set loading to true here, it's handled on mount
     try {
       const data = await getCategories();
       setCategories(data);
+      // 1. TECHNIQUE: Cache the new data with a timestamp
+      const cacheData = {
+        value: data,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
     } catch (error) {
-      console.error(error.message);
+      console.error("Nav component error:", error.message);
+      // If fetching fails, clear the categories to avoid showing stale data
+      setCategories([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  // Use a ref for the debounced function to persist it across renders
+  const debouncedFetchRef = useRef(debounce(fetchCategories, 500));
+
   useEffect(() => {
+    // --- Initial Load ---
+    const cachedItem = localStorage.getItem(CACHE_KEY);
+    if (cachedItem) {
+      const { value, timestamp } = JSON.parse(cachedItem);
+      // 1. TECHNIQUE: Check if cache is still valid
+      if (Date.now() - timestamp < CACHE_TTL_MS) {
+        setCategories(value);
+        setLoading(false); // We have data, so we're not "loading"
+      }
+    }
+    // Always fetch fresh data on mount to ensure it's up-to-date
     fetchCategories();
-  }, [fetchCategories]);
+
+    // 2. TECHNIQUE: Subscribe to real-time changes for the categories table
+    const channel = supabase
+      .channel("public:categories")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "categories" },
+        (payload) => {
+          console.log("Category change detected:", payload);
+          // 3. TECHNIQUE: Debounce the fetch call
+          debouncedFetchRef.current();
+        }
+      );
+
+    // 4. TECHNIQUE: Use page visibility to manage the subscription
+    if (isVisible) {
+      channel.subscribe();
+    }
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchCategories, isVisible]);
 
   const links = [
     {
@@ -35,21 +94,18 @@ export function Nav() {
               Overview
             </Link>
           </div>
-
           {loading && <div>Loading...</div>}
-          {!loading && categories.length === 0 && (
-            <div>No categories found.</div>
-          )}
-          {categories.map((cat) => (
-            <div key={cat.id}>
-              <Link
-                to={`/dashboard/category/${encodeURIComponent(cat.name)}`}
-                className="block hover:text-emerald-700"
-              >
-                {cat.name}
-              </Link>
-            </div>
-          ))}
+          {!loading &&
+            categories.map((cat) => (
+              <div key={cat.id}>
+                <Link
+                  to={`/dashboard/category/${encodeURIComponent(cat.name)}`}
+                  className="block hover:text-emerald-700"
+                >
+                  {cat.name}
+                </Link>
+              </div>
+            ))}
         </>
       ),
     },
@@ -59,19 +115,17 @@ export function Nav() {
       flyoutText: (
         <>
           {loading && <div>Loading...</div>}
-          {!loading && categories.length === 0 && (
-            <div>No categories found.</div>
-          )}
-          {categories.map((cat) => (
-            <div key={cat.id}>
-              <Link
-                to={`/cashout/category/${encodeURIComponent(cat.name)}`}
-                className="block hover:text-emerald-700"
-              >
-                {cat.name}
-              </Link>
-            </div>
-          ))}
+          {!loading &&
+            categories.map((cat) => (
+              <div key={cat.id}>
+                <Link
+                  to={`/cashout/category/${encodeURIComponent(cat.name)}`}
+                  className="block hover:text-emerald-700"
+                >
+                  {cat.name}
+                </Link>
+              </div>
+            ))}
         </>
       ),
     },

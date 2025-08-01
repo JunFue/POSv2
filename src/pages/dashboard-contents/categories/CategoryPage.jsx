@@ -1,12 +1,25 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router";
-
 import { SalesSummaryCard } from "./components/SalesSummaryCard.jsx";
 import { ItemsSoldTable } from "./components/ItemSoldTable.jsx";
 import { MonthlyLogTable } from "./components/MonthlyLogTable.jsx";
 import { useAuth } from "../../../features/pos-features/authentication/hooks/useAuth.js";
+import { supabase } from "../../../utils/supabaseClient"; // Import for real-time
+import { usePageVisibility } from "../../../hooks/usePageVisibility"; // Import the visibility hook
 
-// A simple loading component to improve user experience
+const CACHE_TTL_MS = 5 * 60 * 1000; // Cache is valid for 5 minutes
+
+// A simple debounce utility
+function debounce(func, delay) {
+  let timeoutId;
+  return (...args) => {
+    clearTimeout(timeoutId);
+    timeoutId = setTimeout(() => {
+      func.apply(this, args);
+    }, delay);
+  };
+}
+
 const LoadingSpinner = () => (
   <div className="flex justify-center items-center p-8">
     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
@@ -16,65 +29,92 @@ const LoadingSpinner = () => (
 export function CategoryPage() {
   const { categoryName } = useParams();
   const { token, user } = useAuth();
+  const isVisible = usePageVisibility();
 
-  const [summaryData, setSummaryData] = useState({
-    grossSales: 0,
-    totalQuantitySold: 0,
-    freeQuantity: 0,
-    netQuantity: 0,
-  });
-  // Start in a loading state by default
+  const today = new Date().toISOString().split("T")[0];
+  const CACHE_KEY = `categoricalSales-${categoryName}-${today}`;
+
+  const [summaryData, setSummaryData] = useState({ grossSales: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const [dataForCategory, setDataForCategory] = useState(null);
+
+  const fetchGrossSales = useCallback(async () => {
+    if (!categoryName || !token || !user?.id) {
+      return; // Prerequisites not met
+    }
+    try {
+      const queryParams = new URLSearchParams({
+        date: today,
+        classification: categoryName,
+        userId: user.id,
+      });
+      const url = `/api/categorical-sales?${queryParams.toString()}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Failed to fetch data");
+
+      const newGrossSales = result.totalSales;
+
+      setSummaryData((prev) => ({ ...prev, grossSales: newGrossSales }));
+      setDataForCategory(categoryName);
+
+      const cacheData = {
+        value: newGrossSales,
+        timestamp: Date.now(),
+      };
+      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }, [categoryName, token, user, today, CACHE_KEY]);
+
+  const debouncedFetchRef = useRef(debounce(fetchGrossSales, 500));
+
   useEffect(() => {
-    const fetchGrossSales = async () => {
-      if (!categoryName || !token || !user?.id) {
-        return;
-      }
+    setLoading(true);
+    setError(null);
 
-      setError(null);
-      const today = new Date().toISOString().split("T")[0];
-
-      try {
-        const queryParams = new URLSearchParams({
-          date: today,
-          classification: categoryName,
-          userId: user.id,
-        });
-        const url = `/api/categorical-sales?${queryParams.toString()}`;
-
-        const response = await fetch(url, {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw new Error(result.error || "Failed to fetch data");
-        }
-
-        setSummaryData((prevData) => ({
-          ...prevData,
-          grossSales: result.totalSales,
-        }));
-      } catch (err) {
-        console.error(
-          "[DEBUG] An error occurred in the fetchGrossSales function:",
-          err
-        );
-        setError(err.message);
-      } finally {
-        // Once the fetch is complete (or fails), stop loading.
+    const cachedItem = localStorage.getItem(CACHE_KEY);
+    if (cachedItem) {
+      const { value, timestamp } = JSON.parse(cachedItem);
+      if (Date.now() - timestamp < CACHE_TTL_MS) {
+        setSummaryData({ grossSales: value });
+        setDataForCategory(categoryName);
         setLoading(false);
       }
-    };
+    }
 
-    fetchGrossSales();
-  }, [categoryName, token, user]); // The effect runs when any of these change
+    if (token && user?.id) {
+      fetchGrossSales();
+    }
+
+    const channel = supabase.channel(`public:transactions:${categoryName}`).on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "transactions" },
+      // --- FIX ---
+      // The payload is intentionally not used. Re-fetching the aggregate ensures
+      // the data is always 100% accurate and consistent with the database.
+      () => {
+        debouncedFetchRef.current();
+      }
+    );
+
+    if (isVisible) {
+      channel.subscribe();
+    }
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [categoryName, fetchGrossSales, isVisible, CACHE_KEY, token, user]);
 
   return (
     <div className="p-6 bg-background min-h-screen">
@@ -85,11 +125,10 @@ export function CategoryPage() {
         Sales and logs for the current category.
       </p>
 
-      {/* The loading spinner will now correctly display until the fetch is attempted */}
       {loading && <LoadingSpinner />}
       {error && <p className="text-red-500 text-center">Error: {error}</p>}
 
-      {!loading && !error && (
+      {!loading && !error && dataForCategory === categoryName && (
         <>
           <SalesSummaryCard data={summaryData} />
           <ItemsSoldTable data={[]} />
