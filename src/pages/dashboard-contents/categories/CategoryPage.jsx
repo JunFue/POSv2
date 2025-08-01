@@ -29,24 +29,10 @@ export function CategoryPage() {
 
   useEffect(() => {
     const fetchGrossSales = async () => {
-      console.log("[DEBUG] Checking prerequisites for fetch:", {
-        hasCategoryName: !!categoryName,
-        hasToken: !!token,
-        hasUserId: !!user?.id,
-      });
-
-      // Only proceed if we have all necessary information.
-      // If not, just wait for the next re-render when the auth data is ready.
       if (!categoryName || !token || !user?.id) {
-        console.log(
-          "[DEBUG] Prerequisites not met. Waiting for auth details..."
-        );
-        // By not setting loading to false, we keep the spinner active.
         return;
       }
 
-      // We have the auth data, so now we can proceed with the fetch.
-      // No need to set setLoading(true) here since it's already true.
       setError(null);
       const today = new Date().toISOString().split("T")[0];
 
@@ -58,8 +44,6 @@ export function CategoryPage() {
         });
         const url = `/api/categorical-sales?${queryParams.toString()}`;
 
-        console.log(`[DEBUG] Attempting to fetch from URL: ${url}`);
-
         const response = await fetch(url, {
           method: "GET",
           headers: {
@@ -67,11 +51,7 @@ export function CategoryPage() {
           },
         });
 
-        console.log(
-          `[DEBUG] Received response with status: ${response.status} ${response.statusText}`
-        );
         const result = await response.json();
-        console.log("[DEBUG] Parsed JSON response:", result);
 
         if (!response.ok) {
           throw new Error(result.error || "Failed to fetch data");
