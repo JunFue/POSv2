@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { MiniCard } from "../MiniCard";
 import { supabase } from "../../../../utils/supabaseClient";
 import { getDailyIncome } from "../../../../api/dashboardService";
-import { usePageVisibility } from "../../../../hooks/usePageVisibility"; // Assuming a custom hook for visibility
+import { usePageVisibility } from "../../../../hooks/usePageVisibility";
 
 const CACHE_KEY = "dailyIncomeData";
 const CACHE_TTL_MS = 5 * 60 * 1000; // Cache is valid for 5 minutes
@@ -39,7 +39,7 @@ export function DailyIncomeCard({ onHide }) {
 
       setIncomeValue(formattedIncome);
 
-      // 1. IMPROVEMENT: Cache an object with the value and a timestamp
+      // Cache an object with the value and a timestamp
       const cacheData = {
         value: formattedIncome,
         timestamp: Date.now(),
@@ -54,29 +54,36 @@ export function DailyIncomeCard({ onHide }) {
   useEffect(() => {
     // --- Initial Load ---
     const cachedItem = localStorage.getItem(CACHE_KEY);
+    let isCacheValid = false;
+
     if (cachedItem) {
       const { value, timestamp } = JSON.parse(cachedItem);
-      // 1. IMPROVEMENT: Check if cache is stale
+      // Check if cache is still valid
       if (Date.now() - timestamp < CACHE_TTL_MS) {
         setIncomeValue(value);
+        isCacheValid = true;
       }
     }
-    // Always fetch latest data on mount regardless of cache
-    fetchIncome();
+
+    // **FIX:** Only fetch initial data if the cache is not valid.
+    // The real-time subscription will handle updates regardless.
+    if (!isCacheValid) {
+      fetchIncome();
+    }
 
     // --- Real-time Subscription ---
     const channel = supabase
-      .channel("public:payments:income")
+      .channel("public:payments:income-realtime") // It's good practice to give realtime channels a unique name
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "payments" },
         () => {
-          // 2. IMPROVEMENT: Call the debounced function
+          // Call the debounced function on any change
           debouncedFetchRef.current();
         }
       );
 
-    // 3. IMPROVEMENT: Pause/resume subscription based on page visibility
+    // Pause/resume subscription based on page visibility
     if (isVisible) {
       channel.subscribe();
     }

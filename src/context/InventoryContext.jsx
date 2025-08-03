@@ -7,7 +7,9 @@ import React, {
 } from "react";
 import { useAuth } from "../features/pos-features/authentication/hooks/useAuth";
 import { getInventory } from "../api/itemService";
-import { usePageVisibility } from "../hooks/usePageVisibility"; // Import the visibility hook
+import { usePageVisibility } from "../hooks/usePageVisibility";
+// Import supabase client for real-time subscriptions
+import { supabase } from "../utils/supabaseClient";
 
 const CACHE_KEY = "inventoryData";
 const CACHE_TTL_MS = 10 * 60 * 1000; // Cache inventory data for 10 minutes
@@ -19,10 +21,9 @@ export function InventoryProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const { session } = useAuth();
-  const isVisible = usePageVisibility(); // Use the hook
+  const isVisible = usePageVisibility();
 
   const refreshInventory = useCallback(async () => {
-    // This check is now implicitly handled by getInventory via getAuthToken
     if (!session) {
       setInventory([]);
       setLoading(false);
@@ -32,13 +33,7 @@ export function InventoryProvider({ children }) {
       const data = await getInventory();
       setInventory(data);
       setError(null);
-
-      // --- TECHNIQUE IMPLEMENTED ---
-      // Cache the newly fetched data with a timestamp
-      const cacheData = {
-        value: data,
-        timestamp: Date.now(),
-      };
+      const cacheData = { value: data, timestamp: Date.now() };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
     } catch (err) {
       console.error("Error fetching inventory:", err);
@@ -48,33 +43,68 @@ export function InventoryProvider({ children }) {
     }
   }, [session]);
 
-  // This effect handles the initial load from cache and auth changes
+  // Effect for initial load from cache
   useEffect(() => {
-    // --- TECHNIQUE IMPLEMENTED ---
-    // On initial mount, try to load from cache first.
     const cachedItem = localStorage.getItem(CACHE_KEY);
     if (cachedItem) {
       const { value, timestamp } = JSON.parse(cachedItem);
-      // Check if the cached data is still fresh
       if (Date.now() - timestamp < CACHE_TTL_MS) {
         setInventory(value);
-        setLoading(false); // We have data, no need for a loading spinner
+        setLoading(false);
       }
     }
-    // Always fetch fresh data when the session is available
-    if (session) {
-      refreshInventory();
-    }
-  }, [session, refreshInventory]);
+  }, []);
 
-  // --- TECHNIQUE IMPLEMENTED ---
-  // This new effect handles re-fetching data when the tab becomes visible again
+  // Effect for fetching/refreshing data based on session and visibility
   useEffect(() => {
-    if (isVisible && session) {
-      console.log("Tab is visible, refreshing inventory to ensure data sync.");
+    if (session && isVisible) {
       refreshInventory();
     }
-  }, [isVisible, session, refreshInventory]);
+  }, [session, isVisible, refreshInventory]);
+
+  // --- TECHNIQUE RE-IMPLEMENTED FOR INSTANTANEOUS UPDATES ---
+  // This new effect handles the real-time subscription.
+  useEffect(() => {
+    // Only subscribe if the user is authenticated.
+    if (!session) return;
+
+    const channel = supabase
+      .channel("public:item_inventory")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "item_inventory" },
+        (payload) => {
+          console.log("Real-time inventory change received:", payload);
+          const updatedItem = payload.new;
+
+          // Perform a client-side merge for an instant UI update.
+          // This is much faster than re-fetching the entire list.
+          setInventory((prevInventory) => {
+            const itemIndex = prevInventory.findIndex(
+              (item) => item.id === updatedItem.id
+            );
+            // If the item already exists in our state, update it
+            if (itemIndex > -1) {
+              const newInventory = [...prevInventory];
+              newInventory[itemIndex] = updatedItem;
+              return newInventory;
+            }
+            // Otherwise, it's a new item, so add it to the list
+            else {
+              return [...prevInventory, updatedItem].sort((a, b) =>
+                a.item_name.localeCompare(b.item_name)
+              );
+            }
+          });
+        }
+      )
+      .subscribe();
+
+    // Cleanup function to remove the channel when the component unmounts
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [session]); // Re-subscribe if the user session changes.
 
   const getLiveQuantity = useCallback(
     (itemName) => {

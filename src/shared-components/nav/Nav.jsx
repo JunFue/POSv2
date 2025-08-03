@@ -112,22 +112,7 @@ export function Nav() {
     {
       path: "/cashout",
       label: "Cashout",
-      flyoutText: (
-        <>
-          {loading && <div>Loading...</div>}
-          {!loading &&
-            categories.map((cat) => (
-              <div key={cat.id}>
-                <Link
-                  to={`/cashout/category/${encodeURIComponent(cat.name)}`}
-                  className="block hover:text-emerald-700"
-                >
-                  {cat.name}
-                </Link>
-              </div>
-            ))}
-        </>
-      ),
+      // flyoutText removed for cashout link
     },
     {
       path: "/transactions",
@@ -197,9 +182,11 @@ export function Nav() {
           >
             {link.label}
           </Link>
-          <div className="absolute top-[1vw] left-1/2 transform -translate-x-1/2 mt-2 w-max bg-background traditional-glass text-body-text text-sm md:text-[15px] lg:text-[18px] xl:text-[20px] p-2 rounded shadow-lg hidden group-hover:block z-20">
-            {link.flyoutText}
-          </div>
+          {link.flyoutText && (
+            <div className="absolute top-[1vw] left-1/2 transform -translate-x-1/2 mt-2 w-max bg-background traditional-glass text-body-text text-sm md:text-[15px] lg:text-[18px] xl:text-[20px] p-2 rounded shadow-lg hidden group-hover:block z-20">
+              {link.flyoutText}
+            </div>
+          )}
         </div>
       ))}
     </nav>

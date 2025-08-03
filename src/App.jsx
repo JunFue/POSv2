@@ -30,12 +30,8 @@ function App() {
                 element={<CategoryPage />}
               />
 
-              {/* Specific Cashout Routes */}
+              {/* Specific Cashout Route */}
               <Route path="cashout" element={<Cashout />} />
-              <Route
-                path="cashout/category/:categoryName"
-                element={<Cashout />}
-              />
 
               {/* Other top-level routes */}
               <Route path="transactions/*" element={<Transactions />} />
