@@ -4,9 +4,10 @@ import {
   addStockRecord,
   updateStockRecord,
   deleteStockRecord,
-} from "../../../../api/stocksService";
-import { useAuth } from "../../../../features/pos-features/authentication/hooks/useAuth";
-import { usePageVisibility } from "../../../../hooks/usePageVisibility";
+} from "../../src/api/stocksService";
+
+import { useAuth } from "../features/pos-features/authentication/hooks/useAuth";
+import { usePageVisibility } from "../hooks/usePageVisibility";
 
 // Define the keys for localStorage and the backend status endpoint.
 const STOCKS_CACHE_KEY = "stocksData";
