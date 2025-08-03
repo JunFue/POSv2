@@ -10,7 +10,6 @@ import { useAuth } from "../../../../features/pos-features/authentication/hooks/
 import { usePageVisibility } from "../../../../hooks/usePageVisibility";
 
 const CACHE_KEY = "stocksData";
-const CACHE_TTL_MS = 10 * 60 * 1000; // Cache stocks data for 10 minutes
 
 /**
  * Custom hook for managing stock records state and logic.
@@ -33,11 +32,8 @@ export function useStocks() {
       }));
       setStockRecords(syncedData);
 
-      const cacheData = {
-        value: syncedData,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      // Cache the latest data indefinitely
+      localStorage.setItem(CACHE_KEY, JSON.stringify(syncedData));
     } catch (error) {
       console.error("API CALL FAILED: getStocks", error);
     } finally {
@@ -46,20 +42,20 @@ export function useStocks() {
   }, [user]);
 
   useEffect(() => {
+    // Immediately load data from cache on initial mount
     const cachedItem = localStorage.getItem(CACHE_KEY);
     if (cachedItem) {
-      const { value, timestamp } = JSON.parse(cachedItem);
-      if (Date.now() - timestamp < CACHE_TTL_MS) {
-        setStockRecords(value);
-        setLoading(false);
-      }
+      setStockRecords(JSON.parse(cachedItem));
+      setLoading(false);
     }
+    // Fetch fresh data from the API when user is available
     if (user) {
       fetchStocks();
     }
   }, [user, fetchStocks]);
 
   useEffect(() => {
+    // Re-fetch data when the page becomes visible
     if (isVisible && user) {
       fetchStocks();
     }
