@@ -9,17 +9,11 @@ import {
 import { useAuth } from "../../../../features/pos-features/authentication/hooks/useAuth";
 import { usePageVisibility } from "../../../../hooks/usePageVisibility";
 
-// The key for storing stock data in localStorage.
 const CACHE_KEY = "stocksData";
-
-// --- REVISION ---
-// The endpoint now dynamically uses the backend URL from your .env file.
-// Vite exposes environment variables prefixed with "VITE_" on the import.meta.env object.
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-const STOCK_STATUS_ENDPOINT = `${BACKEND_URL}/api/status/stocks`;
+const CACHE_TTL_MS = 10 * 60 * 1000; // Cache stocks data for 10 minutes
 
 /**
- * Custom hook for managing stock records with an efficient, backend-driven cache.
+ * Custom hook for managing stock records state and logic.
  */
 export function useStocks() {
   const [stockRecords, setStockRecords] = useState([]);
@@ -28,13 +22,8 @@ export function useStocks() {
   const { user } = useAuth();
   const isVisible = usePageVisibility();
 
-  /**
-   * Fetches fresh stock data from the server and updates both the state and the local cache.
-   */
   const fetchStocks = useCallback(async () => {
     if (!user) return;
-    console.log("Fetching fresh stock data from the server...");
-    setLoading(true); // Show loading indicator during fetch
     try {
       const data = await getStocks();
       const syncedData = data.map((r) => ({
@@ -44,10 +33,9 @@ export function useStocks() {
       }));
       setStockRecords(syncedData);
 
-      // Update the cache with the new data and the current timestamp.
       const cacheData = {
         value: syncedData,
-        timestamp: Date.now(), // This marks when the client cache was updated.
+        timestamp: Date.now(),
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
     } catch (error) {
@@ -57,55 +45,26 @@ export function useStocks() {
     }
   }, [user]);
 
-  /**
-   * This effect handles the core cache validation logic.
-   */
   useEffect(() => {
-    const validateCacheAndFetch = async () => {
-      if (!user) {
-        setLoading(false);
-        return;
-      }
-
-      const cachedItemJSON = localStorage.getItem(CACHE_KEY);
-      let localCacheTimestamp = 0;
-
-      if (cachedItemJSON) {
-        const { value, timestamp } = JSON.parse(cachedItemJSON);
+    const cachedItem = localStorage.getItem(CACHE_KEY);
+    if (cachedItem) {
+      const { value, timestamp } = JSON.parse(cachedItem);
+      if (Date.now() - timestamp < CACHE_TTL_MS) {
         setStockRecords(value);
-        localCacheTimestamp = timestamp;
+        setLoading(false);
       }
-      setLoading(false);
+    }
+    if (user) {
+      fetchStocks();
+    }
+  }, [user, fetchStocks]);
 
-      try {
-        console.log("Checking cache status with the local backend...");
-        const response = await fetch(STOCK_STATUS_ENDPOINT);
-        if (!response.ok) {
-          // This will now catch the 401 error if it happens
-          throw new Error(`Server responded with status: ${response.status}`);
-        }
-        const { lastUpdatedAt } = await response.json();
-
-        if (lastUpdatedAt > localCacheTimestamp) {
-          console.log("Cache is stale. Refetching data.");
-          await fetchStocks();
-        } else {
-          console.log("Cache is fresh. No refetch needed.");
-        }
-      } catch (error) {
-        console.error("Could not validate cache with backend:", error);
-        if (!cachedItemJSON) {
-          await fetchStocks();
-        }
-      }
-    };
-
+  useEffect(() => {
     if (isVisible && user) {
-      validateCacheAndFetch();
+      fetchStocks();
     }
   }, [isVisible, user, fetchStocks]);
 
-  // --- Optimistic UI Update Functions ---
   const addRecord = async (newRecord) => {
     const tempId = crypto.randomUUID();
     const optimisticRecord = {
