@@ -1,17 +1,15 @@
 import { useForm } from "react-hook-form";
 import { useContext, useState, useCallback } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
-import { registerItem } from "../../../api/itemService";
+// We no longer need to import registerItem here, the hook handles it.
 import { CategoryManager } from "./itemregforms-components/CategoryManager";
 import { RegistrationFormFields } from "./itemregforms-components/RegistrationFormField";
 
-// Helper to generate a temporary ID, still needed for optimistic updates
-const generateTemporaryId = () =>
-  `temp_${Math.random().toString(36).substr(2, 9)}`;
-
 export const ItemRegForm = () => {
-  const { serverOnline, items, addOptimisticItem, updateItemStatus } =
-    useContext(ItemRegData);
+  // --- Step 1: Get the correct `addItem` function from the context ---
+  // Replaced `addOptimisticItem` and `updateItemStatus` with `addItem`.
+  const { serverOnline, items, addItem } = useContext(ItemRegData);
+
   const {
     register,
     handleSubmit,
@@ -20,13 +18,14 @@ export const ItemRegForm = () => {
   } = useForm();
   const [categories, setCategories] = useState([]);
 
-  // Callback to receive the category list from the CategoryManager child
   const handleCategoriesChange = useCallback((loadedCategories) => {
     setCategories(loadedCategories);
   }, []);
 
-  // --- MODIFIED: Form submission handler to use optimistic update correctly ---
+  // --- Step 2: Simplify the form submission handler ---
+  // This function is now much cleaner. It only worries about form-level logic.
   const addToRegistry = async (data) => {
+    // The duplicate check is still good to have here to provide immediate feedback.
     if (
       items.find(
         (item) =>
@@ -34,30 +33,22 @@ export const ItemRegForm = () => {
           item.name.toLowerCase() === data.name.toLowerCase()
       )
     ) {
+      // Note: alert() can be disruptive. Consider a more modern UI notification.
       alert("An item with the same barcode or name already exists.");
       return;
     }
 
-    const tempId = generateTemporaryId();
-    // 1. Optimistically add the new item to the UI with a 'pending' status.
-    addOptimisticItem({ ...data, id: tempId, status: "pending" });
+    // --- THE FIX ---
+    // Create a copy of the data object before passing it to addItem.
+    // This prevents the `reset()` call from clearing the data for the new row.
+    addItem({ ...data });
+
+    // Reset the form for the next entry.
     reset();
     setTimeout(() => document.getElementById("barcode")?.focus(), 0);
-
-    try {
-      // 2. Attempt to save the item to the server. We assume `registerItem` returns the saved item with its final ID.
-      const savedItem = await registerItem(data);
-
-      // 3. Instead of refreshing the whole table, just update the single item we added.
-      updateItemStatus(tempId, { ...savedItem, status: "synced" });
-    } catch (error) {
-      alert(error.message);
-      // 4. If the save fails, update the item's status to 'failed'.
-      updateItemStatus(tempId, { ...data, id: tempId, status: "failed" });
-    }
   };
 
-  // Event handler to manage 'Enter' key presses
+  // The handleKeyDown logic for form navigation remains unchanged.
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       const target = e.target;
