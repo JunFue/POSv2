@@ -3,8 +3,8 @@ import { ItemRegForm } from "./inventory-contents/item-reg/ItemRegForms";
 import { ItemRegTable } from "./inventory-contents/item-reg/ItemRegTable";
 import { Stocks } from "./inventory-contents/stocks-management/Stocks";
 import { StocksMonitor } from "./inventory-contents/stocks-monitor/StocksMonitor";
-// --- Step 1: Import the new RefreshButton component ---
-import { RefreshButton } from "./inventory-contents/item-reg/RefreshButton";
+// --- Step 1: Remove the import for RefreshButton ---
+// import { RefreshButton } from "./inventory-contents/item-reg/RefreshButton";
 
 export function Inventory() {
   return (
@@ -19,8 +19,7 @@ export function Inventory() {
               </div>
               <div className="flex flex-col w-full h-full gap-[1vw]">
                 <ItemRegForm />
-                {/* --- Step 2: Add the RefreshButton here --- */}
-                <RefreshButton />
+                {/* --- Step 2: Remove the RefreshButton component usage --- */}
                 <ItemRegTable />
               </div>
             </>
