@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import {
   getCategories,
   addCategory,
@@ -15,29 +15,32 @@ export const CategoryManager = ({ onCategoriesChange }) => {
   const [newCategory, setNewCategory] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchAndNotify = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const data = await getCategories();
-      const syncedCategories = data.map((cat) => ({
-        ...cat,
-        status: "synced",
-      }));
-      setCategories(syncedCategories);
-      if (onCategoriesChange) {
-        onCategoriesChange(syncedCategories);
-      }
-    } catch (error) {
-      console.error("Failed to fetch categories:", error);
-      alert(error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [onCategoriesChange]);
-
+  // --- FIX: The data fetching logic is now self-contained in this useEffect hook ---
   useEffect(() => {
+    // Define the async function inside the effect to make it self-contained.
+    const fetchAndNotify = async () => {
+      setIsLoading(true);
+      try {
+        const data = await getCategories();
+        const syncedCategories = data.map((cat) => ({
+          ...cat,
+          status: "synced",
+        }));
+        setCategories(syncedCategories);
+        // This check is important because the prop might not always be provided.
+        if (onCategoriesChange) {
+          onCategoriesChange(syncedCategories);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories:", error);
+        alert(error.message);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
     fetchAndNotify();
-  }, [fetchAndNotify]);
+  }, [onCategoriesChange]); // The dependency is now just the stable prop function.
 
   const handleAddCategory = async () => {
     if (!newCategory.trim()) return;
@@ -49,9 +52,20 @@ export const CategoryManager = ({ onCategoriesChange }) => {
     };
     setCategories((prev) => [...prev, optimisticCategory]);
     setNewCategory("");
+
     try {
       await addCategory(optimisticCategory.name);
-      await fetchAndNotify();
+      // After adding, we can re-fetch to get the final state from the server.
+      // This part is complex and could be replaced by a real-time update if available.
+      const data = await getCategories();
+      const syncedCategories = data.map((cat) => ({
+        ...cat,
+        status: "synced",
+      }));
+      setCategories(syncedCategories);
+      if (onCategoriesChange) {
+        onCategoriesChange(syncedCategories);
+      }
     } catch (error) {
       console.error("Error adding category:", error);
       alert(error.message);

@@ -23,26 +23,6 @@ export function InventoryProvider({ children }) {
   const { session } = useAuth();
   const isVisible = usePageVisibility();
 
-  const refreshInventory = useCallback(async () => {
-    if (!session) {
-      setInventory([]);
-      setLoading(false);
-      return;
-    }
-    try {
-      const data = await getInventory();
-      setInventory(data);
-      setError(null);
-      const cacheData = { value: data, timestamp: Date.now() };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    } catch (err) {
-      console.error("Error fetching inventory:", err);
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [session]);
-
   // Effect for initial load from cache
   useEffect(() => {
     const cachedItem = localStorage.getItem(CACHE_KEY);
@@ -55,17 +35,39 @@ export function InventoryProvider({ children }) {
     }
   }, []);
 
-  // Effect for fetching/refreshing data based on session and visibility
+  // --- FIX: The data fetching logic is now self-contained in this useEffect hook ---
   useEffect(() => {
+    // Define the function inside the effect to avoid dependency loops.
+    const refreshInventory = async () => {
+      if (!session) {
+        setInventory([]);
+        setLoading(false);
+        return;
+      }
+      try {
+        // Set loading true only when we are about to fetch.
+        setLoading(true);
+        const data = await getInventory();
+        setInventory(data);
+        setError(null);
+        const cacheData = { value: data, timestamp: Date.now() };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      } catch (err) {
+        console.error("Error fetching inventory:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    // Only run the fetch if the user is logged in and the page is visible.
     if (session && isVisible) {
       refreshInventory();
     }
-  }, [session, isVisible, refreshInventory]);
+  }, [session, isVisible]); // The dependency array is now simple and safe.
 
-  // --- TECHNIQUE RE-IMPLEMENTED FOR INSTANTANEOUS UPDATES ---
-  // This new effect handles the real-time subscription.
+  // This real-time subscription effect is correct and remains unchanged.
   useEffect(() => {
-    // Only subscribe if the user is authenticated.
     if (!session) return;
 
     const channel = supabase
@@ -77,20 +79,15 @@ export function InventoryProvider({ children }) {
           console.log("Real-time inventory change received:", payload);
           const updatedItem = payload.new;
 
-          // Perform a client-side merge for an instant UI update.
-          // This is much faster than re-fetching the entire list.
           setInventory((prevInventory) => {
             const itemIndex = prevInventory.findIndex(
               (item) => item.id === updatedItem.id
             );
-            // If the item already exists in our state, update it
             if (itemIndex > -1) {
               const newInventory = [...prevInventory];
               newInventory[itemIndex] = updatedItem;
               return newInventory;
-            }
-            // Otherwise, it's a new item, so add it to the list
-            else {
+            } else {
               return [...prevInventory, updatedItem].sort((a, b) =>
                 a.item_name.localeCompare(b.item_name)
               );
@@ -100,11 +97,10 @@ export function InventoryProvider({ children }) {
       )
       .subscribe();
 
-    // Cleanup function to remove the channel when the component unmounts
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [session]); // Re-subscribe if the user session changes.
+  }, [session]);
 
   const getLiveQuantity = useCallback(
     (itemName) => {

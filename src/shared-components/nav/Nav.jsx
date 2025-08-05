@@ -1,5 +1,5 @@
 import { Link } from "react-router"; // It's conventional to use react-router-dom
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect } from "react";
 import { getCategories } from "../../api/categoryService";
 import { supabase } from "../../utils/supabaseClient"; // Import supabase for real-time
 import { usePageVisibility } from "../../hooks/usePageVisibility"; // Import the visibility hook
@@ -23,44 +23,42 @@ export function Nav() {
   const [loading, setLoading] = useState(true);
   const isVisible = usePageVisibility();
 
-  const fetchCategories = useCallback(async () => {
-    // No need to set loading to true here, it's handled on mount
-    try {
-      const data = await getCategories();
-      setCategories(data);
-      // 1. TECHNIQUE: Cache the new data with a timestamp
-      const cacheData = {
-        value: data,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    } catch (error) {
-      console.error("Nav component error:", error.message);
-      // If fetching fails, clear the categories to avoid showing stale data
-      setCategories([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Use a ref for the debounced function to persist it across renders
-  const debouncedFetchRef = useRef(debounce(fetchCategories, 500));
-
+  // --- FIX: The data fetching and real-time logic is now self-contained in this useEffect hook ---
   useEffect(() => {
+    // Define the fetching function inside the effect.
+    const fetchCategories = async () => {
+      try {
+        const data = await getCategories();
+        setCategories(data);
+        const cacheData = {
+          value: data,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+      } catch (error) {
+        console.error("Nav component error:", error.message);
+        setCategories([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     // --- Initial Load ---
     const cachedItem = localStorage.getItem(CACHE_KEY);
     if (cachedItem) {
       const { value, timestamp } = JSON.parse(cachedItem);
-      // 1. TECHNIQUE: Check if cache is still valid
       if (Date.now() - timestamp < CACHE_TTL_MS) {
         setCategories(value);
-        setLoading(false); // We have data, so we're not "loading"
+        setLoading(false);
       }
     }
-    // Always fetch fresh data on mount to ensure it's up-to-date
+    // Always fetch fresh data on mount.
     fetchCategories();
 
-    // 2. TECHNIQUE: Subscribe to real-time changes for the categories table
+    // Use a ref for the debounced function to persist it across renders.
+    const debouncedFetchRef = debounce(fetchCategories, 500);
+
+    // --- Real-time Subscription ---
     const channel = supabase
       .channel("public:categories")
       .on(
@@ -68,20 +66,20 @@ export function Nav() {
         { event: "*", schema: "public", table: "categories" },
         (payload) => {
           console.log("Category change detected:", payload);
-          // 3. TECHNIQUE: Debounce the fetch call
-          debouncedFetchRef.current();
+          debouncedFetchRef();
         }
       );
 
-    // 4. TECHNIQUE: Use page visibility to manage the subscription
+    // Manage subscription based on page visibility.
     if (isVisible) {
       channel.subscribe();
     }
 
+    // Cleanup function.
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchCategories, isVisible]);
+  }, [isVisible]); // The dependency array is now simple and safe.
 
   const links = [
     {
@@ -112,7 +110,6 @@ export function Nav() {
     {
       path: "/cashout",
       label: "Cashout",
-      // flyoutText removed for cashout link
     },
     {
       path: "/transactions",
