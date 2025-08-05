@@ -11,7 +11,6 @@ import {
   FaSpinner,
 } from "react-icons/fa";
 import { ItemRegData } from "../../../context/ItemRegContext";
-import { deleteItem } from "../../../api/itemService";
 
 // Helper component for status icons
 const StatusIcon = ({ status }) => {
@@ -36,7 +35,8 @@ const StatusIcon = ({ status }) => {
 };
 
 export function ItemRegTable() {
-  const { items, refreshItems, loading } = useContext(ItemRegData);
+  // --- CHANGE 1: Get `deleteItem` from context, remove `refreshItems` ---
+  const { items, loading, deleteItem } = useContext(ItemRegData);
   const [sorting, setSorting] = useState([]);
 
   const columns = [
@@ -78,18 +78,17 @@ export function ItemRegTable() {
       enableSorting: false,
       cell: ({ row }) => (
         <button
+          // --- CHANGE 2: Simplify the onClick handler ---
           onClick={async () => {
             if (
               window.confirm(
                 `Are you sure you want to delete ${row.original.name}?`
               )
             ) {
-              try {
-                await deleteItem(row.original.barcode);
-                refreshItems();
-              } catch (error) {
-                alert(error.message);
-              }
+              // This now calls the optimistic deleteItem from the context.
+              // It will update the UI instantly and handle server communication
+              // in the background, including reverting on failure.
+              await deleteItem(row.original.barcode);
             }
           }}
           className="text-red-500 hover:text-red-700"
