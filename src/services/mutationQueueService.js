@@ -31,9 +31,6 @@ const saveQueue = (queue) => {
 
 /**
  * Adds a new mutation to the end of the queue.
- * A mutation should be an object with a 'type' and 'payload'.
- * e.g., { type: 'CREATE_ITEM', payload: { ...itemData } }
- *
  * @param {object} mutation - The mutation object to add.
  */
 export const addToQueue = (mutation) => {
@@ -52,8 +49,43 @@ export const getFullQueue = () => {
 
 /**
  * Clears the entire mutation queue from localStorage.
- * This should be called after the queue has been successfully processed.
  */
 export const clearQueue = () => {
   localStorage.removeItem(QUEUE_KEY);
+};
+
+/**
+ * Processes the queued mutations by calling the provided API functions.
+ * This function is now exported to be used by our synchronization hook.
+ * @param {{ registerItem: Function, deleteItem: Function }} api - An object with the API functions to execute.
+ */
+export const processMutationQueue = async (api) => {
+  const { registerItem, deleteItem } = api;
+  const queuedMutations = getFullQueue();
+
+  if (queuedMutations.length === 0) {
+    return; // Nothing to do
+  }
+
+  console.log(`Processing ${queuedMutations.length} queued mutations.`);
+
+  for (const mutation of queuedMutations) {
+    try {
+      if (mutation.type === "CREATE_ITEM") {
+        await registerItem(mutation.payload);
+      }
+      if (mutation.type === "DELETE_ITEM") {
+        await deleteItem(mutation.payload.barcode);
+      }
+    } catch (error) {
+      console.error("Failed to process a queued mutation:", error);
+      // If one mutation fails, we stop and throw an error to prevent
+      // further actions from running out of order. The queue is NOT cleared.
+      throw new Error("Mutation processing failed");
+    }
+  }
+
+  // If all mutations succeed, clear the queue.
+  clearQueue();
+  console.log("Mutation queue successfully processed and cleared.");
 };
