@@ -1,6 +1,8 @@
 import { useState } from "react";
 
-export function State(initialState = { search: "", selected: [], sort: null }) {
+export function useFilterState(
+  initialState = { search: "", selected: [], sort: null }
+) {
   const [filter, setFilter] = useState(initialState);
   const [isDropdownVisible, setDropdownVisible] = useState(false);
 
