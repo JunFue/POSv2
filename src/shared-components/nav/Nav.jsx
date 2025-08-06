@@ -1,11 +1,11 @@
-import { Link } from "react-router"; // It's conventional to use react-router-dom
+import { Link } from "react-router";
 import { useState, useEffect } from "react";
 import { getCategories } from "../../api/categoryService";
-import { supabase } from "../../utils/supabaseClient"; // Import supabase for real-time
-import { usePageVisibility } from "../../hooks/usePageVisibility"; // Import the visibility hook
+import { supabase } from "../../utils/supabaseClient";
+import { usePageVisibility } from "../../hooks/usePageVisibility";
 
 const CACHE_KEY = "navCategoriesData";
-const CACHE_TTL_MS = 15 * 60 * 1000; // Cache categories for 15 minutes
+const CACHE_TTL_MS = 15 * 60 * 1000;
 
 // A simple debounce utility
 function debounce(func, delay) {
@@ -23,63 +23,59 @@ export function Nav() {
   const [loading, setLoading] = useState(true);
   const isVisible = usePageVisibility();
 
-  // --- FIX: The data fetching and real-time logic is now self-contained in this useEffect hook ---
   useEffect(() => {
-    // Define the fetching function inside the effect.
-    const fetchCategories = async () => {
-      try {
-        const data = await getCategories();
-        setCategories(data);
-        const cacheData = {
-          value: data,
-          timestamp: Date.now(),
-        };
-        localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-      } catch (error) {
-        console.error("Nav component error:", error.message);
-        setCategories([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    // --- Initial Load ---
-    const cachedItem = localStorage.getItem(CACHE_KEY);
-    if (cachedItem) {
-      const { value, timestamp } = JSON.parse(cachedItem);
-      if (Date.now() - timestamp < CACHE_TTL_MS) {
-        setCategories(value);
-        setLoading(false);
-      }
-    }
-    // Always fetch fresh data on mount.
-    fetchCategories();
-
-    // Use a ref for the debounced function to persist it across renders.
-    const debouncedFetchRef = debounce(fetchCategories, 500);
-
-    // --- Real-time Subscription ---
-    const channel = supabase
-      .channel("public:categories")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "categories" },
-        (payload) => {
-          console.log("Category change detected:", payload);
-          debouncedFetchRef();
-        }
-      );
-
-    // Manage subscription based on page visibility.
+    // --- FIX: All logic is now wrapped in an `if (isVisible)` block ---
+    // This ensures we only fetch data and subscribe when the page is active.
     if (isVisible) {
-      channel.subscribe();
-    }
+      const fetchCategories = async () => {
+        try {
+          const data = await getCategories();
+          setCategories(data);
+          const cacheData = { value: data, timestamp: Date.now() };
+          localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
+        } catch (error) {
+          console.error("Nav component error:", error.message);
+          setCategories([]);
+        } finally {
+          setLoading(false);
+        }
+      };
 
-    // Cleanup function.
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [isVisible]); // The dependency array is now simple and safe.
+      // --- Initial Load ---
+      const cachedItem = localStorage.getItem(CACHE_KEY);
+      if (cachedItem) {
+        const { value, timestamp } = JSON.parse(cachedItem);
+        if (Date.now() - timestamp < CACHE_TTL_MS) {
+          setCategories(value);
+          setLoading(false);
+        }
+      }
+      // Always fetch fresh data when the component becomes visible.
+      fetchCategories();
+
+      const debouncedFetch = debounce(fetchCategories, 500);
+
+      // --- Real-time Subscription ---
+      const channel = supabase
+        .channel("public:categories")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "categories" },
+          () => {
+            console.log("Category change detected, re-fetching with debounce.");
+            debouncedFetch();
+          }
+        );
+
+      channel.subscribe();
+
+      // The cleanup function will run when the component unmounts OR when isVisible becomes false.
+      return () => {
+        console.log("Unsubscribing from categories channel.");
+        supabase.removeChannel(channel);
+      };
+    }
+  }, [isVisible]); // The dependency array is correct.
 
   const links = [
     {

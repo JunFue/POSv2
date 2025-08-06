@@ -4,7 +4,7 @@ import {
   addCategory,
   deleteCategory,
 } from "../../../../api/categoryService";
-import { StatusIcon } from "./StatusIcon"; // Assuming StatusIcon.jsx is in the same folder
+import { StatusIcon } from "./StatusIcon";
 
 const generateTemporaryId = () =>
   `temp_${Math.random().toString(36).substr(2, 9)}`;
@@ -17,8 +17,16 @@ export const CategoryManager = ({ onCategoriesChange }) => {
 
   // --- FIX: The data fetching logic is now self-contained in this useEffect hook ---
   useEffect(() => {
+    // --- DEBUG: Add logs to trace the effect's execution ---
+    console.log("[CategoryManager] useEffect is running.");
+    console.log(
+      "[CategoryManager] Dependency 'onCategoriesChange' is:",
+      onCategoriesChange
+    );
+
     // Define the async function inside the effect to make it self-contained.
     const fetchAndNotify = async () => {
+      console.log("[CategoryManager] Starting to fetch categories...");
       setIsLoading(true);
       try {
         const data = await getCategories();
@@ -27,14 +35,15 @@ export const CategoryManager = ({ onCategoriesChange }) => {
           status: "synced",
         }));
         setCategories(syncedCategories);
-        // This check is important because the prop might not always be provided.
+
         if (onCategoriesChange) {
+          console.log("[CategoryManager] Calling onCategoriesChange prop.");
           onCategoriesChange(syncedCategories);
         }
       } catch (error) {
-        console.error("Failed to fetch categories:", error);
-        alert(error.message);
+        console.error("[CategoryManager] Failed to fetch categories:", error);
       } finally {
+        console.log("[CategoryManager] Finished fetching categories.");
         setIsLoading(false);
       }
     };
@@ -55,8 +64,7 @@ export const CategoryManager = ({ onCategoriesChange }) => {
 
     try {
       await addCategory(optimisticCategory.name);
-      // After adding, we can re-fetch to get the final state from the server.
-      // This part is complex and could be replaced by a real-time update if available.
+      // Re-fetch after adding to get the final state from the server.
       const data = await getCategories();
       const syncedCategories = data.map((cat) => ({
         ...cat,
@@ -68,7 +76,6 @@ export const CategoryManager = ({ onCategoriesChange }) => {
       }
     } catch (error) {
       console.error("Error adding category:", error);
-      alert(error.message);
       setCategories((prev) => prev.filter((cat) => cat.id !== tempId));
     }
   };

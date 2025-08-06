@@ -8,7 +8,6 @@ import React, {
 import { useAuth } from "../features/pos-features/authentication/hooks/useAuth";
 import { getInventory } from "../api/itemService";
 import { usePageVisibility } from "../hooks/usePageVisibility";
-// Import supabase client for real-time subscriptions
 import { supabase } from "../utils/supabaseClient";
 
 const CACHE_KEY = "inventoryData";
@@ -37,7 +36,7 @@ export function InventoryProvider({ children }) {
 
   // --- FIX: The data fetching logic is now self-contained in this useEffect hook ---
   useEffect(() => {
-    // Define the function inside the effect to avoid dependency loops.
+    // Define the function inside the effect to break the dependency loop.
     const refreshInventory = async () => {
       if (!session) {
         setInventory([]);
@@ -45,7 +44,6 @@ export function InventoryProvider({ children }) {
         return;
       }
       try {
-        // Set loading true only when we are about to fetch.
         setLoading(true);
         const data = await getInventory();
         setInventory(data);
@@ -76,9 +74,7 @@ export function InventoryProvider({ children }) {
         "postgres_changes",
         { event: "*", schema: "public", table: "item_inventory" },
         (payload) => {
-          console.log("Real-time inventory change received:", payload);
           const updatedItem = payload.new;
-
           setInventory((prevInventory) => {
             const itemIndex = prevInventory.findIndex(
               (item) => item.id === updatedItem.id
