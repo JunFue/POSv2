@@ -14,119 +14,104 @@ import {
   clearQueue,
   processMutationQueue,
 } from "../services/mutationQueueService";
+import { supabase } from "../utils/supabaseClient";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:3001";
-
-/**
- * A robust hook to manage item data synchronization with a backend server.
- * This final version uses a useRef to create a persistent SSE connection
- * that is resilient to React Strict Mode's re-renders in development.
- *
- * @param {string} userId - The ID of the current user.
- * @returns {object} The state and methods for managing item data.
- */
 export const useItemSynchronization = (userId) => {
   const [items, setItems] = useState([]);
+  // loading: For the initial, full-screen load.
   const [loading, setLoading] = useState(true);
+  // --- NEW: A separate state for background syncs ---
+  // isSyncing: For silent, non-blocking updates.
+  const [isSyncing, setIsSyncing] = useState(false);
   const [serverOnline, setServerOnline] = useState(true);
+
+  // Use a ref to prevent multiple simultaneous refreshes.
   const isRefreshing = useRef(false);
-  // --- CHANGE: Store the EventSource in a ref to make it persistent ---
-  const eventSourceRef = useRef(null);
 
-  const refreshItems = useCallback(async () => {
-    if (!userId || isRefreshing.current) return;
+  // --- MODIFIED: refreshItems now handles two types of loading states ---
+  const refreshItems = useCallback(
+    async (isBackgroundRefresh = false) => {
+      if (!userId || isRefreshing.current) return;
 
-    isRefreshing.current = true;
-    setLoading(true);
-    try {
-      const data = await getItems();
-      const syncedItems = data.map((item) => ({ ...item, status: "synced" }));
-      setItems(syncedItems);
-      setServerOnline(true);
+      isRefreshing.current = true;
+      // Only show the main loading screen if it's not a background refresh
+      if (!isBackgroundRefresh) {
+        setLoading(true);
+      } else {
+        // Otherwise, use the non-intrusive syncing indicator
+        setIsSyncing(true);
+      }
 
-      const response = await fetch(`${BACKEND_URL}/api/status/stocks`);
-      const serverStatus = await response.json();
-      localStorage.setItem("itemCacheTimestamp", serverStatus.lastUpdatedAt);
-      saveItemsToCache(syncedItems, serverStatus.lastUpdatedAt);
-    } catch (error) {
-      console.error("Error during item refresh:", error.message);
-      setServerOnline(false);
-    } finally {
-      setLoading(false);
-      isRefreshing.current = false;
-    }
-  }, [userId]);
+      try {
+        const data = await getItems();
+        const syncedItems = data.map((item) => ({ ...item, status: "synced" }));
+        setItems(syncedItems);
+        setServerOnline(true);
+        saveItemsToCache(syncedItems, new Date().toISOString());
+      } catch (error) {
+        console.error("Error during item refresh:", error.message);
+        setServerOnline(false);
+      } finally {
+        // Clear all loading/syncing states
+        isRefreshing.current = false;
+        setLoading(false);
+        setIsSyncing(false);
+      }
+    },
+    [userId]
+  );
 
-  /**
-   * EFFECT: Manages the entire data synchronization lifecycle for a user session.
-   */
+  // --- MODIFIED: The main useEffect for a smoother initial load ---
   useEffect(() => {
     if (!userId) {
       setItems([]);
       clearItemsCache();
       clearQueue();
       setLoading(true);
-      // Ensure any existing connection is closed on logout
-      if (eventSourceRef.current) {
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
-      }
       return;
     }
 
-    // --- CHANGE: Only establish connection if one doesn't already exist ---
-    if (!eventSourceRef.current) {
-      const setupAndLoad = async () => {
-        console.log("Establishing SSE connection to /api/status/stream");
-        const eventSource = new EventSource(`${BACKEND_URL}/api/status/stream`);
-        eventSourceRef.current = eventSource; // Store it in the ref
-
-        eventSource.onopen = () => {
-          console.log("SSE connection successful.");
-          setServerOnline(true);
-        };
-
-        eventSource.addEventListener("update", () => {
-          console.log('SSE "update" event received, triggering data refresh.');
-          refreshItems();
-        });
-
-        eventSource.onerror = () => {
-          console.error("SSE connection error.");
-          setServerOnline(false);
-          eventSource.close();
-          eventSourceRef.current = null; // Clear the ref on error
-        };
-
-        const cachedData = loadItemsFromCache();
-        if (cachedData) {
-          setItems(cachedData.value);
-        }
-        try {
-          await processMutationQueue({
-            registerItem,
-            deleteItem: apiDeleteItem,
-          });
-        } catch {
-          setServerOnline(false);
-        }
-        await refreshItems();
-      };
-
-      setupAndLoad();
-    }
-
-    // The cleanup function will run when the component unmounts (e.g., user logs out)
-    return () => {
-      if (eventSourceRef.current) {
-        console.log("Closing SSE connection for user session.");
-        eventSourceRef.current.close();
-        eventSourceRef.current = null;
+    const setupAndLoad = async () => {
+      // 1. Load from cache immediately and finish initial loading.
+      // This makes the table appear instantly on page load.
+      const cachedData = loadItemsFromCache();
+      if (cachedData) {
+        setItems(cachedData.value);
       }
-    };
-  }, [userId, refreshItems]);
+      setLoading(false); // End the main loading state here!
 
-  // --- Optimistic Mutation Logic (No changes needed) ---
+      // 2. Process the offline queue in the background.
+      try {
+        await processMutationQueue({ registerItem, deleteItem: apiDeleteItem });
+        setServerOnline(true);
+      } catch {
+        setServerOnline(false);
+      }
+
+      // 3. Refresh data in the background without a loading screen.
+      await refreshItems(true); // Pass `true` for a background refresh
+    };
+
+    setupAndLoad();
+
+    // 4. The Supabase subscription for real-time updates.
+    const channel = supabase
+      .channel("public:items")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "items" },
+        (payload) => {
+          console.log("Change received from Supabase Broadcast!", payload);
+          // When a change occurs, trigger a silent, background refresh.
+          refreshItems(true); // Pass `true` here as well
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [userId, refreshItems]); // refreshItems is stable due to useCallback
 
   const addItem = useCallback(
     async (newItemData) => {
@@ -135,25 +120,22 @@ export const useItemSynchronization = (userId) => {
 
       setItems((currentItems) => {
         const newItems = [optimisticItem, ...currentItems];
-        saveItemsToCache(newItems, localStorage.getItem("itemCacheTimestamp"));
+        saveItemsToCache(newItems, new Date().toISOString());
         return newItems;
       });
 
       if (!serverOnline) {
-        addToQueue({
-          type: "CREATE_ITEM",
-          payload: { ...newItemData, tempId },
-        });
+        addToQueue({ type: "CREATE_ITEM", payload: newItemData });
         return;
       }
 
       try {
         await registerItem(newItemData);
-      } catch {
-        addToQueue({
-          type: "CREATE_ITEM",
-          payload: { ...newItemData, tempId },
-        });
+        // SUCCESS: The Supabase subscription will trigger a background refresh automatically.
+        // No need to call refreshItems() here.
+      } catch (error) {
+        console.error("Failed to add item, adding to queue:", error);
+        addToQueue({ type: "CREATE_ITEM", payload: newItemData });
       }
     },
     [serverOnline]
@@ -162,12 +144,11 @@ export const useItemSynchronization = (userId) => {
   const deleteItem = useCallback(
     async (barcode) => {
       const originalItems = [...items];
-
       setItems((currentItems) => {
         const newItems = currentItems.filter(
           (item) => item.barcode !== barcode
         );
-        saveItemsToCache(newItems, localStorage.getItem("itemCacheTimestamp"));
+        saveItemsToCache(newItems, new Date().toISOString());
         return newItems;
       });
 
@@ -178,17 +159,28 @@ export const useItemSynchronization = (userId) => {
 
       try {
         await apiDeleteItem(barcode);
-      } catch {
-        setItems(originalItems);
-        saveItemsToCache(
-          originalItems,
-          localStorage.getItem("itemCacheTimestamp")
+        // SUCCESS: The Supabase subscription will trigger a background refresh.
+      } catch (error) {
+        console.error(
+          "Failed to delete item, reverting and adding to queue:",
+          error
         );
+        setItems(originalItems);
+        saveItemsToCache(originalItems, new Date().toISOString());
         addToQueue({ type: "DELETE_ITEM", payload: { barcode } });
       }
     },
     [items, serverOnline]
   );
 
-  return { items, loading, serverOnline, addItem, deleteItem, refreshItems };
+  // --- MODIFIED: Return the new isSyncing state ---
+  return {
+    items,
+    loading,
+    isSyncing,
+    serverOnline,
+    addItem,
+    deleteItem,
+    refreshItems,
+  };
 };

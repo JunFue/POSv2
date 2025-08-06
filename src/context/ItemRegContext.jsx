@@ -1,11 +1,12 @@
-import { createContext, useContext, useMemo } from "react";
-import { AuthContext } from "./AuthContext";
+import { createContext, useMemo } from "react";
+
 import { useItemSynchronization } from "../hooks/useItemSynchronization";
+import { useAuth } from "../features/AUTHENTICATION/hooks/useAuth";
 
 const ItemRegData = createContext();
 
 export function ItemRegProvider({ children }) {
-  const { user } = useContext(AuthContext);
+  const { user } = useAuth();
   const userId = user?.id;
 
   // --- Step 1: Get `refreshItems` back from the hook ---

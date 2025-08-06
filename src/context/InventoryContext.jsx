@@ -5,7 +5,7 @@ import React, {
   useContext,
   useCallback,
 } from "react";
-import { useAuth } from "../features/pos-features/authentication/hooks/useAuth";
+import { useAuth } from "../features/AUTHENTICATION/hooks/useAuth";
 import { getInventory } from "../api/itemService";
 import { usePageVisibility } from "../hooks/usePageVisibility";
 import { supabase } from "../utils/supabaseClient";
