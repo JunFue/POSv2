@@ -20,7 +20,6 @@ export const useItemSynchronization = (userId) => {
   const [items, setItems] = useState([]);
   // loading: For the initial, full-screen load.
   const [loading, setLoading] = useState(true);
-  // --- NEW: A separate state for background syncs ---
   // isSyncing: For silent, non-blocking updates.
   const [isSyncing, setIsSyncing] = useState(false);
   const [serverOnline, setServerOnline] = useState(true);
@@ -28,7 +27,6 @@ export const useItemSynchronization = (userId) => {
   // Use a ref to prevent multiple simultaneous refreshes.
   const isRefreshing = useRef(false);
 
-  // --- MODIFIED: refreshItems now handles two types of loading states ---
   const refreshItems = useCallback(
     async (isBackgroundRefresh = false) => {
       if (!userId || isRefreshing.current) return;
@@ -61,7 +59,6 @@ export const useItemSynchronization = (userId) => {
     [userId]
   );
 
-  // --- MODIFIED: The main useEffect for a smoother initial load ---
   useEffect(() => {
     if (!userId) {
       setItems([]);
@@ -73,7 +70,6 @@ export const useItemSynchronization = (userId) => {
 
     const setupAndLoad = async () => {
       // 1. Load from cache immediately and finish initial loading.
-      // This makes the table appear instantly on page load.
       const cachedData = loadItemsFromCache();
       if (cachedData) {
         setItems(cachedData.value);
@@ -89,7 +85,7 @@ export const useItemSynchronization = (userId) => {
       }
 
       // 3. Refresh data in the background without a loading screen.
-      await refreshItems(true); // Pass `true` for a background refresh
+      await refreshItems(true);
     };
 
     setupAndLoad();
@@ -103,7 +99,7 @@ export const useItemSynchronization = (userId) => {
         (payload) => {
           console.log("Change received from Supabase Broadcast!", payload);
           // When a change occurs, trigger a silent, background refresh.
-          refreshItems(true); // Pass `true` here as well
+          refreshItems(true);
         }
       )
       .subscribe();
@@ -118,6 +114,7 @@ export const useItemSynchronization = (userId) => {
       const tempId = `temp-${Date.now()}`;
       const optimisticItem = { ...newItemData, id: tempId, status: "pending" };
 
+      // 1. Optimistically add the item to the UI with a "pending" status.
       setItems((currentItems) => {
         const newItems = [optimisticItem, ...currentItems];
         saveItemsToCache(newItems, new Date().toISOString());
@@ -130,20 +127,31 @@ export const useItemSynchronization = (userId) => {
       }
 
       try {
-        await registerItem(newItemData);
-        // SUCCESS: The Supabase subscription will trigger a background refresh automatically.
-        // No need to call refreshItems() here.
+        // 2. Send the request to the server.
+        const savedItem = await registerItem(newItemData);
+        // 3. On success, find the temporary item and update its status to "synced".
+        // This avoids a full refresh and provides an instant "sent" confirmation.
+        setItems((currentItems) => {
+          const newItems = currentItems.map((item) =>
+            item.id === tempId ? { ...savedItem, status: "synced" } : item
+          );
+          saveItemsToCache(newItems, new Date().toISOString());
+          return newItems;
+        });
       } catch (error) {
         console.error("Failed to add item, adding to queue:", error);
+        // If the API call fails, the item remains in a "pending" state
+        // and is added to the queue for a later retry.
         addToQueue({ type: "CREATE_ITEM", payload: newItemData });
       }
     },
-    [serverOnline]
+    [serverOnline] // No longer depends on refreshItems
   );
 
   const deleteItem = useCallback(
     async (barcode) => {
       const originalItems = [...items];
+      // 1. Optimistically remove the item from the UI.
       setItems((currentItems) => {
         const newItems = currentItems.filter(
           (item) => item.barcode !== barcode
@@ -158,22 +166,24 @@ export const useItemSynchronization = (userId) => {
       }
 
       try {
+        // 2. Send the delete request.
         await apiDeleteItem(barcode);
-        // SUCCESS: The Supabase subscription will trigger a background refresh.
+        // 3. On success, we do nothing. The optimistic removal is now final.
+        // No refresh is needed.
       } catch (error) {
         console.error(
           "Failed to delete item, reverting and adding to queue:",
           error
         );
+        // If the API call fails, revert the change and add to the queue.
         setItems(originalItems);
         saveItemsToCache(originalItems, new Date().toISOString());
         addToQueue({ type: "DELETE_ITEM", payload: { barcode } });
       }
     },
-    [items, serverOnline]
+    [items, serverOnline] // No longer depends on refreshItems
   );
 
-  // --- MODIFIED: Return the new isSyncing state ---
   return {
     items,
     loading,
