@@ -17,16 +17,8 @@ export const CategoryManager = ({ onCategoriesChange }) => {
 
   // --- FIX: The data fetching logic is now self-contained in this useEffect hook ---
   useEffect(() => {
-    // --- DEBUG: Add logs to trace the effect's execution ---
-    console.log("[CategoryManager] useEffect is running.");
-    console.log(
-      "[CategoryManager] Dependency 'onCategoriesChange' is:",
-      onCategoriesChange
-    );
-
     // Define the async function inside the effect to make it self-contained.
     const fetchAndNotify = async () => {
-      console.log("[CategoryManager] Starting to fetch categories...");
       setIsLoading(true);
       try {
         const data = await getCategories();
@@ -37,13 +29,11 @@ export const CategoryManager = ({ onCategoriesChange }) => {
         setCategories(syncedCategories);
 
         if (onCategoriesChange) {
-          console.log("[CategoryManager] Calling onCategoriesChange prop.");
           onCategoriesChange(syncedCategories);
         }
       } catch (error) {
         console.error("[CategoryManager] Failed to fetch categories:", error);
       } finally {
-        console.log("[CategoryManager] Finished fetching categories.");
         setIsLoading(false);
       }
     };
