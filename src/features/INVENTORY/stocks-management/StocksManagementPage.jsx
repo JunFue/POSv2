@@ -1,4 +1,4 @@
-import { Stocks } from "./Stocks";
+import { Stocks } from "./components/Stocks";
 
 export function StocksManagementPage() {
   return (

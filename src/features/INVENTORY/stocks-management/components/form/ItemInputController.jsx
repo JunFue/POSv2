@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 
-import { ItemRegData } from "../../../../context/ItemRegContext";
-import { SuggestionList } from "../../../SALES_TERMINAL/forms/SuggestionList";
+import { ItemRegData } from "../../../../../context/ItemRegContext";
+import { SuggestionList } from "../../../../SALES_TERMINAL/forms/SuggestionList";
 
 /**
  * A controller component that wraps a text input to provide autocomplete functionality.

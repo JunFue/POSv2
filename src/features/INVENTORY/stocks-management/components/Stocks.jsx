@@ -1,29 +1,35 @@
-import { StocksForm } from "./StocksForm";
+import { StocksForm } from "./form/StocksForm";
 import { StocksTable } from "./StocksTable";
-import { useStocks } from "./hooks/useStocks"; // Import the new custom hook
+import { useStocksSync } from "../hooks/useStocksSync"; // Corrected import name
 
 export function Stocks() {
-  // All complex logic is now handled by the custom hook.
+  // All logic is now handled by the new, more powerful hook.
   const {
     stockRecords,
     editingRecord,
     loading,
+    isSyncing, // Use the new isSyncing state for background updates
     addRecord,
     updateRecord,
     deleteRecord,
     handleSetEditing,
     cancelEditing,
-  } = useStocks();
+  } = useStocksSync(); // Corrected function call
 
   return (
-    <div className="flex flex-col gap-[1vw] p-[1vw] bg-background rounded-lg h-fit">
+    <div className="flex flex-col gap-[1vw] p-[1vw] bg-background rounded-lg h-fit relative">
+      {/* Optional: Add a syncing indicator like in the items table */}
+      {isSyncing && (
+        <div className="absolute top-2 right-12 text-xs text-gray-500 animate-pulse">
+          Syncing...
+        </div>
+      )}
       <StocksForm
         onAddRecord={addRecord}
         onUpdateRecord={updateRecord}
         editingRecord={editingRecord}
         onCancelEdit={cancelEditing}
       />
-      {/* The UI remains the same, but the component is much cleaner. */}
       {loading ? (
         <div className="text-center p-4">Loading stock records...</div>
       ) : (

@@ -2,9 +2,9 @@ import { useForm } from "react-hook-form";
 import { useEffect, useContext } from "react";
 import dayjs from "dayjs";
 
-import { ItemInputController } from "./form/ItemInputController"; // Updated import
-import { FormInput, FormSelect } from "./form/FormInputs";
-import { ItemRegData } from "../../../context/ItemRegContext";
+import { ItemInputController } from "./ItemInputController"; // Updated import
+import { FormInput, FormSelect } from "./FormInputs";
+import { ItemRegData } from "../../../../../context/ItemRegContext";
 
 /**
  * The main form component, now with enhanced keyboard navigation.

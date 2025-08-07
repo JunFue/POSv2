@@ -69,9 +69,7 @@ export function Nav() {
 
       channel.subscribe();
 
-      // The cleanup function will run when the component unmounts OR when isVisible becomes false.
       return () => {
-        console.log("Unsubscribing from categories channel.");
         supabase.removeChannel(channel);
       };
     }
