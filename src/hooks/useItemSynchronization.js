@@ -90,18 +90,25 @@ export const useItemSynchronization = (userId) => {
 
     setupAndLoad();
 
-    // 4. The Supabase subscription for real-time updates.
+    // 4. The Supabase subscription for REAL-TIME UPDATES FOR THE SAME USER
+    // Create a unique channel name for the user
+    const userChannelName = `user-items-${userId}`;
+
     const channel = supabase
-      .channel("public:items")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "items" },
-        (payload) => {
-          console.log("Change received from Supabase Broadcast!", payload);
-          // When a change occurs, trigger a silent, background refresh.
-          refreshItems(true);
-        }
-      )
+      // Listen on the user-specific channel, not the public one
+      .channel(userChannelName, {
+        config: {
+          broadcast: {
+            // IMPORTANT: Acknowledge broadcasts from other clients/tabs
+            self: true,
+          },
+        },
+      })
+      .on("broadcast", { event: "items_updated" }, (payload) => {
+        console.log("User-specific broadcast received!", payload);
+        // When a change occurs, trigger a silent, background refresh.
+        refreshItems(true);
+      })
       .subscribe();
 
     return () => {
