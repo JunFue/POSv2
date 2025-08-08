@@ -4,7 +4,7 @@ import { PaymentsFilter } from "./PaymentsFilter";
 
 // --- 1. Import the virtualizer hook and the shared table component ---
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { VirtualizedTable } from "../../../components/VirtualizedTable";
+import { VirtualizedTable } from "../../../../components/VirtualizedTable";
 
 export function Payments() {
   const [payments, setPayments] = useState([]);

@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from "react-router";
 import { ItemSold } from "./transactions-contents/item-sold/ItemSold";
-import { Payments } from "./transactions-contents/Payments";
+import { Payments } from "./transactions-contents/payments/Payments";
 
 export function Transactions() {
   return (
