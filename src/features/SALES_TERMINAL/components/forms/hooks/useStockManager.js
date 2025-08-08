@@ -1,4 +1,4 @@
-import { useInventory } from "../../../../context/InventoryContext";
+import { useInventory } from "../../../../../context/InventoryContext";
 
 /**
  * A hook that provides a function to get the net quantity of an item

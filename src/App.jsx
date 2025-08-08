@@ -1,5 +1,5 @@
 import "./index.css";
-import { POS } from "./features/SALES_TERMINAL/POS/POS.jsx";
+
 import { Nav } from "./components/NAVIGATION/Nav.jsx";
 
 import { Cashout } from "./features/CASHOUT/Cashout.jsx";
@@ -11,6 +11,7 @@ import { AppProviders } from "./context/Provider.jsx";
 
 import { CategoryPage } from "./features/DASHBOARD/components/CategoryPage.jsx";
 import { Dashboard } from "./features/DASHBOARD/Dashboard.jsx";
+import { POS } from "./features/SALES_TERMINAL/POS.jsx";
 
 function App() {
   return (

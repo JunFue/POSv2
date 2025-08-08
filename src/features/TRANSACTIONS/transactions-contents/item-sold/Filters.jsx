@@ -1,198 +1,130 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
-
+import React from "react";
 import { TransactionNoFilter } from "./TransactionNoFilter";
 import { PaginationButtons } from "./PaginationButtons";
-import { useFetchTransactions } from "./useFetchTransactions";
 import { Calendar } from "../../../../components/Calendar";
 
+// This function now formats the date based on its local calendar values, not UTC.
+const toLocalDateString = (date) => {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+};
+
 export function Filters({
-  onFilter,
-  onLocalFilter,
+  onApplyFilters,
+  onReset,
+  onPageChange,
+  onRowsPerPageChange,
+  onTransactionNoChange,
+  onDateRangeChange,
   currentPage,
-  setCurrentPage,
   totalPages,
   rowsPerPage,
-  setRowsPerPage,
+  loading,
+  transactionNo,
+  dateRange,
 }) {
-  const { user, session } = useAuth();
-  // Removed: const [fromDate, setFromDate] = useState("");
-  // Removed: const [toDate, setToDate] = useState("");
-  const [transactionNo, setTransactionNo] = useState("");
-  const [itemName, setItemName] = useState("");
-
-  // Initialize filterParams with today's date.
-  const today = new Date().toISOString().split("T")[0];
-  const [filterParams, setFilterParams] = useState({ from: today, to: today });
-
-  const { fetchTransactions, loading } = useFetchTransactions(session);
-
-  useEffect(() => {
-    if (user) {
-      setCurrentPage(1);
-      fetchTransactions(
-        1,
-        rowsPerPage,
-        filterParams.from,
-        filterParams.to,
-        ""
-      ).then((data) => {
-        if (data && onFilter) onFilter(data);
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  // New callback to handle calendar selection.
-  const handleCalendarFilter = (filter) => {
-    let newFrom, newTo;
-    if (filter.date) {
-      newFrom = filter.date.toISOString().split("T")[0];
-      newTo = newFrom;
-    } else if (filter.range) {
-      newFrom = filter.range.from.toISOString().split("T")[0];
-      newTo = filter.range.to.toISOString().split("T")[0];
-    }
-    setFilterParams({ from: newFrom, to: newTo });
-    setCurrentPage(1);
-    fetchTransactions(
-      1,
-      rowsPerPage,
-      newFrom,
-      newTo,
-      transactionNo.trim()
-    ).then((data) => {
-      if (data && onFilter) onFilter(data);
-    });
+  const handleTransactionNoChange = (e) => {
+    onTransactionNoChange(e.target.value);
   };
 
-  const handleFilter = () => {
-    if (itemName.trim() !== "") {
-      if (onLocalFilter) onLocalFilter(itemName);
+  // This handler now uses the new local date formatting function.
+  const handleDateChange = (selection) => {
+    // Log the raw output from the calendar component
+    console.log("Raw calendar selection:", selection);
+
+    if (!selection) return;
+    let newFrom, newTo;
+    if (selection.range && selection.range.from && selection.range.to) {
+      newFrom = toLocalDateString(selection.range.from);
+      newTo = toLocalDateString(selection.range.to);
+    } else if (selection.date) {
+      newFrom = toLocalDateString(selection.date);
+      newTo = newFrom;
+    } else {
       return;
     }
-    setCurrentPage(1);
-    fetchTransactions(
-      1,
-      rowsPerPage,
-      filterParams.from,
-      filterParams.to,
-      transactionNo.trim()
-    ).then((data) => {
-      if (data && onFilter) onFilter(data);
-    });
+
+    // Log the formatted object before sending it to the parent
+    const formattedDateRange = { from: newFrom, to: newTo };
+    console.log("Formatted date range sent to parent:", formattedDateRange);
+
+    onDateRangeChange(formattedDateRange);
   };
 
-  const handleReset = () => {
-    setTransactionNo("");
-    setItemName("");
-    setCurrentPage(1);
-    // Reset filterParams to today's date.
-    setFilterParams({ from: today, to: today });
-    fetchTransactions(1, rowsPerPage, today, today, "").then((data) => {
-      if (data && onFilter) onFilter(data);
-    });
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      const nextPage = currentPage + 1;
-      setCurrentPage(nextPage);
-      fetchTransactions(
-        nextPage,
-        rowsPerPage,
-        filterParams.from,
-        filterParams.to,
-        transactionNo.trim()
-      ).then((data) => {
-        if (data && onFilter) onFilter(data);
-      });
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      const prevPage = currentPage - 1;
-      setCurrentPage(prevPage);
-      fetchTransactions(
-        prevPage,
-        rowsPerPage,
-        filterParams.from,
-        filterParams.to,
-        transactionNo.trim()
-      ).then((data) => {
-        if (data && onFilter) onFilter(data);
-      });
-    }
-  };
-
-  const handleRowsPerPageChange = (e) => {
-    const newRows = Number(e.target.value);
-    setRowsPerPage(newRows);
-    setCurrentPage(1);
-    fetchTransactions(
-      1,
-      newRows,
-      filterParams.from,
-      filterParams.to,
-      transactionNo.trim()
-    ).then((data) => {
-      if (data && onFilter) onFilter(data);
-    });
+  const handleRowsPerPage = (e) => {
+    onRowsPerPageChange(Number(e.target.value));
   };
 
   return (
-    <div className="flex flex-row gap-4 p-4 bg-background rounded-lg shadow-md">
-      {/* Replace DateFilter with reusable Calendar */}
-      <div className="w-[50%] h-[25%]">
-        <Calendar onFilter={handleCalendarFilter} />
+    <div className="flex flex-row flex-wrap gap-4 p-4 bg-background rounded-lg shadow-md">
+      <div className="w-60 h-100">
+        {/*
+          IMPORTANT: We remove the 'Z' here.
+          By creating the date like `new Date('2025-08-08T00:00:00')`, we are telling
+          JavaScript to interpret the string in the browser's local timezone, which
+          prevents the off-by-one display error.
+        */}
+        <Calendar
+          value={{
+            from: new Date(dateRange.from + "T00:00:00"),
+            to: new Date(dateRange.to + "T00:00:00"),
+          }}
+          onChange={handleDateChange}
+          className="w-full h-full"
+        />
       </div>
-      <div>
-        {/* Transaction Number Filter */}
+      <div className="flex flex-col gap-4">
         <TransactionNoFilter
           transactionNo={transactionNo}
-          onTransactionNoChange={(e) => setTransactionNo(e.target.value)}
+          onTransactionNoChange={handleTransactionNoChange}
         />
 
-        {/* Filter and Reset Buttons */}
         <div className="flex gap-4">
           <button
-            onClick={handleFilter}
+            onClick={onApplyFilters}
             disabled={loading}
-            className={`traditional-button ${
-              loading ? "opacity-50 cursor-not-allowed" : ""
-            }`}
+            className="traditional-button"
           >
             {loading ? "Loading..." : "Filter"}
           </button>
-          <button onClick={handleReset} className="traditional-button">
-            Reset
+          <button
+            onClick={onReset}
+            disabled={loading}
+            className="traditional-button"
+          >
+            Reset fields only
           </button>
         </div>
 
-        {/* Pagination Buttons */}
         <PaginationButtons
           currentPage={currentPage}
           totalPages={totalPages}
           loading={loading}
-          onNext={handleNextPage}
-          onPrev={handlePreviousPage}
+          onNext={() => onPageChange(currentPage + 1)}
+          onPrev={() => onPageChange(currentPage - 1)}
         />
 
-        {/* Rows Per Page Selection */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label
+            htmlFor="rowsPerPage"
+            className="block text-sm font-medium text-body-text"
+          >
+            Rows:
+          </label>
           <select
+            id="rowsPerPage"
             value={rowsPerPage}
-            onChange={handleRowsPerPageChange}
+            onChange={handleRowsPerPage}
             disabled={loading}
             className="traditional-input"
           >
-            <option value={10}>10</option>
-            <option value={25}>25</option>
-            <option value={50}>50</option>
-            <option value={100}>100</option>
-            <option value={500}>500</option>
-            <option value={1000}>1000</option>
+            {[10, 25, 50, 100, 500, 1000].map((val) => (
+              <option key={val} value={val}>
+                {val}
+              </option>
+            ))}
           </select>
         </div>
       </div>

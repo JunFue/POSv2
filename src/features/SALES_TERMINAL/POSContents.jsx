@@ -1,19 +1,19 @@
 import { useContext, useRef, useState } from "react";
-import { CounterForm } from "../../forms/CounterForm";
-import { CartContext } from "../../../../context/CartContext";
-import { SettingsContext } from "../../../../context/SettingsContext";
-import { Settings } from "../../../SETTINGS/Settings";
-import Auth from "../../../AUTHENTICATION/Auth";
-import { AddToCartBtn } from "./buttons/AddToCartBtn";
-import { DoneBtn } from "./buttons/DoneBtn";
-import { ClearBtn } from "./buttons/ClearBtn";
-import { LoginBtn } from "./buttons/LoginBtn";
-import { SettingsBtn } from "./buttons/SettingsBtn";
+import { CounterForm } from "./components/forms/CounterForm";
+import { CartContext } from "../../context/CartContext";
+import { SettingsContext } from "../../context/SettingsContext";
+import { Settings } from "../SETTINGS/Settings";
+import Auth from "../AUTHENTICATION/Auth";
+import { AddToCartBtn } from "./components/buttons/AddToCartBtn";
+import { DoneBtn } from "./components/buttons/DoneBtn";
+import { ClearBtn } from "./components/buttons/ClearBtn";
+import { LoginBtn } from "./components/buttons/LoginBtn";
+import { SettingsBtn } from "./components/buttons/SettingsBtn";
 
-import { LogoutButton } from "./buttons/LogoutButton";
-import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
-import { NewCustomerBtn } from "./buttons/NewCostumerBtn";
-import { CartTable } from "./CartTable";
+import { LogoutButton } from "./components/buttons/LogoutButton";
+import { useAuth } from "../AUTHENTICATION/hooks/useAuth";
+import { NewCustomerBtn } from "./components/buttons/NewCostumerBtn";
+import { CartTable } from "./components/CartTable";
 
 export function POSContents() {
   const { cartData, setCartData } = useContext(CartContext);

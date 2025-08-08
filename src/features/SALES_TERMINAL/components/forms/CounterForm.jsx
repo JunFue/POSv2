@@ -13,10 +13,10 @@ import { CounterFormFields } from "./CounterFormFields";
 import { SuggestionList } from "./SuggestionList";
 import { useItemSuggestions } from "./hooks/useItemSuggestions";
 import { useTransactionHandler } from "./hooks/useTransactionHandler";
-import { generateTransactionNo } from "../../../utils/transactionNumberGenerator";
-import { CartContext } from "../../../context/CartContext";
-import { ItemRegData } from "../../../context/ItemRegContext";
-import { useAuth } from "../../AUTHENTICATION/hooks/useAuth";
+import { generateTransactionNo } from "../../../../utils/transactionNumberGenerator";
+import { CartContext } from "../../../../context/CartContext";
+import { ItemRegData } from "../../../../context/ItemRegContext";
+import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
 
 export const CounterForm = forwardRef((props, ref) => {
   const { cartData } = useContext(CartContext);

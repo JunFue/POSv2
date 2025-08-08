@@ -4,7 +4,7 @@ import {
   useReactTable,
 } from "@tanstack/react-table";
 import { useContext } from "react";
-import { CartContext } from "../../../../context/CartContext";
+import { CartContext } from "../../../context/CartContext";
 
 export function CartTable() {
   const { cartData, setCartData } = useContext(CartContext);

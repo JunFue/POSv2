@@ -1,16 +1,24 @@
-import { useContext, useState, useMemo, useRef } from "react";
-
-import { Filters } from "./Filters";
+import React, {
+  useContext,
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useFilterState } from "./hooks/useFilterState";
 
-import { MemoizedColumnFilterDropdown } from "./components/ColumnFilterDropdown";
 import { ItemSoldContext } from "../../../../context/ItemSoldContext";
+import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
+import { useFetchTransactions } from "./useFetchTransactions";
+import { useFilterState } from "./hooks/useFilterState";
 import { useFilterWorker } from "../../../../hooks/useFilterWorker";
-import { VirtualizedTable } from "../../../../components/VirtualizedTable";
 
-// A small component to render the filterable header, further cleaning up the column definitions.
+import { Filters } from "./Filters";
+import { VirtualizedTable } from "../../../../components/VirtualizedTable";
+import { MemoizedColumnFilterDropdown } from "./components/ColumnFilterDropdown";
+
 const FilterableHeader = ({
   title,
   toggleDropdown,
@@ -38,20 +46,80 @@ const FilterableHeader = ({
 
 export function ItemSold() {
   const { itemSold, setItemSold, serverOnline } = useContext(ItemSoldContext);
+  const { session } = useAuth();
   const tableContainerRef = useRef(null);
 
-  // State for pagination and loading
-  const [totalItems, setTotalItems] = useState(0);
+  // --- State Management ---
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
-  const totalPages = Math.ceil(totalItems / rowsPerPage);
+  const [transactionNo, setTransactionNo] = useState("");
+  const today = useMemo(() => new Date().toISOString().split("T")[0], []);
+  const [dateRange, setDateRange] = useState({ from: today, to: today });
+  const [totalItems, setTotalItems] = useState(0);
 
-  // Use the custom hook to manage filter state and dropdown visibility
+  const { fetchTransactions, loading } = useFetchTransactions(session);
+
+  // --- Data Fetching Logic ---
+  const performFetch = useCallback(
+    (page, limit, dates, transNo) => {
+      fetchTransactions(page, limit, dates.from, dates.to, transNo).then(
+        (response) => {
+          if (response) {
+            setItemSold(response.data || []);
+            setTotalItems(response.totalCount || 0);
+          } else {
+            setItemSold([]);
+            setTotalItems(0);
+          }
+        }
+      );
+    },
+    [fetchTransactions, setItemSold]
+  );
+
+  // --- Handlers for Child Component ---
+  const handleApplyFilters = useCallback(() => {
+    setCurrentPage(1);
+    performFetch(1, rowsPerPage, dateRange, transactionNo.trim());
+  }, [performFetch, rowsPerPage, dateRange, transactionNo]);
+
+  const handlePageChange = useCallback(
+    (newPage) => {
+      setCurrentPage(newPage);
+      performFetch(newPage, rowsPerPage, dateRange, transactionNo.trim());
+    },
+    [performFetch, rowsPerPage, dateRange, transactionNo]
+  );
+
+  const handleRowsPerPageChange = useCallback(
+    (newRows) => {
+      setRowsPerPage(newRows);
+      setCurrentPage(1);
+      performFetch(1, newRows, dateRange, transactionNo.trim());
+    },
+    [performFetch, dateRange, transactionNo]
+  );
+
+  const handleReset = useCallback(() => {
+    const newDateRange = { from: today, to: today };
+    setTransactionNo("");
+    setDateRange(newDateRange);
+  }, [today]);
+
+  // Effect for the initial data load when the component mounts.
+  useEffect(() => {
+    if (session) {
+      performFetch(1, 10, { from: today, to: today }, "");
+    }
+  }, [session, performFetch, today]);
+
+  // --- Client-side filtering & Table setup ---
+  const totalPages = useMemo(
+    () => Math.ceil(totalItems / rowsPerPage),
+    [totalItems, rowsPerPage]
+  );
   const itemNameFilter = useFilterState();
   const classificationFilter = useFilterState();
-
-  // Memoize unique values for dropdowns
   const uniqueItemNames = useMemo(
     () => Array.from(new Set((itemSold || []).map((d) => d.itemName))),
     [itemSold]
@@ -60,18 +128,11 @@ export function ItemSold() {
     () => Array.from(new Set((itemSold || []).map((d) => d.classification))),
     [itemSold]
   );
-
-  // Get filtered data using the worker hook
   const filteredData = useFilterWorker(
     itemSold,
     itemNameFilter.filter,
     classificationFilter.filter
   );
-
-  const handleServerData = (response) => {
-    setItemSold(response.data);
-    setTotalItems(response.totalCount);
-  };
 
   const columns = useMemo(
     () => [
@@ -126,12 +187,8 @@ export function ItemSold() {
     data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    // Simple cells are now default, so we don't need to define them unless they're special.
-    defaultColumn: {
-      cell: (props) => <p>{props.getValue()}</p>,
-    },
+    defaultColumn: { cell: (props) => <p>{props.getValue()}</p> },
   });
-
   const { rows } = table.getRowModel();
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
@@ -139,7 +196,6 @@ export function ItemSold() {
     estimateSize: () => 40,
     overscan: 5,
   });
-
   const closeAllDropdowns = () => {
     itemNameFilter.closeDropdown();
     classificationFilter.closeDropdown();
@@ -151,14 +207,18 @@ export function ItemSold() {
         <div className="text-red-500 font-bold p-2">SERVER IS OFFLINE</div>
       )}
       <Filters
-        onFilter={handleServerData}
+        onApplyFilters={handleApplyFilters}
+        onReset={handleReset}
+        onPageChange={handlePageChange}
+        onRowsPerPageChange={handleRowsPerPageChange}
+        onTransactionNoChange={setTransactionNo}
+        onDateRangeChange={setDateRange}
         currentPage={currentPage}
-        setCurrentPage={setCurrentPage}
         totalPages={totalPages}
         rowsPerPage={rowsPerPage}
-        setRowsPerPage={setRowsPerPage}
         loading={loading}
-        setLoading={setLoading}
+        transactionNo={transactionNo}
+        dateRange={dateRange}
       />
       <div className="relative">
         <VirtualizedTable
@@ -167,8 +227,8 @@ export function ItemSold() {
           rowVirtualizer={rowVirtualizer}
         />
         {loading && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background shadow-input bg-opacity-50">
-            Loading...
+          <div className="absolute inset-0 flex items-center justify-center bg-background bg-opacity-50">
+            <p>Loading...</p>
           </div>
         )}
       </div>

@@ -1,6 +1,6 @@
 import { useState, useContext } from "react";
 import { useStockManager } from "./useStockManager";
-import { ItemRegData } from "../../../../context/ItemRegContext";
+import { ItemRegData } from "../../../../../context/ItemRegContext";
 
 export const useItemSuggestions = (setValue, quantityRef) => {
   const { items: regItems } = useContext(ItemRegData);

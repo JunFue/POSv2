@@ -1,12 +1,8 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 
 import { ItemRegData } from "../../../../../context/ItemRegContext";
-import { SuggestionList } from "../../../../SALES_TERMINAL/forms/SuggestionList";
+import { SuggestionList } from "../../../../SALES_TERMINAL/components/forms/SuggestionList";
 
-/**
- * A controller component that wraps a text input to provide autocomplete functionality.
- * It now correctly merges its own logic with props from react-hook-form.
- */
 export function ItemInputController({ register, setValue, name, isEditing }) {
   const { items } = useContext(ItemRegData);
   const [suggestions, setSuggestions] = useState([]);

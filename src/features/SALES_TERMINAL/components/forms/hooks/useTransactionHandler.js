@@ -1,12 +1,12 @@
 import { useContext } from "react";
 import { useStockManager } from "./useStockManager";
-import { supabase } from "../../../../utils/supabaseClient";
-import { CartContext } from "../../../../context/CartContext";
-import { ItemRegData } from "../../../../context/ItemRegContext";
-import { PaymentContext } from "../../../../context/PaymentContext";
-import { ItemSoldContext } from "../../../../context/ItemSoldContext";
-import { useInventory } from "../../../../context/InventoryContext"; // Import InventoryContext
-import { generateTransactionNo } from "../../../../utils/transactionNumberGenerator";
+import { supabase } from "../../../../../utils/supabaseClient";
+import { CartContext } from "../../../../../context/CartContext";
+import { ItemRegData } from "../../../../../context/ItemRegContext";
+import { PaymentContext } from "../../../../../context/PaymentContext";
+import { ItemSoldContext } from "../../../../../context/ItemSoldContext";
+import { useInventory } from "../../../../../context/InventoryContext"; // Import InventoryContext
+import { generateTransactionNo } from "../../../../../utils/transactionNumberGenerator";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
