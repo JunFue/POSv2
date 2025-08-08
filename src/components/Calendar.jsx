@@ -1,4 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, {
+  useState,
+  useEffect,
+  useImperativeHandle,
+  forwardRef,
+} from "react";
 import {
   format,
   addMonths,
@@ -16,66 +21,102 @@ import {
 } from "date-fns";
 import { FaCalendarDay, FaCalendarWeek, FaUndo } from "react-icons/fa";
 
-export function Calendar({ onFilter }) {
-  const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [mode, setMode] = useState("single"); // 'single' or 'range'
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [range, setRange] = useState({ from: null, to: null });
+export const Calendar = forwardRef(({ className, value, onChange }, ref) => {
+  // --- FIX ---
+  // State is now initialized lazily, so it doesn't reset on every render.
+  // This prevents the infinite loop that was causing the loading issue.
+  const [range, setRange] = useState(() => {
+    const today = new Date();
+    if (value && value.from) {
+      return {
+        from: startOfDay(value.from),
+        to: value.to ? startOfDay(value.to) : startOfDay(value.from),
+      };
+    }
+    return { from: today, to: today };
+  });
+
+  const [selectedDate, setSelectedDate] = useState(range.from);
+  const [currentMonth, setCurrentMonth] = useState(range.from);
+  const [mode, setMode] = useState(() =>
+    isSameDay(range.from, range.to) ? "single" : "range"
+  );
   const [hoveredDate, setHoveredDate] = useState(null);
 
+  // --- FIX ---
+  // This effect synchronizes the calendar's internal state if the `value`
+  // prop from the parent component changes.
   useEffect(() => {
-    handleReset();
-  }, [mode]);
+    if (value && value.from) {
+      const newRange = {
+        from: startOfDay(value.from),
+        to: value.to ? startOfDay(value.to) : startOfDay(value.from),
+      };
+      setRange(newRange);
+      setSelectedDate(newRange.from);
+      setCurrentMonth(newRange.from);
+      setMode(isSameDay(newRange.from, newRange.to) ? "single" : "range");
+    }
+  }, [value]);
 
   const handleDayClick = (day) => {
+    const dayStart = startOfDay(day);
     if (mode === "single") {
-      setSelectedDate(day);
+      setSelectedDate(dayStart);
+      setRange({ from: dayStart, to: dayStart });
+      if (onChange) onChange({ date: dayStart });
     } else {
       if (!range.from || (range.from && range.to)) {
-        setRange({ from: startOfDay(day), to: null });
-        setHoveredDate(null);
+        setRange({ from: dayStart, to: null });
+        // Don't call onChange yet, wait for the second date.
       } else {
-        const newRange = isAfter(day, range.from)
-          ? { from: range.from, to: startOfDay(day) }
-          : { from: startOfDay(day), to: range.from };
+        const newRange = isAfter(dayStart, range.from)
+          ? { from: range.from, to: dayStart }
+          : { from: dayStart, to: range.from };
         setRange(newRange);
-        setHoveredDate(null);
+        if (onChange) onChange({ range: newRange });
       }
-    }
-  };
-
-  const handleFilterClick = () => {
-    if (mode === "single") {
-      onFilter({ date: selectedDate });
-    } else if (range.from && range.to) {
-      onFilter({ range: range });
-    } else {
-      alert("Please select a complete date range.");
+      setHoveredDate(null);
     }
   };
 
   const handleReset = () => {
     const today = new Date();
-    setSelectedDate(today);
-    setCurrentMonth(today);
-    setRange({ from: null, to: null });
-    onFilter({ date: today });
+    const todayStart = startOfDay(today);
+    setSelectedDate(todayStart);
+    setCurrentMonth(todayStart);
+    setRange({ from: todayStart, to: todayStart });
+    if (onChange) {
+      onChange({ date: todayStart });
+    }
   };
+
+  // Expose the current selection to the parent.
+  useImperativeHandle(ref, () => ({
+    getSelection: () => {
+      if (mode === "single") {
+        return { date: selectedDate };
+      } else if (range.from && range.to) {
+        return { range };
+      }
+      return null;
+    },
+  }));
 
   const renderHeader = () => (
     <div className="flex justify-between items-center py-2 px-4">
       <button
         onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-        className="p-2 rounded-full hover:bg-gray-200"
+        className="p-1 rounded-full hover:bg-gray-200"
       >
         &lt;
       </button>
-      <span className="text-lg font-bold">
+      <span className="font-bold text-head-text text-sm">
         {format(currentMonth, "MMMM yyyy")}
       </span>
       <button
         onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-        className="p-2 rounded-full hover:bg-gray-200"
+        className="p-1 rounded-full hover:bg-gray-200"
       >
         &gt;
       </button>
@@ -83,7 +124,7 @@ export function Calendar({ onFilter }) {
   );
 
   const renderDays = () => (
-    <div className="grid grid-cols-7 text-center font-semibold text-sm text-head-text">
+    <div className="grid grid-cols-7 text-center text-[50%] font-semibold text-head-text">
       {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
         <div key={index}>{day}</div>
       ))}
@@ -103,7 +144,7 @@ export function Calendar({ onFilter }) {
       for (let i = 0; i < 7; i++) {
         const cloneDay = day;
         let cellClasses =
-          "p-2 text-center h-10 flex items-center justify-center text-sm cursor-pointer transition-colors duration-200";
+          "p-1 text-center h-10 flex items-center justify-center cursor-pointer transition-colors duration-200 text-[50%]";
 
         if (!isSameMonth(day, monthStart)) cellClasses += " text-head-text";
         else cellClasses += " hover:bg-blue-100";
@@ -166,35 +207,39 @@ export function Calendar({ onFilter }) {
   };
 
   return (
-    <div className="bg-background rounded-lg shadow-md p-4 flex flex-col">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
+    <div
+      className={`bg-background rounded-lg shadow-md p-4 flex flex-col w-full h-full ${
+        className || ""
+      }`}
+    >
+      <div className="flex justify-between items-center">
+        <div className="flex items-center">
           <button
             onClick={() => setMode("single")}
-            className={`p-2 rounded-full ${
+            className={`p-1 rounded-full ${
               mode === "single"
                 ? "bg-blue-500 text-body-text"
                 : "hover:bg-gray-200"
             }`}
             title="Single Day Mode"
           >
-            <FaCalendarDay />
+            <FaCalendarDay className="text-sm" />
           </button>
           <button
             onClick={() => setMode("range")}
-            className={`p-2 rounded-full ${
+            className={`p-1 rounded-full ${
               mode === "range"
                 ? "bg-blue-500 text-body-text"
                 : "hover:bg-gray-200"
             }`}
             title="Date Range Mode"
           >
-            <FaCalendarWeek />
+            <FaCalendarWeek className="text-sm" />
           </button>
         </div>
         <button
           onClick={handleReset}
-          className="p-2 rounded-full hover:bg-gray-200"
+          className="p-1 rounded-full hover:bg-gray-200 text-sm"
           title="Reset to Today"
         >
           <FaUndo />
@@ -203,12 +248,6 @@ export function Calendar({ onFilter }) {
       {renderHeader()}
       {renderDays()}
       {renderCells()}
-      <button
-        onClick={handleFilterClick}
-        className="traditional-button mt-4 w-full"
-      >
-        Filter
-      </button>
     </div>
   );
-}
+});
