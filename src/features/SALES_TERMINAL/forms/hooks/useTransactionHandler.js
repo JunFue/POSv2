@@ -5,6 +5,7 @@ import { CartContext } from "../../../../context/CartContext";
 import { ItemRegData } from "../../../../context/ItemRegContext";
 import { PaymentContext } from "../../../../context/PaymentContext";
 import { ItemSoldContext } from "../../../../context/ItemSoldContext";
+import { useInventory } from "../../../../context/InventoryContext"; // Import InventoryContext
 import { generateTransactionNo } from "../../../../utils/transactionNumberGenerator";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -15,6 +16,8 @@ export const useTransactionHandler = (formMethods, refs) => {
   const { setItemSold, setServerOnline: setSoldServerOnline } =
     useContext(ItemSoldContext);
   const { setPaymentData } = useContext(PaymentContext);
+  // Consume the inventory context to get the current state and the setter function
+  const { inventory, setInventory } = useInventory();
 
   const { getNetQuantity } = useStockManager();
 
@@ -22,7 +25,7 @@ export const useTransactionHandler = (formMethods, refs) => {
   const { barcodeRef, costumerNameRef, quantityRef } = refs;
 
   const addToCart = (data) => {
-    // ... addToCart logic remains the same
+    // ... existing addToCart logic remains the same ...
     if (!data.barcode || !data.quantity) {
       alert("Please enter barcode and quantity.");
       return;
@@ -77,6 +80,7 @@ export const useTransactionHandler = (formMethods, refs) => {
   };
 
   const handleDone = async () => {
+    // --- 1. Perform standard validation and data prep ---
     const {
       transactionNo,
       cashierName,
@@ -107,16 +111,26 @@ export const useTransactionHandler = (formMethods, refs) => {
       return;
     }
 
-    const {
-      data: { session },
-      error: sessionError,
-    } = await supabase.auth.getSession();
-    if (sessionError || !session) {
-      alert("Authentication error. Please sign in again.");
-      return;
-    }
-    const token = session.access_token;
+    // --- 2. OPTIMISTIC UI UPDATE ---
+    // Create a deep copy of the inventory to avoid direct state mutation.
+    const optimisticInventory = JSON.parse(JSON.stringify(inventory));
 
+    // For each item in the cart, find it in our copied inventory and subtract the quantity.
+    for (const cartItem of cartData) {
+      const itemIndex = optimisticInventory.findIndex(
+        (invItem) => invItem.item_name === cartItem.item
+      );
+      if (itemIndex > -1) {
+        optimisticInventory[itemIndex].quantity_available -= cartItem.quantity;
+      }
+    }
+
+    // Immediately update the UI with the new, predicted inventory state.
+    // Any component using the InventoryContext (like StocksMonitor) will re-render instantly.
+    setInventory(optimisticInventory);
+    // --- END OF OPTIMISTIC UPDATE ---
+
+    // --- 3. Clear local UI state for the next transaction ---
     const soldItems = cartData.map((item) => {
       const regItem = regItems.find((ri) => ri.barcode === item.barcode);
       return {
@@ -144,8 +158,6 @@ export const useTransactionHandler = (formMethods, refs) => {
       inCharge: cashierName,
     };
 
-    // --- REVISED LOGIC ---
-    // 1. Clear the UI immediately for a responsive feel.
     setCartData([]);
     reset({
       ...getValues(),
@@ -161,13 +173,22 @@ export const useTransactionHandler = (formMethods, refs) => {
     });
     costumerNameRef.current?.focus();
 
-    // 2. Update local contexts (still happens instantly)
+    // Update other local contexts
     setItemSold((prev) => [...prev, ...soldItems]);
     setPaymentData((prev) => [...prev, paymentRecord]);
 
-    // 3. Perform network requests in the background.
-    // We don't need to 'await' these inside the function because the UI is already cleared.
+    // --- 4. Perform network requests in the background ---
     const sendDataToServer = async () => {
+      const {
+        data: { session },
+        error: sessionError,
+      } = await supabase.auth.getSession();
+      if (sessionError || !session) {
+        alert("Authentication error. Please sign in again.");
+        return;
+      }
+      const token = session.access_token;
+
       let offline = false;
       try {
         const requests = soldItems.map((item) =>
@@ -193,8 +214,6 @@ export const useTransactionHandler = (formMethods, refs) => {
         );
 
         const responses = await Promise.all(requests);
-
-        // Check if any request failed
         if (responses.some((res) => !res.ok)) {
           offline = true;
         }
