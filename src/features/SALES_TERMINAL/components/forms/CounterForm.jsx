@@ -11,18 +11,18 @@ import dayjs from "dayjs";
 
 import { CounterFormFields } from "./CounterFormFields";
 import { SuggestionList } from "./SuggestionList";
-import { useItemSuggestions } from "./hooks/useItemSuggestions";
-import { useTransactionHandler } from "./hooks/useTransactionHandler";
+import { useItemSuggestions } from "../../hooks/useItemSuggestions";
+import { useTransactionHandler } from "../../hooks/useTransactionHandler";
 import { generateTransactionNo } from "../../../../utils/transactionNumberGenerator";
 import { CartContext } from "../../../../context/CartContext";
 import { ItemRegData } from "../../../../context/ItemRegContext";
 import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
+import { useAddToCart } from "../../hooks/useAddtoCart";
 
 export const CounterForm = forwardRef((props, ref) => {
   const { cartData } = useContext(CartContext);
   const { items: regItems } = useContext(ItemRegData);
   const { user } = useAuth();
-
   const [alertMessage, setAlertMessage] = useState(null);
 
   const form = useForm({
@@ -49,6 +49,8 @@ export const CounterForm = forwardRef((props, ref) => {
   const discountRef = useRef(null);
   const inputRefs = { costumerNameRef, barcodeRef, quantityRef, discountRef };
 
+  const addToCart = useAddToCart(form, inputRefs);
+
   const {
     suggestions,
     highlightedIndex,
@@ -57,7 +59,7 @@ export const CounterForm = forwardRef((props, ref) => {
     handleSelectSuggestion,
   } = useItemSuggestions(setValue, quantityRef);
 
-  const { addToCart, handleDone } = useTransactionHandler(
+  const { handleDone } = useTransactionHandler(
     { getValues, setValue, reset },
     inputRefs
   );
