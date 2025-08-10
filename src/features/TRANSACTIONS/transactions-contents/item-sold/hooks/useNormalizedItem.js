@@ -1,15 +1,15 @@
 import { useMemo } from "react";
 import { normalizeItemSold } from "../utils/normalizeItemSold";
 
-export function useNormalizedItems(
-  isViewingToday,
-  todaysItemSold,
-  itemSold,
-  today
-) {
+export function useNormalizedItems({ source }) {
   return useMemo(() => {
-    const source = isViewingToday ? todaysItemSold : itemSold;
-    const safe = Array.isArray(source) ? source : [];
-    return safe.map((tx) => normalizeItemSold(tx, today));
-  }, [isViewingToday, todaysItemSold, itemSold, today]);
+    console.log("Source received in useNormalizedItems:", source);
+
+    if (!Array.isArray(source)) return [];
+    console.log("Mapping source:", source);
+    return source.map((tx) => {
+      console.log("Mapping tx:", tx);
+      return normalizeItemSold(tx);
+    });
+  }, [source]);
 }

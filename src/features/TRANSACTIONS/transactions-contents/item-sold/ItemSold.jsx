@@ -1,16 +1,20 @@
-import React, { useContext, useRef, useCallback, useState } from "react";
+import React, {
+  useContext,
+  useRef,
+  useCallback,
+  useState,
+  useEffect,
+} from "react";
 
 // Modular hooks
 import { useQueryState } from "./hooks/useQuerryState";
 import { useFetchData } from "./hooks/useFetchData";
-
 import { useFilters } from "./hooks/useFilters";
 import { useColumns } from "./hooks/useColumns";
 import { useTableSetup } from "./hooks/useTableSetup";
 import { useVirtualRows } from "./hooks/useVirtualRows";
 
 // UI
-
 import { ItemSoldContext } from "../../../../context/ItemSoldContext";
 import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
 import { useTodaysItemsSold } from "./hooks/useTodaysItemSold";
@@ -26,7 +30,7 @@ export function ItemSold() {
   const {
     itemSold = [],
     setItemSold,
-    todaysItemSold = [],
+    todaysItemSold = {},
     serverOnline,
     setServerOnline,
   } = ctx;
@@ -34,10 +38,10 @@ export function ItemSold() {
   const { session } = useAuth();
   const tableContainerRef = useRef(null);
 
-  // Preload today's transactions if applicable
-  useTodaysItemsSold();
+  useTodaysItemsSold(); // Preload cached items
 
-  // Query State (dates, trans no, “view today” logic)
+  const [readySource, setReadySource] = useState([]);
+
   const {
     today,
     dateRange,
@@ -48,7 +52,6 @@ export function ItemSold() {
     resetQuery,
   } = useQueryState();
 
-  // Fetch orchestrator
   const [totalItems, setTotalItems] = useState(0);
   const { performFetch, loading } = useFetchData(
     session,
@@ -57,15 +60,25 @@ export function ItemSold() {
     setTotalItems
   );
 
-  // Data transformation
-  const normalizedBase = useNormalizedItems(
-    isViewingToday,
-    todaysItemSold,
-    itemSold,
-    today
-  );
+  useEffect(() => {
+    const itemsToday = todaysItemSold?.data;
+    const newSource =
+      isViewingToday && Array.isArray(itemsToday) && itemsToday.length > 0
+        ? itemsToday
+        : itemSold;
 
-  // Filters
+    if (newSource.length > 0) {
+      setReadySource(newSource);
+    } else {
+      setReadySource([]);
+    }
+  }, [todaysItemSold, itemSold, isViewingToday]);
+
+  const normalizedBase = useNormalizedItems({
+    source: readySource,
+    today,
+  });
+
   const {
     filteredData,
     itemNameFilter,
@@ -75,21 +88,15 @@ export function ItemSold() {
     closeAllDropdowns,
   } = useFilters(normalizedBase);
 
-  // Table schema
   const columns = useColumns(
     itemNameFilter,
     uniqueItemNames,
     classificationFilter,
     uniqueClassifications
   );
-
-  // Table setup
   const table = useTableSetup(filteredData, columns);
-
-  // Virtualized rows
   const { rowVirtualizer } = useVirtualRows(table, tableContainerRef);
 
-  // Handlers
   const handleApplyFilters = useCallback(() => {
     if (!isViewingToday) {
       table.setPageIndex(0);
