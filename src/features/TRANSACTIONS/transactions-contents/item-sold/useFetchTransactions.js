@@ -3,36 +3,27 @@ import { useState, useCallback } from "react";
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 /**
- * Custom hook to fetch transactions from the backend.
+ * Custom hook to fetch historical/paginated transactions from the backend.
+ * This is triggered manually by user actions like changing dates or clicking 'Filter'.
  * @param {object} session - The user's session object, containing the access token.
  * @returns {object} An object containing the fetchTransactions function and the loading state.
  */
 export function useFetchTransactions(session) {
   const [loading, setLoading] = useState(false);
 
-  // --- 1. The function now accepts a single options object ---
   const fetchTransactions = useCallback(
     async (options) => {
       if (!session) {
+        console.error("Fetch aborted: No user session available.");
         return null;
       }
 
-      // --- 2. Destructure the options, defaulting isSilent to false ---
-      const {
-        page,
-        limit,
-        startDate,
-        endDate,
-        transNo = "",
-        isSilent = false,
-      } = options;
-
-      // --- 3. Only set loading to true if the fetch is NOT silent ---
-      if (!isSilent) {
-        setLoading(true);
-      }
+      // The loading indicator is now always active for any fetch using this hook.
+      setLoading(true);
 
       try {
+        const { page, limit, startDate, endDate, transNo = "" } = options;
+
         const params = new URLSearchParams({
           page: String(page),
           limit: String(limit),
@@ -48,7 +39,7 @@ export function useFetchTransactions(session) {
         }
 
         const url = `${BACKEND_URL}/api/transactions?${params.toString()}`;
-        console.log("Fetching transactions with URL:", url);
+        console.log("Fetching historical transactions with URL:", url);
 
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${session.access_token}` },
@@ -57,19 +48,19 @@ export function useFetchTransactions(session) {
         if (response.ok) {
           return await response.json();
         } else {
-          console.error("Failed to fetch filtered data from the server.", {
+          console.error("Server Error: Failed to fetch historical data.", {
             status: response.status,
           });
           return null;
         }
       } catch (error) {
-        console.error(`Error fetching data: ${error.message}`);
+        console.error(
+          `Network Error fetching historical data: ${error.message}`
+        );
         return null;
       } finally {
-        // The loading state is always set to false when the operation finishes.
-        if (!isSilent) {
-          setLoading(false);
-        }
+        // Always turn off the loading indicator when the operation is complete.
+        setLoading(false);
       }
     },
     [session]

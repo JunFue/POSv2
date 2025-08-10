@@ -10,7 +10,7 @@ import { CartContext } from "../../../context/CartContext";
 export const useTransactionHandler = (formMethods, refs) => {
   const { cartData, setCartData } = useContext(CartContext);
   const { items: regItems } = useContext(ItemRegData);
-  const { setItemSold, setServerOnline: setSoldServerOnline } =
+  const { setTodaysItemSold, setServerOnline: setSoldServerOnline } =
     useContext(ItemSoldContext);
   const { setPaymentData } = useContext(PaymentContext);
   const { inventory, setInventory } = useInventory();
@@ -90,8 +90,17 @@ export const useTransactionHandler = (formMethods, refs) => {
       inCharge: cashierName,
     };
 
+    const todaysDateString = new Date().toISOString().split("T")[0];
+    const transactionDateString = transactionTime.split("T")[0];
+    if (transactionDateString === todaysDateString) {
+      setTodaysItemSold((prev) => [...soldItems, ...prev]);
+    } else {
+      console.log(
+        "Transaction date is not today. Skipping local 'todaysItemSold' update."
+      );
+    }
     setCartData([]);
-    setItemSold((prev) => [...prev, ...soldItems]);
+
     setPaymentData((prev) => [...prev, paymentRecord]);
     reset({
       ...getValues(),

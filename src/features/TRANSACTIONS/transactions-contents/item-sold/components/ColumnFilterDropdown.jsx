@@ -8,6 +8,32 @@ import React, {
 } from "react";
 import { useDebounce } from "../hooks/useDebounce";
 
+// This is the component that was moved
+export const FilterableHeader = ({
+  title,
+  toggleDropdown,
+  isVisible,
+  uniqueValues,
+  filter,
+  setFilter,
+  closeDropdown,
+}) => (
+  <div className="relative">
+    <span>{title}</span>
+    <button onClick={toggleDropdown} className="ml-1 text-blue-500">
+      &#x25BC;
+    </button>
+    {isVisible && (
+      <MemoizedColumnFilterDropdown
+        uniqueValues={uniqueValues}
+        filter={filter}
+        setFilter={setFilter}
+        closeDropdown={closeDropdown}
+      />
+    )}
+  </div>
+);
+
 function ColumnFilterDropdown({
   uniqueValues,
   filter,
