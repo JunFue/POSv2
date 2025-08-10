@@ -4,10 +4,10 @@ import { FaCog } from "react-icons/fa";
 
 // 1. Import the new, individual card components
 import { TodaysGrossSalesCard } from "./flsh-info-cards/TodaysGrossSalesCard";
-import { DailyIncomeCard } from "./flsh-info-cards/DailyIncomeCard";
 import { MonthlyIncomeCard } from "./flsh-info-cards/MonthlyIncomeCard";
 import { DailyExpensesCard } from "./flsh-info-cards/DailyExpensesCard";
 import { LowStocksCard } from "./flsh-info-cards/LowStocksCard";
+import { TodaysNetIncome } from "./flsh-info-cards/TodaysNetIncome";
 // ... import other card components as you create them
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -55,7 +55,7 @@ const initialCards = [
 // 3. A map to easily link a card ID to its component
 const cardComponentMap = {
   "todays-gross-sales": TodaysGrossSalesCard,
-  "daily-income": DailyIncomeCard,
+  "daily-income": TodaysNetIncome,
   "monthly-income": MonthlyIncomeCard,
   "daily-expenses": DailyExpensesCard,
   "low-stocks": LowStocksCard,

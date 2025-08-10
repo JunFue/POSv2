@@ -4,7 +4,7 @@ import { getDailyIncome } from "../../../../api/dashboardService";
 import { usePageVisibility } from "../../../../hooks/usePageVisibility";
 import { MiniCard } from "./MiniCard";
 
-const CACHE_KEY = "dailyIncomeData";
+const CACHE_KEY = "todaysNetIncome";
 const CACHE_TTL_MS = 5 * 60 * 1000; // Cache is valid for 5 minutes
 
 // A simple debounce utility
@@ -18,7 +18,7 @@ function debounce(func, delay) {
   };
 }
 
-export function DailyIncomeCard({ onHide }) {
+export function TodaysNetIncome({ onHide }) {
   const [incomeValue, setIncomeValue] = useState("Loading...");
   const isVisible = usePageVisibility();
 
@@ -46,7 +46,10 @@ export function DailyIncomeCard({ onHide }) {
       };
       localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
     } catch (error) {
-      console.error("DailyIncomeCard: Error fetching daily income:", error);
+      console.error(
+        "TodaysNetIncomeCard: Error fetching daily net income:",
+        error
+      );
       setIncomeValue("Error");
     }
   }, []);
@@ -93,5 +96,7 @@ export function DailyIncomeCard({ onHide }) {
     };
   }, [fetchIncome, isVisible]);
 
-  return <MiniCard title="Daily Income" value={incomeValue} onHide={onHide} />;
+  return (
+    <MiniCard title="Today's Net Income" value={incomeValue} onHide={onHide} />
+  );
 }
