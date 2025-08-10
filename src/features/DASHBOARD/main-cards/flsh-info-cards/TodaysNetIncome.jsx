@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "../../../../utils/supabaseClient";
-import { getDailyIncome } from "../../../../api/dashboardService";
 import { usePageVisibility } from "../../../../hooks/usePageVisibility";
-import { MiniCard } from "./MiniCard";
 
-const CACHE_KEY = "todaysNetIncome";
-const CACHE_TTL_MS = 5 * 60 * 1000; // Cache is valid for 5 minutes
+import { MiniCard } from "./MiniCard";
+import { useTodaysNetIncome } from "../../hooks/useTodaysNetIncome";
 
 // A simple debounce utility
 function debounce(func, delay) {
@@ -19,40 +17,20 @@ function debounce(func, delay) {
 }
 
 export function TodaysNetIncome({ onHide }) {
-  const [incomeValue, setIncomeValue] = useState("Loading...");
+  const { income, fetchTodaysNetIncome, CACHE_KEY, CACHE_TTL_MS } =
+    useTodaysNetIncome();
+  const [incomeValue, setIncomeValue] = useState(income);
   const isVisible = usePageVisibility();
 
-  // Use a ref for the debounced function so it persists across renders
   const debouncedFetchRef = useRef(
     debounce(() => {
-      fetchIncome();
-    }, 500) // Debounce fetch by 500ms
+      fetchTodaysNetIncome();
+    }, 500)
   );
 
-  const fetchIncome = useCallback(async () => {
-    try {
-      const data = await getDailyIncome();
-      const formattedIncome = new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-      }).format(data.totalNetIncome);
-
-      setIncomeValue(formattedIncome);
-
-      // Cache an object with the value and a timestamp
-      const cacheData = {
-        value: formattedIncome,
-        timestamp: Date.now(),
-      };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    } catch (error) {
-      console.error(
-        "TodaysNetIncomeCard: Error fetching daily net income:",
-        error
-      );
-      setIncomeValue("Error");
-    }
-  }, []);
+  useEffect(() => {
+    setIncomeValue(income);
+  }, [income]);
 
   useEffect(() => {
     // --- Initial Load ---
@@ -61,32 +39,27 @@ export function TodaysNetIncome({ onHide }) {
 
     if (cachedItem) {
       const { value, timestamp } = JSON.parse(cachedItem);
-      // Check if cache is still valid
       if (Date.now() - timestamp < CACHE_TTL_MS) {
         setIncomeValue(value);
         isCacheValid = true;
       }
     }
 
-    // **FIX:** Only fetch initial data if the cache is not valid.
-    // The real-time subscription will handle updates regardless.
     if (!isCacheValid) {
-      fetchIncome();
+      fetchTodaysNetIncome();
     }
 
     // --- Real-time Subscription ---
     const channel = supabase
-      .channel("public:payments:income-realtime") // It's good practice to give realtime channels a unique name
+      .channel("public:payments:income-realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "payments" },
         () => {
-          // Call the debounced function on any change
           debouncedFetchRef.current();
         }
       );
 
-    // Pause/resume subscription based on page visibility
     if (isVisible) {
       channel.subscribe();
     }
@@ -94,7 +67,7 @@ export function TodaysNetIncome({ onHide }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchIncome, isVisible]);
+  }, [fetchTodaysNetIncome, isVisible, CACHE_KEY, CACHE_TTL_MS]);
 
   return (
     <MiniCard title="Today's Net Income" value={incomeValue} onHide={onHide} />
