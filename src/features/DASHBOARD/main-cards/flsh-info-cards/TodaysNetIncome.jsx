@@ -1,62 +1,63 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { supabase } from "../../../../utils/supabaseClient";
 import { usePageVisibility } from "../../../../hooks/usePageVisibility";
 
 import { MiniCard } from "./MiniCard";
 import { useTodaysNetIncome } from "../../hooks/useTodaysNetIncome";
+import { useTodaysTotalSales } from "../../hooks/useTodaysTotalSales";
 
-// A simple debounce utility
-function debounce(func, delay) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
-}
+// Helper to format numbers as PHP currency
+const formatToPHP = (value) =>
+  new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+  }).format(value);
 
 export function TodaysNetIncome({ onHide }) {
-  const { income, fetchTodaysNetIncome, CACHE_KEY, CACHE_TTL_MS } =
-    useTodaysNetIncome();
-  const [incomeValue, setIncomeValue] = useState(income);
+  // Hook for the server-side source of truth
+  const { income: fetchedIncome, fetchTodaysNetIncome } = useTodaysNetIncome();
+
+  // Hook for the instant, client-side optimistic value
+  const localTotalSales = useTodaysTotalSales();
+
+  // The state that will actually be displayed in the UI
+  const [displayIncome, setDisplayIncome] = useState("Loading...");
+
   const isVisible = usePageVisibility();
 
-  const debouncedFetchRef = useRef(
-    debounce(() => {
-      fetchTodaysNetIncome();
-    }, 500)
-  );
-
+  // EFFECT 1: Optimistic Update
+  // Instantly updates the display when a local transaction occurs.
   useEffect(() => {
-    setIncomeValue(income);
-  }, [income]);
+    // We check for > 0 to avoid showing "₱0.00" on initial load before the fetch completes.
+    if (localTotalSales > 0) {
+      setDisplayIncome(formatToPHP(localTotalSales));
+    }
+  }, [localTotalSales]);
 
+  // EFFECT 2: Source of Truth Sync
+  // Updates the display with the fetched value from the database when it arrives.
   useEffect(() => {
-    // --- Initial Load ---
-    const cachedItem = localStorage.getItem(CACHE_KEY);
-    let isCacheValid = false;
-
-    if (cachedItem) {
-      const { value, timestamp } = JSON.parse(cachedItem);
-      if (Date.now() - timestamp < CACHE_TTL_MS) {
-        setIncomeValue(value);
-        isCacheValid = true;
-      }
+    // Check if fetchedIncome is a valid, formatted currency string
+    if (typeof fetchedIncome === "string" && fetchedIncome.startsWith("₱")) {
+      setDisplayIncome(fetchedIncome);
     }
+  }, [fetchedIncome]);
 
-    if (!isCacheValid) {
-      fetchTodaysNetIncome();
-    }
+  // EFFECT 3: Initial Fetch and Real-time Subscription
+  // Fetches the source of truth on component mount and listens for DB changes.
+  useEffect(() => {
+    // Initial fetch
+    fetchTodaysNetIncome();
 
-    // --- Real-time Subscription ---
+    // Set up a real-time subscription to the payments table
     const channel = supabase
       .channel("public:payments:income-realtime")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "payments" },
         () => {
-          debouncedFetchRef.current();
+          // When the database changes, re-fetch the source of truth to stay in sync.
+          fetchTodaysNetIncome();
         }
       );
 
@@ -67,9 +68,13 @@ export function TodaysNetIncome({ onHide }) {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchTodaysNetIncome, isVisible, CACHE_KEY, CACHE_TTL_MS]);
+  }, [fetchTodaysNetIncome, isVisible]);
 
   return (
-    <MiniCard title="Today's Net Income" value={incomeValue} onHide={onHide} />
+    <MiniCard
+      title="Today's Net Income"
+      value={displayIncome}
+      onHide={onHide}
+    />
   );
 }
