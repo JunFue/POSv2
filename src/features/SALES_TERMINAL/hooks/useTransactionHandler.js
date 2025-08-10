@@ -1,10 +1,10 @@
-import { useContext } from "react"; // Core React hook for accessing context.
-import { ItemRegData } from "../../../context/ItemRegContext"; // Provides access to the master list of all registered items.
-import { PaymentContext } from "../../../context/PaymentContext"; // Manages the state of payment records for transactions.
-import { ItemSoldContext } from "../../../context/ItemSoldContext"; // Manages the state of items that have been sold.
-import { useInventory } from "../../../context/InventoryContext"; // Custom hook providing access to the live inventory state.
-import { generateTransactionNo } from "../../../utils/transactionNumberGenerator"; // Utility function to create unique transaction numbers.
-import { finalizeTransaction } from "../services/transactionService"; // Service that handles all backend API communication for finalizing a sale.
+import { useContext } from "react";
+import { ItemRegData } from "../../../context/ItemRegContext";
+import { PaymentContext } from "../../../context/PaymentContext";
+import { ItemSoldContext } from "../../../context/ItemSoldContext";
+import { useInventory } from "../../../context/InventoryContext";
+import { generateTransactionNo } from "../../../utils/transactionNumberGenerator";
+import { finalizeTransaction } from "../services/transactionService";
 import { CartContext } from "../../../context/CartContext";
 
 export const useTransactionHandler = (formMethods, refs) => {
@@ -90,17 +90,30 @@ export const useTransactionHandler = (formMethods, refs) => {
       inCharge: cashierName,
     };
 
-    const todaysDateString = new Date().toISOString().split("T")[0];
-    const transactionDateString = transactionTime.split("T")[0];
+    const now = new Date();
+    const todaysDateString = `${now.getFullYear()}-${String(
+      now.getMonth() + 1
+    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+
+    // ✅ FIX: Split the transactionTime string by the space to get only the date part.
+    const transactionDateString = transactionTime.split(" ")[0];
+
     if (transactionDateString === todaysDateString) {
-      setTodaysItemSold((prev) => [...soldItems, ...prev]);
+      console.log("LOG: New items to be added:", soldItems);
+      setTodaysItemSold((prev) => {
+        console.log("LOG: Previous 'todaysItemSold' state:", prev);
+        const prevData = Array.isArray(prev?.data) ? prev.data : [];
+        const newData = { data: [...soldItems, ...prevData] };
+        console.log("LOG: New state being set:", newData);
+        return newData;
+      });
     } else {
       console.log(
-        "Transaction date is not today. Skipping local 'todaysItemSold' update."
+        `LOG: Transaction date (${transactionDateString}) does not match today's date (${todaysDateString}). Skipping update.`
       );
     }
-    setCartData([]);
 
+    setCartData([]);
     setPaymentData((prev) => [...prev, paymentRecord]);
     reset({
       ...getValues(),
@@ -117,7 +130,6 @@ export const useTransactionHandler = (formMethods, refs) => {
     costumerNameRef.current?.focus();
 
     // --- 4. Perform network request via the service ---
-    console.log("Sending transaction to the server...");
     const result = await finalizeTransaction(paymentRecord, soldItems);
 
     setSoldServerOnline(result.success);
@@ -126,8 +138,6 @@ export const useTransactionHandler = (formMethods, refs) => {
       alert(
         "SERVER IS OFFLINE. Data has been saved locally but failed to sync."
       );
-    } else {
-      console.log("Transaction successfully synced with the server.");
     }
   };
 

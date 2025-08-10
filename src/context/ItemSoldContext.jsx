@@ -12,19 +12,36 @@ export function ItemSoldProvider({ children }) {
   const [todaysItemSold, setTodaysItemSold] = useState(() => {
     const today = getTodaysDateString();
     const storedItems = localStorage.getItem(`todaysItemSold_${today}`);
-    return storedItems ? JSON.parse(storedItems) : [];
+    const initialValue = storedItems ? JSON.parse(storedItems) : [];
+    // Log the initial state loaded from localStorage
+    console.log(
+      "LOG (Context): Initializing 'todaysItemSold' state:",
+      initialValue
+    );
+    return initialValue;
   });
 
   const [serverOnline, setServerOnline] = useState(true);
 
   // Effect to cache today's items whenever they change
   useEffect(() => {
+    // Log when the state changes and what the new value is
+    console.log(
+      "LOG (Context): 'todaysItemSold' state changed, updating localStorage.",
+      todaysItemSold
+    );
     const today = getTodaysDateString();
     localStorage.setItem(
       `todaysItemSold_${today}`,
       JSON.stringify(todaysItemSold)
     );
   }, [todaysItemSold]);
+
+  // Log every time the provider component renders
+  console.log(
+    "LOG (Context): ItemSoldProvider is rendering. Current 'todaysItemSold':",
+    todaysItemSold
+  );
 
   return (
     <ItemSoldContext.Provider
