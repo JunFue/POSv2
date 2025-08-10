@@ -55,7 +55,7 @@ export function useColumns(
       { accessorKey: "transactionDate", header: "Transaction Date", size: 180 },
       { accessorKey: "transactionNo", header: "Transaction No.", size: 150 },
       { accessorKey: "inCharge", header: "In Charge", size: 150 },
-      { accessorKey: "costumer", header: "Customer Name", size: 150 },
+      { accessorKey: "costumerName", header: "Customer Name", size: 150 },
       {
         accessorKey: "classification",
         header: getClassificationHeader(

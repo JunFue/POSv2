@@ -106,7 +106,7 @@ export const CounterForm = forwardRef((props, ref) => {
           transactionDate: transactionTime,
           transactionNo: transactionNo,
           inCharge: cashierName,
-          costumer: costumerName || "N/A",
+          costumerName: costumerName || "N/A",
           classification: regItem ? regItem.category : "",
         };
       });

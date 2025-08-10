@@ -21,7 +21,7 @@ export function normalizeItemSold(tx) {
       transactionDate: tx.transactionDate,
       transactionNo: tx.transactionNo,
       inCharge: tx.inCharge,
-      customer: tx.customer, // Corrected from 'costumer'
+      costumerName: tx.costumerName, // Corrected from 'costumer'
       classification: tx.classification,
 
       // Fields that need type conversion to Number
