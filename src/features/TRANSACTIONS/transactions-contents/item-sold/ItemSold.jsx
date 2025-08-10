@@ -14,11 +14,13 @@ import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
 import { useFetchTransactions } from "./useFetchTransactions";
 import { useFilterState } from "./hooks/useFilterState";
 import { useFilterWorker } from "../../../../hooks/useFilterWorker";
+import { useTransactionSubscription } from "./hooks/useTransactionSubscription";
 
 import { Filters } from "./Filters";
 import { VirtualizedTable } from "../../../../components/VirtualizedTable";
 import { MemoizedColumnFilterDropdown } from "./components/ColumnFilterDropdown";
 
+// FilterableHeader component remains unchanged.
 const FilterableHeader = ({
   title,
   toggleDropdown,
@@ -45,11 +47,12 @@ const FilterableHeader = ({
 );
 
 export function ItemSold() {
-  const { itemSold, setItemSold, serverOnline } = useContext(ItemSoldContext);
+  const { itemSold, setItemSold, serverOnline, setServerOnline } =
+    useContext(ItemSoldContext);
   const { session } = useAuth();
   const tableContainerRef = useRef(null);
 
-  // --- State Management ---
+  // State Management
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [transactionNo, setTransactionNo] = useState("");
@@ -59,34 +62,59 @@ export function ItemSold() {
 
   const { fetchTransactions, loading } = useFetchTransactions(session);
 
-  // --- Data Fetching Logic ---
+  // --- 1. Update performFetch to pass the options object directly ---
   const performFetch = useCallback(
-    (page, limit, dates, transNo) => {
-      fetchTransactions(page, limit, dates.from, dates.to, transNo).then(
-        (response) => {
-          if (response) {
-            setItemSold(response.data || []);
-            setTotalItems(response.totalCount || 0);
-          } else {
-            setItemSold([]);
-            setTotalItems(0);
-          }
+    (fetchOptions) => {
+      fetchTransactions(fetchOptions).then((response) => {
+        if (response) {
+          setServerOnline(true);
+          setItemSold(response.data || []);
+          setTotalItems(response.totalCount || 0);
+        } else {
+          setServerOnline(false);
         }
-      );
+      });
     },
-    [fetchTransactions, setItemSold]
+    [fetchTransactions, setItemSold, setServerOnline]
   );
 
-  // --- Handlers for Child Component ---
+  // --- 2. Make the initial background fetch SILENT ---
+  useEffect(() => {
+    if (session) {
+      performFetch({
+        page: 1,
+        limit: rowsPerPage,
+        startDate: today,
+        endDate: today,
+        transNo: "",
+        isSilent: true, // This ensures no loading indicator on page load
+      });
+    }
+  }, [session, performFetch, today, rowsPerPage]);
+
+  // --- 3. User-driven actions are NOT silent ---
   const handleApplyFilters = useCallback(() => {
     setCurrentPage(1);
-    performFetch(1, rowsPerPage, dateRange, transactionNo.trim());
+    performFetch({
+      page: 1,
+      limit: rowsPerPage,
+      startDate: dateRange.from,
+      endDate: dateRange.to,
+      transNo: transactionNo.trim(),
+      // isSilent is omitted, so it defaults to false, showing the loader.
+    });
   }, [performFetch, rowsPerPage, dateRange, transactionNo]);
 
   const handlePageChange = useCallback(
     (newPage) => {
       setCurrentPage(newPage);
-      performFetch(newPage, rowsPerPage, dateRange, transactionNo.trim());
+      performFetch({
+        page: newPage,
+        limit: rowsPerPage,
+        startDate: dateRange.from,
+        endDate: dateRange.to,
+        transNo: transactionNo.trim(),
+      });
     },
     [performFetch, rowsPerPage, dateRange, transactionNo]
   );
@@ -95,7 +123,13 @@ export function ItemSold() {
     (newRows) => {
       setRowsPerPage(newRows);
       setCurrentPage(1);
-      performFetch(1, newRows, dateRange, transactionNo.trim());
+      performFetch({
+        page: 1,
+        limit: newRows,
+        startDate: dateRange.from,
+        endDate: dateRange.to,
+        transNo: transactionNo.trim(),
+      });
     },
     [performFetch, dateRange, transactionNo]
   );
@@ -106,14 +140,21 @@ export function ItemSold() {
     setDateRange(newDateRange);
   }, [today]);
 
-  // Effect for the initial data load when the component mounts.
-  useEffect(() => {
-    if (session) {
-      performFetch(1, 10, { from: today, to: today }, "");
-    }
-  }, [session, performFetch, today]);
+  // --- 4. Real-time updates should also be silent ---
+  const handleSubscriptionChange = useCallback(() => {
+    performFetch({
+      page: currentPage, // refetch the current page to see changes
+      limit: rowsPerPage,
+      startDate: dateRange.from,
+      endDate: dateRange.to,
+      transNo: transactionNo.trim(),
+      isSilent: true, // Keep the update silent to avoid flashing the loader
+    });
+  }, [performFetch, currentPage, rowsPerPage, dateRange, transactionNo]);
 
-  // --- Client-side filtering & Table setup ---
+  useTransactionSubscription(handleSubscriptionChange);
+
+  // Client-side filtering & Table setup (no changes)
   const totalPages = useMemo(
     () => Math.ceil(totalItems / rowsPerPage),
     [totalItems, rowsPerPage]
@@ -201,10 +242,13 @@ export function ItemSold() {
     classificationFilter.closeDropdown();
   };
 
+  // JSX Rendering (updated loading text)
   return (
     <div onClick={closeAllDropdowns} className="bg-background">
       {!serverOnline && (
-        <div className="text-red-500 font-bold p-2">SERVER IS OFFLINE</div>
+        <div className="text-red-500 font-bold p-2 text-center">
+          SERVER IS OFFLINE. DISPLAYING CACHED DATA.
+        </div>
       )}
       <Filters
         onApplyFilters={handleApplyFilters}

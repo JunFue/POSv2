@@ -10,12 +10,27 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 export function useFetchTransactions(session) {
   const [loading, setLoading] = useState(false);
 
+  // --- 1. The function now accepts a single options object ---
   const fetchTransactions = useCallback(
-    async (page, limit, startDate, endDate, transNo = "") => {
+    async (options) => {
       if (!session) {
         return null;
       }
-      setLoading(true);
+
+      // --- 2. Destructure the options, defaulting isSilent to false ---
+      const {
+        page,
+        limit,
+        startDate,
+        endDate,
+        transNo = "",
+        isSilent = false,
+      } = options;
+
+      // --- 3. Only set loading to true if the fetch is NOT silent ---
+      if (!isSilent) {
+        setLoading(true);
+      }
 
       try {
         const params = new URLSearchParams({
@@ -33,9 +48,6 @@ export function useFetchTransactions(session) {
         }
 
         const url = `${BACKEND_URL}/api/transactions?${params.toString()}`;
-
-        // --- ADDED ---
-        // Log the URL to the console to verify the parameters.
         console.log("Fetching transactions with URL:", url);
 
         const response = await fetch(url, {
@@ -43,8 +55,7 @@ export function useFetchTransactions(session) {
         });
 
         if (response.ok) {
-          const data = await response.json();
-          return data;
+          return await response.json();
         } else {
           console.error("Failed to fetch filtered data from the server.", {
             status: response.status,
@@ -55,7 +66,10 @@ export function useFetchTransactions(session) {
         console.error(`Error fetching data: ${error.message}`);
         return null;
       } finally {
-        setLoading(false);
+        // The loading state is always set to false when the operation finishes.
+        if (!isSilent) {
+          setLoading(false);
+        }
       }
     },
     [session]
