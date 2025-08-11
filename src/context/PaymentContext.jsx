@@ -35,62 +35,54 @@ const calculateNetSales = (payments) => {
   return netSales;
 };
 
-// Helper function to read and parse initial state from localStorage
-const getInitialPayments = () => {
-  console.log("LOG: (Init) Reading initial payments from localStorage.");
-  const stored = localStorage.getItem("todaysPayments");
-  if (stored) {
-    try {
-      const { date, data } = JSON.parse(stored);
-      if (date === getTodaysDateString() && Array.isArray(data)) {
-        console.log("LOG: (Init) Found valid data for today:", data);
-        return data;
-      }
-    } catch (e) {
-      console.error("LOG: (Init) Failed to parse localStorage data.", e);
-      return [];
-    }
-  }
-  console.log("LOG: (Init) No valid data in localStorage, starting fresh.");
-  return [];
-};
-
 const PaymentContext = createContext();
 
 export function PaymentProvider({ children }) {
-  // Get the initial data once to avoid multiple localStorage reads
-  const initialPayments = getInitialPayments();
+  const [todaysPayments, setTodaysPayments] = useState([]);
+  const [todaysNetSales, setTodaysNetSales] = useState(0);
 
-  // Initialize both states from this single source of truth
-  const [todaysPayments, setTodaysPayments] = useState(initialPayments);
-  const [todaysNetSales, setTodaysNetSales] = useState(() =>
-    calculateNetSales(initialPayments)
-  );
+  // Function to fetch initial data from the database
+  const fetchInitialPayments = useCallback(async () => {
+    console.log("LOG: (DB Fetch) Fetching initial payments for today.");
+    const today = getTodaysDateString();
+    const { data, error } = await supabase
+      .from("payments")
+      .select("*")
+      .gte("transaction_date", `${today}T00:00:00.000Z`)
+      .lte("transaction_date", `${today}T23:59:59.999Z`);
+
+    if (error) {
+      console.error("LOG: (DB Fetch) Error fetching initial payments:", error);
+    } else {
+      console.log("LOG: (DB Fetch) Successfully fetched payments:", data);
+      setTodaysPayments(data || []);
+    }
+  }, []);
+
+  // Effect to fetch initial data on component mount
+  useEffect(() => {
+    fetchInitialPayments();
+  }, [fetchInitialPayments]);
 
   const addTodaysPayment = useCallback((paymentRecord) => {
-    console.log("LOG: (Action) Adding new payment:", paymentRecord);
+    console.log(
+      "LOG: (Action) Adding new payment optimistically:",
+      paymentRecord
+    );
     setTodaysPayments((prevPayments) => {
       const newPayments = [paymentRecord, ...prevPayments];
       console.log("LOG: (Action) Updated todaysPayments list:", newPayments);
-      // The useEffect will handle the net sales calculation
       return newPayments;
     });
   }, []);
 
-  // Effect to sync total and localStorage when todaysPayments changes
+  // Effect to recalculate totals when todaysPayments changes
   useEffect(() => {
     console.log(
       "LOG: (Effect) 'todaysPayments' changed, recalculating totals."
     );
     const newNetSales = calculateNetSales(todaysPayments);
     setTodaysNetSales(newNetSales);
-
-    console.log("LOG: (Effect) Updating localStorage with new data.");
-    const dataToStore = {
-      date: getTodaysDateString(),
-      data: todaysPayments,
-    };
-    localStorage.setItem("todaysPayments", JSON.stringify(dataToStore));
   }, [todaysPayments]);
 
   // Supabase real-time subscription
@@ -104,34 +96,15 @@ export function PaymentProvider({ children }) {
         (payload) => {
           console.log("LOG: (Supabase) Change received:", payload);
           const eventDate = new Date(
-            payload.new.transaction_date || payload.old.transaction_date
+            payload.new?.transaction_date || payload.old?.transaction_date
           )
             .toISOString()
             .split("T")[0];
 
           if (eventDate === getTodaysDateString()) {
             console.log("LOG: (Supabase) Change is for today, updating state.");
-            setTodaysPayments((currentPayments) => {
-              let newPayments = [...currentPayments];
-              const index = newPayments.findIndex(
-                (p) => p.id === (payload.new.id || payload.old.id)
-              );
-
-              if (payload.eventType === "INSERT") {
-                if (index === -1) newPayments.unshift(payload.new);
-              } else if (payload.eventType === "UPDATE") {
-                if (index !== -1) newPayments[index] = payload.new;
-              } else if (payload.eventType === "DELETE") {
-                newPayments = newPayments.filter(
-                  (p) => p.id !== payload.old.id
-                );
-              }
-              console.log(
-                "LOG: (Supabase) Payments list after update:",
-                newPayments
-              );
-              return newPayments;
-            });
+            // Instead of merging, we re-fetch to ensure consistency
+            fetchInitialPayments();
           } else {
             console.log("LOG: (Supabase) Change is not for today, ignoring.");
           }
@@ -143,7 +116,7 @@ export function PaymentProvider({ children }) {
       console.log("LOG: (Effect) Cleaning up Supabase subscription.");
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [fetchInitialPayments]);
 
   const value = {
     todaysPayments,
