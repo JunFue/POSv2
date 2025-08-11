@@ -91,14 +91,11 @@ export const useTransactionHandler = (formMethods, refs) => {
       inCharge: cashierName,
     };
 
-    console.log("LOG: New payment record created:", paymentRecord);
-
     const now = new Date();
     const todaysDateString = now.toISOString().split("T")[0];
     const transactionDateString = transactionTime.split(" ")[0];
 
     if (transactionDateString === todaysDateString) {
-      console.log("LOG: New items to be added to sold items:", soldItems);
       setTodaysItemSold((prev) => {
         const prevData = Array.isArray(prev?.data) ? prev.data : [];
         return { data: [...soldItems, ...prevData] };
@@ -106,7 +103,7 @@ export const useTransactionHandler = (formMethods, refs) => {
     }
 
     // Instantly update the local state for today's payments
-    console.log("LOG: Adding new payment record to 'todaysPayments' state.");
+
     addTodaysPayment(paymentRecord);
 
     setCartData([]);
@@ -125,7 +122,7 @@ export const useTransactionHandler = (formMethods, refs) => {
     costumerNameRef.current?.focus();
 
     // --- 4. Perform network request via the service ---
-    console.log("LOG: Finalizing transaction with the backend.");
+
     const result = await finalizeTransaction(paymentRecord, soldItems);
     setSoldServerOnline(result.success);
 
@@ -133,8 +130,6 @@ export const useTransactionHandler = (formMethods, refs) => {
       alert(
         "SERVER IS OFFLINE. Data has been saved locally but failed to sync."
       );
-    } else {
-      console.log("LOG: Transaction successfully finalized with the server.");
     }
   };
 

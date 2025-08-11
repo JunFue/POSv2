@@ -62,7 +62,6 @@ export function Nav() {
           "postgres_changes",
           { event: "*", schema: "public", table: "categories" },
           () => {
-            console.log("Category change detected, re-fetching with debounce.");
             debouncedFetch();
           }
         );

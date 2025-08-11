@@ -28,7 +28,6 @@ export function Payments() {
   const tableContainerRef = useRef(null);
 
   const handleServerData = (response) => {
-    console.log("LOG: Payments.jsx received data from filter:", response);
     if (response) {
       setTotalItems(response.totalCount);
     }
@@ -40,10 +39,8 @@ export function Payments() {
     const today = getTodaysDateString();
 
     if (fromDate === today && toDate === today) {
-      console.log("LOG: Rendering 'todaysPayments'.", todaysPayments);
       return todaysPayments;
     } else {
-      console.log("LOG: Rendering 'paymentData' for other dates.", paymentData);
       return paymentData;
     }
   }, [todaysPayments, paymentData, dateRange]);

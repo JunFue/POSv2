@@ -67,8 +67,6 @@ export const processMutationQueue = async (api) => {
     return; // Nothing to do
   }
 
-  console.log(`Processing ${queuedMutations.length} queued mutations.`);
-
   for (const mutation of queuedMutations) {
     try {
       if (mutation.type === "CREATE_ITEM") {
@@ -87,5 +85,4 @@ export const processMutationQueue = async (api) => {
 
   // If all mutations succeed, clear the queue.
   clearQueue();
-  console.log("Mutation queue successfully processed and cleared.");
 };

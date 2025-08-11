@@ -7,7 +7,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function useTodaysItemsSold() {
   const { session } = useAuth();
-  const { todaysItemSold, setTodaysItemSold } = useContext(ItemSoldContext);
+  const { setTodaysItemSold } = useContext(ItemSoldContext);
 
   const fetchTodaysData = useCallback(async () => {
     if (!session) return;
@@ -22,8 +22,6 @@ export function useTodaysItemsSold() {
       if (response.ok) {
         const data = await response.json();
         setTodaysItemSold(data);
-        console.log("Fetched and updated today's items sold.");
-        console.log(todaysItemSold);
       } else {
         console.error("Failed to fetch today's data from server.");
       }
@@ -44,11 +42,7 @@ export function useTodaysItemsSold() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "transactions" },
-        (payload) => {
-          console.log(
-            "Change received from Supabase, refetching today's data:",
-            payload
-          );
+        () => {
           fetchTodaysData();
         }
       )

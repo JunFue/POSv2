@@ -15,9 +15,7 @@ const getTodaysDateString = () => {
 
 // Helper function to calculate net sales
 const calculateNetSales = (payments) => {
-  console.log("LOG: Calculating net sales for payments:", payments);
   if (!Array.isArray(payments) || payments.length === 0) {
-    console.log("LOG: Payments array is empty or invalid, returning 0.");
     return 0;
   }
   const grossSales = payments.reduce(
@@ -29,9 +27,7 @@ const calculateNetSales = (payments) => {
     0
   );
   const netSales = grossSales - totalDiscount;
-  console.log(
-    `LOG: Gross: ${grossSales}, Discount: ${totalDiscount}, Net Sales: ${netSales}`
-  );
+
   return netSales;
 };
 
@@ -43,7 +39,6 @@ export function PaymentProvider({ children }) {
 
   // Function to fetch initial data from the database
   const fetchInitialPayments = useCallback(async () => {
-    console.log("LOG: (DB Fetch) Fetching initial payments for today.");
     const today = getTodaysDateString();
     const { data, error } = await supabase
       .from("payments")
@@ -54,7 +49,6 @@ export function PaymentProvider({ children }) {
     if (error) {
       console.error("LOG: (DB Fetch) Error fetching initial payments:", error);
     } else {
-      console.log("LOG: (DB Fetch) Successfully fetched payments:", data);
       setTodaysPayments(data || []);
     }
   }, []);
@@ -65,36 +59,27 @@ export function PaymentProvider({ children }) {
   }, [fetchInitialPayments]);
 
   const addTodaysPayment = useCallback((paymentRecord) => {
-    console.log(
-      "LOG: (Action) Adding new payment optimistically:",
-      paymentRecord
-    );
     setTodaysPayments((prevPayments) => {
       const newPayments = [paymentRecord, ...prevPayments];
-      console.log("LOG: (Action) Updated todaysPayments list:", newPayments);
+
       return newPayments;
     });
   }, []);
 
   // Effect to recalculate totals when todaysPayments changes
   useEffect(() => {
-    console.log(
-      "LOG: (Effect) 'todaysPayments' changed, recalculating totals."
-    );
     const newNetSales = calculateNetSales(todaysPayments);
     setTodaysNetSales(newNetSales);
   }, [todaysPayments]);
 
   // Supabase real-time subscription
   useEffect(() => {
-    console.log("LOG: (Effect) Setting up Supabase subscription.");
     const channel = supabase
       .channel("public:payments")
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "payments" },
         (payload) => {
-          console.log("LOG: (Supabase) Change received:", payload);
           const eventDate = new Date(
             payload.new?.transaction_date || payload.old?.transaction_date
           )
@@ -102,18 +87,14 @@ export function PaymentProvider({ children }) {
             .split("T")[0];
 
           if (eventDate === getTodaysDateString()) {
-            console.log("LOG: (Supabase) Change is for today, updating state.");
             // Instead of merging, we re-fetch to ensure consistency
             fetchInitialPayments();
-          } else {
-            console.log("LOG: (Supabase) Change is not for today, ignoring.");
           }
         }
       )
       .subscribe();
 
     return () => {
-      console.log("LOG: (Effect) Cleaning up Supabase subscription.");
       supabase.removeChannel(channel);
     };
   }, [fetchInitialPayments]);

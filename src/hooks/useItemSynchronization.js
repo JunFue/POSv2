@@ -83,9 +83,7 @@ export const useItemSynchronization = (userId) => {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "items" },
-        (payload) => {
-          console.log("Database change received!", payload);
-          // When a change occurs, trigger a silent, background refresh.
+        () => {
           refreshItems(true);
         }
       )

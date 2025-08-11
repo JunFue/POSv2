@@ -18,8 +18,6 @@ export const processStockMutationQueue = async (api) => {
   const queue = JSON.parse(localStorage.getItem(QUEUE_KEY) || "[]");
   if (queue.length === 0) return;
 
-  console.log(`Processing ${queue.length} queued stock mutations.`);
-
   for (const mutation of queue) {
     try {
       switch (mutation.type) {
@@ -45,7 +43,6 @@ export const processStockMutationQueue = async (api) => {
 
   // If all mutations were successful, clear the queue.
   clearStockQueue();
-  console.log("Stock mutation queue processed successfully.");
 };
 
 /**

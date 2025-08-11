@@ -18,10 +18,7 @@ export function useTransactionSubscription(onDataChange) {
           schema: "public",
           table: "transactions", // The table to monitor.
         },
-        (payload) => {
-          // This function runs every time a change is detected.
-          console.log("Database change received!", payload);
-          // Call the provided callback to let the component know it should refetch data.
+        () => {
           onDataChange();
         }
       )

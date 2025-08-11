@@ -39,7 +39,6 @@ export function useFetchTransactions(session) {
         }
 
         const url = `${BACKEND_URL}/api/transactions?${params.toString()}`;
-        console.log("Fetching historical transactions with URL:", url);
 
         const response = await fetch(url, {
           headers: { Authorization: `Bearer ${session.access_token}` },

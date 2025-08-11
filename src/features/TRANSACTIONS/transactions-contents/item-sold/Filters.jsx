@@ -31,9 +31,6 @@ export function Filters({
 
   // This handler now uses the new local date formatting function.
   const handleDateChange = (selection) => {
-    // Log the raw output from the calendar component
-    console.log("Raw calendar selection:", selection);
-
     if (!selection) return;
     let newFrom, newTo;
     if (selection.range && selection.range.from && selection.range.to) {
@@ -46,9 +43,7 @@ export function Filters({
       return;
     }
 
-    // Log the formatted object before sending it to the parent
     const formattedDateRange = { from: newFrom, to: newTo };
-    console.log("Formatted date range sent to parent:", formattedDateRange);
 
     onDateRangeChange(formattedDateRange);
   };

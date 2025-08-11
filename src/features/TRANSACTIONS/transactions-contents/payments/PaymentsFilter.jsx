@@ -40,9 +40,6 @@ export function PaymentsFilter({
     // --- FIX: Check the ref before fetching ---
     // Only run the fetch if the user is authenticated and the fetch hasn't happened yet.
     if (user && !initialFetchDone.current) {
-      console.log(
-        "LOG: PaymentsFilter mounted. Performing initial fetch for today's date."
-      );
       fetchPayments(1, rowsPerPage, dateRange).then(onFilter);
       // Set the ref to true to prevent this effect from running again on re-mount.
       initialFetchDone.current = true;
@@ -60,15 +57,10 @@ export function PaymentsFilter({
     };
     setDateRange(newRange);
     setShowCalendar(false);
-    console.log(
-      "LOG: Date changed. New range selected. Fetching will be done manually.",
-      newRange
-    );
   };
 
   const handleFilter = () => {
     setCurrentPage(1);
-    console.log("LOG: Apply Filters button clicked. Fetching data.");
     handleFetchAndFilter(1, rowsPerPage, dateRange, transactionNo.trim());
   };
 
@@ -77,7 +69,6 @@ export function PaymentsFilter({
     const todayRange = { from: new Date(), to: new Date() };
     setDateRange(todayRange);
     setCurrentPage(1);
-    console.log("LOG: Reset button clicked. Fetching data for today.");
     handleFetchAndFilter(1, rowsPerPage, todayRange);
   };
 

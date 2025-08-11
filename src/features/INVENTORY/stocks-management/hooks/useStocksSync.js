@@ -85,8 +85,7 @@ export function useStocksSync() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "stock_flow" },
-        (payload) => {
-          console.log("Stock change received!", payload);
+        () => {
           refreshRecords(true);
         }
       )

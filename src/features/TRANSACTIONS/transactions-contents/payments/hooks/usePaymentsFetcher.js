@@ -19,11 +19,6 @@ export function usePaymentsFetcher({ setLoading }) {
   const fetchPayments = useCallback(
     async (page, limit, range, transNo = "") => {
       if (!session) return;
-      console.log(
-        `LOG: Fetching payments for page: ${page}, limit: ${limit}, range: ${formatDate(
-          range.from
-        )} to ${formatDate(range.to)}`
-      );
       setLoading(true);
       try {
         const startDate = formatDate(range.from);
@@ -45,16 +40,8 @@ export function usePaymentsFetcher({ setLoading }) {
         if (response.ok) {
           const filteredData = await response.json();
           if (isFetchingToday) {
-            console.log(
-              "LOG: Fetched data is for today. Updating 'todaysPayments'.",
-              filteredData.data
-            );
             setTodaysPayments(filteredData.data);
           } else {
-            console.log(
-              "LOG: Fetched data is for another date range. Updating 'paymentData'.",
-              filteredData.data
-            );
             setPaymentData(filteredData.data);
           }
           // The onFilter callback in PaymentsFilter will now just pass the whole response up
@@ -68,7 +55,6 @@ export function usePaymentsFetcher({ setLoading }) {
         return { data: [], totalCount: 0 };
       } finally {
         setLoading(false);
-        console.log("LOG: Finished fetching payments.");
       }
     },
     [session, setLoading, setTodaysPayments, setPaymentData]
