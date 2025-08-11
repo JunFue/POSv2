@@ -1,19 +1,8 @@
 import { useState, useEffect, useRef } from "react";
-import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
-
-import { FaCalendarAlt } from "react-icons/fa"; // Import an icon for the button
+import { FaCalendarAlt } from "react-icons/fa";
 import { Calendar } from "../../../../components/Calendar";
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-
-// Helper function to format Date objects into YYYY-MM-DD strings
-const formatDate = (date) => {
-  if (!date) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
+import { usePaymentsFetcher } from "./hooks/usePaymentsFetcher"; // 1. Import the new hook
+import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
 
 export function PaymentsFilter({
   onFilter,
@@ -25,20 +14,19 @@ export function PaymentsFilter({
   loading,
   setLoading,
 }) {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const [transactionNo, setTransactionNo] = useState("");
-
-  // State to manage the date range object required by the Calendar component
   const [dateRange, setDateRange] = useState({
     from: new Date(),
     to: new Date(),
   });
-
-  // State to control the visibility of the calendar popover
   const [showCalendar, setShowCalendar] = useState(false);
   const calendarRef = useRef(null);
 
-  // Close the calendar popover if the user clicks outside of it
+  // 2. Use the custom hook to get the fetch function
+  const { fetchPayments } = usePaymentsFetcher({ onFilter, setLoading });
+
+  // Effect to close the calendar when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
@@ -51,59 +39,33 @@ export function PaymentsFilter({
     };
   }, []);
 
-  const handleBackendFetch = async (page, limit, range, transNo = "") => {
-    if (!session) return;
-    setLoading(true);
-    try {
-      const startDate = formatDate(range.from);
-      const endDate = formatDate(range.to);
-
-      const params = new URLSearchParams({ page, limit, startDate, endDate });
-      if (transNo) {
-        params.set("transactionNo", transNo);
-      }
-
-      const url = `${BACKEND_URL}/api/payments?${params.toString()}`;
-      const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${session.access_token}` },
-      });
-
-      if (response.ok) {
-        const filteredData = await response.json();
-        onFilter(filteredData);
-      } else {
-        console.error("Failed to fetch payments from the server.");
-      }
-    } catch (error) {
-      console.error(`Error fetching payments: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Initialize data on first load
+  // 3. Effect for the initial data fetch on component mount
   useEffect(() => {
-    if (user) {
-      handleBackendFetch(1, rowsPerPage, dateRange);
+    // This effect runs once when the component mounts and the user is authenticated.
+    if (user && fetchPayments) {
+      fetchPayments(1, rowsPerPage, dateRange);
     }
-  }, [user]);
+    // We only want this to run on mount, so we disable the exhaustive-deps warning.
+    // The dependencies `dateRange` and `rowsPerPage` are intentionally omitted
+    // because other event handlers take care of re-fetching when they change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, fetchPayments]);
 
-  // Handler for when the calendar selection changes
+  // 4. All handlers now use the `fetchPayments` function from the hook
   const handleDateChange = (selection) => {
     const newRange = selection.range || {
       from: selection.date,
       to: selection.date,
     };
     setDateRange(newRange);
-    setShowCalendar(false); // Close the calendar after selection
-    // Trigger a new fetch with the updated date range
-    handleBackendFetch(1, rowsPerPage, newRange, transactionNo.trim());
+    setShowCalendar(false);
+    fetchPayments(1, rowsPerPage, newRange, transactionNo.trim());
     setCurrentPage(1);
   };
 
   const handleFilter = () => {
     setCurrentPage(1);
-    handleBackendFetch(1, rowsPerPage, dateRange, transactionNo.trim());
+    fetchPayments(1, rowsPerPage, dateRange, transactionNo.trim());
   };
 
   const handleReset = () => {
@@ -111,20 +73,14 @@ export function PaymentsFilter({
     const todayRange = { from: new Date(), to: new Date() };
     setDateRange(todayRange);
     setCurrentPage(1);
-    handleBackendFetch(1, rowsPerPage, todayRange);
+    fetchPayments(1, rowsPerPage, todayRange);
   };
 
-  // Pagination handlers now correctly pass the current dateRange
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       const nextPage = currentPage + 1;
       setCurrentPage(nextPage);
-      handleBackendFetch(
-        nextPage,
-        rowsPerPage,
-        dateRange,
-        transactionNo.trim()
-      );
+      fetchPayments(nextPage, rowsPerPage, dateRange, transactionNo.trim());
     }
   };
 
@@ -132,12 +88,7 @@ export function PaymentsFilter({
     if (currentPage > 1) {
       const prevPage = currentPage - 1;
       setCurrentPage(prevPage);
-      handleBackendFetch(
-        prevPage,
-        rowsPerPage,
-        dateRange,
-        transactionNo.trim()
-      );
+      fetchPayments(prevPage, rowsPerPage, dateRange, transactionNo.trim());
     }
   };
 
@@ -145,10 +96,17 @@ export function PaymentsFilter({
     const newRowsPerPage = Number(e.target.value);
     setRowsPerPage(newRowsPerPage);
     setCurrentPage(1);
-    handleBackendFetch(1, newRowsPerPage, dateRange, transactionNo.trim());
+    fetchPayments(1, newRowsPerPage, dateRange, transactionNo.trim());
   };
 
-  // Function to display the selected date range nicely
+  const formatDate = (date) => {
+    if (!date) return "";
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  };
+
   const displayDateRange = () => {
     const from = formatDate(dateRange.from);
     const to = formatDate(dateRange.to);
@@ -181,7 +139,7 @@ export function PaymentsFilter({
         <div className="flex-grow">
           <label
             htmlFor="transactionNo"
-            className="block text-y font-medium text-body-text"
+            className="block text-y font-medium text-body-text sm:text-[9px] md:text-[12px] lg:text-[15px]"
           >
             Transaction No:
           </label>
