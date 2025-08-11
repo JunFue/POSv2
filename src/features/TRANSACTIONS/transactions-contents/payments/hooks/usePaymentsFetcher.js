@@ -1,34 +1,36 @@
-import { useCallback } from "react";
+import { useCallback, useContext } from "react";
 import { useAuth } from "../../../../AUTHENTICATION/hooks/useAuth";
+import { PaymentContext } from "../../../../../context/PaymentContext";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 // Helper function to format Date objects into YYYY-MM-DD strings
 const formatDate = (date) => {
   if (!date) return "";
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  return date.toISOString().split("T")[0];
 };
 
-/**
- * Custom hook to handle fetching paginated payment data from the backend.
- * @param {object} options - The options for the hook.
- * @param {function} options.onFilter - Callback function to handle the fetched data.
- * @param {function} options.setLoading - Function to set the loading state.
- * @returns {{fetchPayments: function}} - An object containing the fetchPayments function.
- */
-export function usePaymentsFetcher({ onFilter, setLoading }) {
+const getTodaysDateString = () => new Date().toISOString().split("T")[0];
+
+export function usePaymentsFetcher({ setLoading }) {
   const { session } = useAuth();
+  const { setTodaysPayments, setPaymentData } = useContext(PaymentContext);
 
   const fetchPayments = useCallback(
     async (page, limit, range, transNo = "") => {
       if (!session) return;
+      console.log(
+        `LOG: Fetching payments for page: ${page}, limit: ${limit}, range: ${formatDate(
+          range.from
+        )} to ${formatDate(range.to)}`
+      );
       setLoading(true);
       try {
         const startDate = formatDate(range.from);
         const endDate = formatDate(range.to);
+        const isFetchingToday =
+          startDate === getTodaysDateString() &&
+          endDate === getTodaysDateString();
 
         const params = new URLSearchParams({ page, limit, startDate, endDate });
         if (transNo) {
@@ -42,17 +44,34 @@ export function usePaymentsFetcher({ onFilter, setLoading }) {
 
         if (response.ok) {
           const filteredData = await response.json();
-          onFilter(filteredData);
+          if (isFetchingToday) {
+            console.log(
+              "LOG: Fetched data is for today. Updating 'todaysPayments'.",
+              filteredData.data
+            );
+            setTodaysPayments(filteredData.data);
+          } else {
+            console.log(
+              "LOG: Fetched data is for another date range. Updating 'paymentData'.",
+              filteredData.data
+            );
+            setPaymentData(filteredData.data);
+          }
+          // The onFilter callback in PaymentsFilter will now just pass the whole response up
+          return filteredData;
         } else {
           console.error("Failed to fetch payments from the server.");
+          return { data: [], totalCount: 0 };
         }
       } catch (error) {
         console.error(`Error fetching payments: ${error.message}`);
+        return { data: [], totalCount: 0 };
       } finally {
         setLoading(false);
+        console.log("LOG: Finished fetching payments.");
       }
     },
-    [session, onFilter, setLoading]
+    [session, setLoading, setTodaysPayments, setPaymentData]
   );
 
   return { fetchPayments };

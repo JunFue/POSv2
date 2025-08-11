@@ -1,6 +1,6 @@
 import { useContext } from "react";
 import { ItemRegData } from "../../../context/ItemRegContext";
-import { PaymentContext } from "../../../context/PaymentContext";
+import { usePaymentContext } from "../../../context/PaymentContext";
 import { ItemSoldContext } from "../../../context/ItemSoldContext";
 import { useInventory } from "../../../context/InventoryContext";
 import { generateTransactionNo } from "../../../utils/transactionNumberGenerator";
@@ -12,7 +12,7 @@ export const useTransactionHandler = (formMethods, refs) => {
   const { items: regItems } = useContext(ItemRegData);
   const { setTodaysItemSold, setServerOnline: setSoldServerOnline } =
     useContext(ItemSoldContext);
-  const { setPaymentData } = useContext(PaymentContext);
+  const { setTodaysPayments } = usePaymentContext();
   const { inventory, setInventory } = useInventory();
 
   const { getValues, reset } = formMethods;
@@ -79,10 +79,11 @@ export const useTransactionHandler = (formMethods, refs) => {
       };
     });
 
+    // --- FIX: Changed keys to camelCase to match the backend API ---
     const paymentRecord = {
       transactionDate: transactionTime,
       transactionNumber: transactionNo,
-      costumerName: costumerName || "N/A",
+      costumerName: costumerName || "N/A", // Note: Backend has a typo "costumer"
       amountToPay: calculatedGrandTotal.toFixed(2),
       amountRendered: paymentValue.toFixed(2),
       discount: discountValue.toFixed(2),
@@ -90,31 +91,25 @@ export const useTransactionHandler = (formMethods, refs) => {
       inCharge: cashierName,
     };
 
-    const now = new Date();
-    const todaysDateString = `${now.getFullYear()}-${String(
-      now.getMonth() + 1
-    ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    console.log("LOG: New payment record created:", paymentRecord);
 
-    // ✅ FIX: Split the transactionTime string by the space to get only the date part.
+    const now = new Date();
+    const todaysDateString = now.toISOString().split("T")[0];
     const transactionDateString = transactionTime.split(" ")[0];
 
     if (transactionDateString === todaysDateString) {
-      console.log("LOG: New items to be added:", soldItems);
+      console.log("LOG: New items to be added to sold items:", soldItems);
       setTodaysItemSold((prev) => {
-        console.log("LOG: Previous 'todaysItemSold' state:", prev);
         const prevData = Array.isArray(prev?.data) ? prev.data : [];
-        const newData = { data: [...soldItems, ...prevData] };
-        console.log("LOG: New state being set:", newData);
-        return newData;
+        return { data: [...soldItems, ...prevData] };
       });
-    } else {
-      console.log(
-        `LOG: Transaction date (${transactionDateString}) does not match today's date (${todaysDateString}). Skipping update.`
-      );
     }
 
+    // Instantly update the local state for today's payments
+    console.log("LOG: Adding new payment record to 'todaysPayments' state.");
+    setTodaysPayments((prev) => [paymentRecord, ...prev]);
+
     setCartData([]);
-    setPaymentData((prev) => [...prev, paymentRecord]);
     reset({
       ...getValues(),
       payment: "",
@@ -130,14 +125,16 @@ export const useTransactionHandler = (formMethods, refs) => {
     costumerNameRef.current?.focus();
 
     // --- 4. Perform network request via the service ---
+    console.log("LOG: Finalizing transaction with the backend.");
     const result = await finalizeTransaction(paymentRecord, soldItems);
-
     setSoldServerOnline(result.success);
 
     if (!result.success) {
       alert(
         "SERVER IS OFFLINE. Data has been saved locally but failed to sync."
       );
+    } else {
+      console.log("LOG: Transaction successfully finalized with the server.");
     }
   };
 

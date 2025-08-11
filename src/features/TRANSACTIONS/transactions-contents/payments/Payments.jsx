@@ -1,26 +1,52 @@
 import { getCoreRowModel, useReactTable } from "@tanstack/react-table";
-import { useState, useRef, useMemo } from "react";
+import { useState, useRef, useMemo, useContext } from "react";
 import { PaymentsFilter } from "./PaymentsFilter";
-
-// --- 1. Import the virtualizer hook and the shared table component ---
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { VirtualizedTable } from "../../../../components/VirtualizedTable";
+import { PaymentContext } from "../../../../context/PaymentContext";
+
+const getTodaysDateString = () => new Date().toISOString().split("T")[0];
 
 export function Payments() {
-  const [payments, setPayments] = useState([]);
+  const { todaysPayments, paymentData } = useContext(PaymentContext);
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  const [loading, setLoading] = useState(false);
+  // --- FIX: Initialize loading based on whether initial data exists ---
+  // We are not loading if today's payments are already available from localStorage.
+  const [loading, setLoading] = useState(() => {
+    const isToday =
+      new Date().toISOString().split("T")[0] === getTodaysDateString();
+    return isToday && todaysPayments.length > 0 ? false : true;
+  });
+  const [dateRange, setDateRange] = useState({
+    from: new Date(),
+    to: new Date(),
+  });
   const totalPages = Math.ceil(totalItems / rowsPerPage);
 
-  // --- 2. Create a ref for the table container ---
   const tableContainerRef = useRef(null);
 
   const handleServerData = (response) => {
-    setPayments(response.data);
-    setTotalItems(response.totalCount);
+    console.log("LOG: Payments.jsx received data from filter:", response);
+    if (response) {
+      setTotalItems(response.totalCount);
+    }
   };
+
+  const paymentsToDisplay = useMemo(() => {
+    const fromDate = dateRange.from.toISOString().split("T")[0];
+    const toDate = dateRange.to.toISOString().split("T")[0];
+    const today = getTodaysDateString();
+
+    if (fromDate === today && toDate === today) {
+      console.log("LOG: Rendering 'todaysPayments'.", todaysPayments);
+      return todaysPayments;
+    } else {
+      console.log("LOG: Rendering 'paymentData' for other dates.", paymentData);
+      return paymentData;
+    }
+  }, [todaysPayments, paymentData, dateRange]);
 
   const columns = useMemo(
     () => [
@@ -45,17 +71,16 @@ export function Payments() {
   );
 
   const table = useReactTable({
-    data: payments,
+    data: paymentsToDisplay,
     columns,
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // --- 3. Set up the row virtualizer ---
   const { rows } = table.getRowModel();
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 40, // Or your average row height
+    estimateSize: () => 40,
     overscan: 5,
   });
 
@@ -70,18 +95,28 @@ export function Payments() {
         setRowsPerPage={setRowsPerPage}
         loading={loading}
         setLoading={setLoading}
+        dateRange={dateRange}
+        setDateRange={setDateRange}
       />
-      {/* --- 4. Replace the old table with the VirtualizedTable component --- */}
       <div className="relative mt-4">
-        <VirtualizedTable
-          table={table}
-          tableContainerRef={tableContainerRef}
-          rowVirtualizer={rowVirtualizer}
-        />
-        {loading && (
+        {/* --- FIX: Improved conditional rendering logic --- */}
+        {/* Show loading indicator ONLY if we are loading AND there is no data to display */}
+        {loading && paymentsToDisplay.length === 0 ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background shadow-input bg-opacity-50">
             Loading...
           </div>
+        ) : paymentsToDisplay.length === 0 ? (
+          // Show this if not loading and data is empty
+          <div className="text-center py-10">
+            <p className="text-gray-500">No recorded payments</p>
+          </div>
+        ) : (
+          // Always show the table if there is data, even if a background fetch is happening
+          <VirtualizedTable
+            table={table}
+            tableContainerRef={tableContainerRef}
+            rowVirtualizer={rowVirtualizer}
+          />
         )}
       </div>
     </div>
