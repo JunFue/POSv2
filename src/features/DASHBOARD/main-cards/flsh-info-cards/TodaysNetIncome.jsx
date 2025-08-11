@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { supabase } from "../../../../utils/supabaseClient";
 import { usePageVisibility } from "../../../../hooks/usePageVisibility";
 import { MiniCard } from "./MiniCard";
 import { useTodaysNetIncome } from "./hooks/useTodaysNetIncome";
@@ -37,30 +36,13 @@ export function TodaysNetIncome({ onHide }) {
     }
   }, [fetchedIncome]);
 
-  // EFFECT 3: Initial Fetch and Real-time Subscription
+  // EFFECT 3: Initial Fetch
+  // Fetches the source-of-truth value from the server when the component mounts.
+  // Real-time updates are now handled by the PaymentContext.
   useEffect(() => {
-    fetchTodaysNetIncome();
-
-    const channel = supabase
-      .channel("public:payments:income-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "payments" },
-        () => {
-          console.log(
-            "LOG: Real-time change detected, re-fetching net income."
-          );
-          fetchTodaysNetIncome();
-        }
-      );
-
     if (isVisible) {
-      channel.subscribe();
+      fetchTodaysNetIncome();
     }
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
   }, [fetchTodaysNetIncome, isVisible]);
 
   return (
