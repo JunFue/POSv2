@@ -12,7 +12,7 @@ export const useTransactionHandler = (formMethods, refs) => {
   const { items: regItems } = useContext(ItemRegData);
   const { setTodaysItemSold, setServerOnline: setSoldServerOnline } =
     useContext(ItemSoldContext);
-  const { setTodaysPayments } = usePaymentContext();
+  const { addTodaysPayment } = usePaymentContext();
   const { inventory, setInventory } = useInventory();
 
   const { getValues, reset } = formMethods;
@@ -107,7 +107,7 @@ export const useTransactionHandler = (formMethods, refs) => {
 
     // Instantly update the local state for today's payments
     console.log("LOG: Adding new payment record to 'todaysPayments' state.");
-    setTodaysPayments((prev) => [paymentRecord, ...prev]);
+    addTodaysPayment(paymentRecord);
 
     setCartData([]);
     reset({

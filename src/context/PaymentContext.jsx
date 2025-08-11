@@ -1,4 +1,10 @@
-import { createContext, useEffect, useState, useContext } from "react";
+import {
+  createContext,
+  useEffect,
+  useState,
+  useContext,
+  useCallback,
+} from "react";
 import { supabase } from "../utils/supabaseClient";
 
 // Helper to get today's date in YYYY-MM-DD format
@@ -7,16 +13,30 @@ const getTodaysDateString = () => {
   return today.toISOString().split("T")[0];
 };
 
+// Helper function to calculate net sales, can be used in multiple places
+const calculateNetSales = (payments) => {
+  if (!Array.isArray(payments) || payments.length === 0) {
+    return 0;
+  }
+  const grossSales = payments.reduce(
+    (sum, p) => sum + parseFloat(p.amount_to_pay || 0),
+    0
+  );
+  const totalDiscount = payments.reduce(
+    (sum, p) => sum + parseFloat(p.discount || 0),
+    0
+  );
+  return grossSales - totalDiscount;
+};
+
 const PaymentContext = createContext();
 
 export function PaymentProvider({ children }) {
-  // State for today's payments, initialized from localStorage for instant UI
   const [todaysPayments, setTodaysPayments] = useState(() => {
     console.log("LOG: Initializing todaysPayments from localStorage.");
     const stored = localStorage.getItem("todaysPayments");
     if (stored) {
       const { date, data } = JSON.parse(stored);
-      // Only load if the stored data is from today
       if (date === getTodaysDateString()) {
         console.log("LOG: Found valid data for today in localStorage.");
         return data;
@@ -28,12 +48,36 @@ export function PaymentProvider({ children }) {
     return [];
   });
 
-  // State for payments from other dates, fetched from the server
+  // New state for the calculated total, initialized from localStorage data
+  const [todaysNetSales, setTodaysNetSales] = useState(() => {
+    const stored = localStorage.getItem("todaysPayments");
+    if (stored) {
+      const { date, data } = JSON.parse(stored);
+      if (date === getTodaysDateString()) {
+        return calculateNetSales(data);
+      }
+    }
+    return 0;
+  });
+
   const [paymentData, setPaymentData] = useState([]);
 
-  // Effect to persist todaysPayments to localStorage
+  // New function to add a payment and update the total atomically
+  const addTodaysPayment = useCallback((paymentRecord) => {
+    setTodaysPayments((prevPayments) => {
+      const newPayments = [paymentRecord, ...prevPayments];
+      // Recalculate and update the net sales state at the same time
+      setTodaysNetSales(calculateNetSales(newPayments));
+      return newPayments;
+    });
+  }, []);
+
+  // Effect to sync total and localStorage when todaysPayments changes from any source
   useEffect(() => {
-    console.log("LOG: todaysPayments state changed, updating localStorage.");
+    console.log(
+      "LOG: todaysPayments changed, recalculating total and updating localStorage."
+    );
+    setTodaysNetSales(calculateNetSales(todaysPayments));
     const dataToStore = {
       date: getTodaysDateString(),
       data: todaysPayments,
@@ -41,10 +85,9 @@ export function PaymentProvider({ children }) {
     localStorage.setItem("todaysPayments", JSON.stringify(dataToStore));
   }, [todaysPayments]);
 
-  // Effect for Supabase real-time subscription
+  // Supabase real-time subscription
   useEffect(() => {
     console.log("LOG: Setting up Supabase subscription for 'payments' table.");
-
     const channel = supabase
       .channel("public:payments")
       .on(
@@ -52,23 +95,19 @@ export function PaymentProvider({ children }) {
         { event: "*", schema: "public", table: "payments" },
         (payload) => {
           console.log("LOG: Supabase change received:", payload);
+          // The main useEffect will handle recalculation when setTodaysPayments updates the state
           const eventDate = new Date(
             payload.new.transaction_date || payload.old.transaction_date
           )
             .toISOString()
             .split("T")[0];
 
-          // Only update if the change affects today's payments
           if (eventDate === getTodaysDateString()) {
-            console.log(
-              "LOG: Change affects today's data. Updating todaysPayments."
-            );
             setTodaysPayments((currentPayments) => {
               const newPayments = [...currentPayments];
               const index = newPayments.findIndex(
                 (p) => p.id === (payload.new.id || payload.old.id)
               );
-
               if (payload.eventType === "INSERT") {
                 if (index === -1) newPayments.push(payload.new);
               } else if (payload.eventType === "UPDATE") {
@@ -78,14 +117,11 @@ export function PaymentProvider({ children }) {
               }
               return newPayments;
             });
-          } else {
-            console.log("LOG: Change does not affect today's data. Ignoring.");
           }
         }
       )
       .subscribe();
 
-    // Cleanup function to remove the subscription
     return () => {
       console.log("LOG: Cleaning up Supabase subscription.");
       supabase.removeChannel(channel);
@@ -94,9 +130,11 @@ export function PaymentProvider({ children }) {
 
   const value = {
     todaysPayments,
-    setTodaysPayments,
+    setTodaysPayments, // Keep for fetcher
     paymentData,
     setPaymentData,
+    todaysNetSales, // Expose the new total
+    addTodaysPayment, // Expose the new atomic function
   };
 
   return (
