@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   format,
   addMonths,
@@ -18,27 +18,34 @@ import { FaCalendarDay, FaCalendarWeek, FaUndo } from "react-icons/fa";
 
 export function CashoutCalendar({ onFilter }) {
   const [currentMonth, setCurrentMonth] = useState(new Date());
-  const [mode, setMode] = useState("single"); // 'single' or 'range'
+  const [mode, setMode] = useState("single");
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [range, setRange] = useState({ from: null, to: null });
   const [hoveredDate, setHoveredDate] = useState(null);
 
-  // Reset the calendar state when the mode is toggled
+  // Ref to track the initial mount and prevent the useEffect from running on the first render.
+  const isInitialMount = useRef(true);
+
   useEffect(() => {
-    handleReset();
+    // This check ensures the effect only runs when 'mode' is changed by the user,
+    // not during the initial component mount. This prevents the infinite loop.
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    } else {
+      handleReset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode]);
 
   const handleDayClick = (day) => {
     if (mode === "single") {
       setSelectedDate(day);
     } else {
-      // Range selection logic
       if (!range.from || (range.from && range.to)) {
-        // Start a new range
         setRange({ from: startOfDay(day), to: null });
         setHoveredDate(null);
       } else {
-        // Finish the range
+        // Determine the correct start and end of the range
         const newRange = isAfter(day, range.from)
           ? { from: range.from, to: startOfDay(day) }
           : { from: startOfDay(day), to: range.from };
@@ -52,9 +59,10 @@ export function CashoutCalendar({ onFilter }) {
     if (mode === "single") {
       onFilter({ date: selectedDate });
     } else if (range.from && range.to) {
-      onFilter({ range: range });
+      onFilter({ range });
     } else {
-      alert("Please select a complete date range.");
+      // Notify user if the range selection is incomplete
+      console.warn("Please select a complete date range.");
     }
   };
 
@@ -63,24 +71,26 @@ export function CashoutCalendar({ onFilter }) {
     setSelectedDate(today);
     setCurrentMonth(today);
     setRange({ from: null, to: null });
-    // Also filter by today's date on reset
-    onFilter({ date: today });
+    // The call to onFilter() was removed from here as it was the source of the loop.
+    // The parent now controls when to filter based on user interaction.
   };
 
   const renderHeader = () => (
-    <div className="flex justify-between items-center py-2 px-4">
+    <div className="flex justify-between items-center py-2 px-1">
       <button
         onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-        className="p-2 rounded-full hover:bg-gray-200"
+        className="p-2 rounded-full hover:bg-gray-100"
+        aria-label="Previous month"
       >
         &lt;
       </button>
-      <span className="text-lg font-bold">
+      <span className="text-lg font-semibold">
         {format(currentMonth, "MMMM yyyy")}
       </span>
       <button
         onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-        className="p-2 rounded-full hover:bg-gray-200"
+        className="p-2 rounded-full hover:bg-gray-100"
+        aria-label="Next month"
       >
         &gt;
       </button>
@@ -88,9 +98,9 @@ export function CashoutCalendar({ onFilter }) {
   );
 
   const renderDays = () => (
-    <div className="grid grid-cols-7 text-center font-semibold text-sm text-head-text">
-      {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, index) => (
-        <div key={index}>{day}</div>
+    <div className="grid grid-cols-7 text-center font-semibold text-xs text-gray-500 my-2">
+      {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
+        <div key={day}>{day}</div>
       ))}
     </div>
   );
@@ -108,54 +118,64 @@ export function CashoutCalendar({ onFilter }) {
       for (let i = 0; i < 7; i++) {
         const cloneDay = day;
         let cellClasses =
-          "p-2 text-center h-10 flex items-center justify-center text-sm cursor-pointer transition-colors duration-200";
+          "h-9 w-9 flex items-center justify-center text-sm cursor-pointer transition-colors duration-200 rounded-full";
 
-        if (!isSameMonth(day, monthStart)) cellClasses += " text-head-text";
-        else cellClasses += " hover:bg-blue-100";
+        if (!isSameMonth(day, monthStart)) {
+          cellClasses += " text-gray-300";
+        } else {
+          cellClasses += " hover:bg-blue-100";
+        }
 
         if (mode === "single" && isSameDay(day, selectedDate)) {
-          cellClasses += " bg-blue-500 text-body-text rounded-full";
+          cellClasses += " bg-blue-600 text-white";
         } else if (mode === "range") {
           const { from, to } = range;
           const isFrom = from && isSameDay(day, from);
           const isTo = to && isSameDay(day, to);
-
           let inRange =
             from && to && isWithinInterval(day, { start: from, end: to });
-          let inHoverRange =
-            from &&
-            !to &&
-            hoveredDate &&
-            isWithinInterval(day, { start: from, end: hoveredDate });
-          if (from && !to && hoveredDate && isAfter(from, hoveredDate)) {
-            inHoverRange = isWithinInterval(day, {
-              start: hoveredDate,
-              end: from,
-            });
+
+          let inHoverRange = false;
+          if (from && !to && hoveredDate) {
+            if (isAfter(hoveredDate, from)) {
+              inHoverRange = isWithinInterval(day, {
+                start: from,
+                end: hoveredDate,
+              });
+            } else {
+              inHoverRange = isWithinInterval(day, {
+                start: hoveredDate,
+                end: from,
+              });
+            }
           }
 
           if (isFrom || isTo) {
-            cellClasses += " bg-blue-500 text-body-text rounded-full";
+            cellClasses += " bg-blue-600 text-white";
           } else if (inRange) {
-            cellClasses += " bg-blue-200";
+            cellClasses += " bg-blue-200 rounded-none";
           } else if (inHoverRange) {
-            cellClasses += " bg-blue-100";
+            cellClasses += " bg-blue-100 rounded-none";
           }
         }
 
         days.push(
           <div
-            className={cellClasses}
             key={day.toString()}
-            onClick={() => handleDayClick(cloneDay)}
-            onMouseEnter={() =>
-              mode === "range" &&
-              range.from &&
-              !range.to &&
-              setHoveredDate(cloneDay)
-            }
+            className="flex justify-center items-center"
           >
-            <span>{format(day, "d")}</span>
+            <div
+              className={cellClasses}
+              onClick={() => handleDayClick(cloneDay)}
+              onMouseEnter={() =>
+                mode === "range" &&
+                range.from &&
+                !range.to &&
+                setHoveredDate(cloneDay)
+              }
+            >
+              <span>{format(day, "d")}</span>
+            </div>
           </div>
         );
         day = addDays(day, 1);
@@ -171,36 +191,32 @@ export function CashoutCalendar({ onFilter }) {
   };
 
   return (
-    <div className="bg-background rounded-lg shadow-md p-4 flex flex-col">
+    <div className="bg-white rounded-lg shadow-lg p-4 flex flex-col border border-gray-200 w-full">
       <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 bg-gray-100 rounded-full p-1">
           <button
             onClick={() => setMode("single")}
-            className={`p-2 rounded-full ${
-              mode === "single"
-                ? "bg-blue-500 text-body-text"
-                : "hover:bg-gray-200"
+            className={`px-3 py-1 text-sm rounded-full ${
+              mode === "single" ? "bg-white shadow" : ""
             }`}
-            title="Single Day Mode"
+            title="Single Day"
           >
             <FaCalendarDay />
           </button>
           <button
             onClick={() => setMode("range")}
-            className={`p-2 rounded-full ${
-              mode === "range"
-                ? "bg-blue-500 text-body-text"
-                : "hover:bg-gray-200"
+            className={`px-3 py-1 text-sm rounded-full ${
+              mode === "range" ? "bg-white shadow" : ""
             }`}
-            title="Date Range Mode"
+            title="Date Range"
           >
             <FaCalendarWeek />
           </button>
         </div>
         <button
           onClick={handleReset}
-          className="p-2 rounded-full hover:bg-gray-200"
-          title="Reset to Today"
+          className="p-2 rounded-full hover:bg-gray-100"
+          title="Reset"
         >
           <FaUndo />
         </button>
@@ -210,9 +226,9 @@ export function CashoutCalendar({ onFilter }) {
       {renderCells()}
       <button
         onClick={handleFilterClick}
-        className="traditional-button mt-4 w-full"
+        className="w-full mt-4 bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
       >
-        Filter
+        Apply Filter
       </button>
     </div>
   );

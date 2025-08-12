@@ -10,9 +10,11 @@ import {
   FaCheckCircle,
   FaExclamationTriangle,
   FaSpinner,
+  FaTrash,
 } from "react-icons/fa";
+import { VirtualizedTable } from "../../components/VirtualizedTable";
 
-// --- NEW: Skeleton loader component ---
+// Skeleton loader component for a more polished loading state
 const SkeletonRow = ({ columns }) => (
   <tr className="flex w-full">
     {columns.map((column) => (
@@ -27,6 +29,27 @@ const SkeletonRow = ({ columns }) => (
   </tr>
 );
 
+// Consistent status icon component
+const StatusIcon = ({ status }) => {
+  switch (status) {
+    case "pending":
+      return (
+        <FaSpinner className="animate-spin text-gray-500" title="Sending..." />
+      );
+    case "synced":
+      return <FaCheckCircle className="text-green-500" title="Synced" />;
+    case "failed":
+      return (
+        <FaExclamationTriangle
+          className="text-red-500"
+          title="Failed to save"
+        />
+      );
+    default:
+      return null;
+  }
+};
+
 export function CashoutTable({ data, loading, onDelete }) {
   const [sorting, setSorting] = React.useState([]);
 
@@ -36,7 +59,12 @@ export function CashoutTable({ data, loading, onDelete }) {
       {
         accessorKey: "amount",
         header: "Amount",
-        cell: (info) => `$${parseFloat(info.getValue()).toFixed(2)}`,
+        // Use Intl.NumberFormat for robust currency formatting
+        cell: (info) =>
+          new Intl.NumberFormat("en-US", {
+            style: "currency",
+            currency: "USD",
+          }).format(info.getValue()),
         size: 120,
       },
       { accessorKey: "notes", header: "Notes", size: 250 },
@@ -45,13 +73,15 @@ export function CashoutTable({ data, loading, onDelete }) {
         id: "actions",
         header: "Actions",
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <StatusIcon status={row.original.status} />
             <button
               onClick={() => onDelete(row.original.id)}
-              className="text-red-500 hover:text-red-700"
+              className="text-gray-400 hover:text-red-600 transition-colors"
+              title="Delete"
             >
-              &#x274C;
+              {/* Use a consistent icon library */}
+              <FaTrash />
             </button>
           </div>
         ),
@@ -62,7 +92,8 @@ export function CashoutTable({ data, loading, onDelete }) {
   );
 
   const table = useReactTable({
-    data,
+    // Ensure data is always an array to prevent crashes
+    data: data || [],
     columns,
     state: { sorting },
     onSortingChange: setSorting,
@@ -75,25 +106,22 @@ export function CashoutTable({ data, loading, onDelete }) {
   const rowVirtualizer = useVirtualizer({
     count: rows.length,
     getScrollElement: () => tableContainerRef.current,
-    estimateSize: () => 40,
+    estimateSize: () => 40, // Row height in pixels
     overscan: 5,
   });
 
-  // --- UPDATED: Loading state now shows a skeleton loader ---
+  // Improved loading state with skeleton rows
   if (loading) {
     return (
-      <div
-        ref={tableContainerRef}
-        className="overflow-auto rounded-lg bg-background shadow-input h-[500px]"
-      >
-        <table className="w-full text-[0.8vw]" style={{ tableLayout: "fixed" }}>
-          <thead className="bg-background shadow-neumorphic sticky top-0 z-10">
+      <div className="overflow-auto rounded-lg bg-white shadow-md h-[500px]">
+        <table className="w-full" style={{ tableLayout: "fixed" }}>
+          <thead className="bg-gray-50 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="text-left px-4 py-2 font-semibold text-head-text"
+                    className="text-left px-4 py-3 font-medium text-gray-500 uppercase tracking-wider text-sm"
                     style={{ width: `${header.getSize()}px` }}
                   >
                     {flexRender(
@@ -115,103 +143,23 @@ export function CashoutTable({ data, loading, onDelete }) {
     );
   }
 
-  if (!loading && data.length === 0) {
+  // Clearer empty state
+  if (!data || data.length === 0) {
     return (
-      <div className="text-center p-4 bg-background rounded-lg shadow-md">
-        No cashout made on this day.
+      <div className="text-center p-10 bg-white rounded-lg shadow-md h-[500px] flex items-center justify-center">
+        <p className="text-gray-500">
+          No cashout records for the selected date(s).
+        </p>
       </div>
     );
   }
 
+  // Render the virtualized table
   return (
-    <div
-      ref={tableContainerRef}
-      className="overflow-auto rounded-lg bg-background shadow-input h-[500px]"
-    >
-      <table className="w-full text-[0.8vw]" style={{ tableLayout: "fixed" }}>
-        <thead className="bg-background shadow-neumorphic sticky top-0 z-10">
-          {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <th
-                  key={header.id}
-                  className="text-left px-4 py-2 font-semibold text-head-text"
-                  style={{ width: `${header.getSize()}px` }}
-                >
-                  <div
-                    onClick={header.column.getToggleSortingHandler()}
-                    className="flex items-center cursor-pointer"
-                  >
-                    {flexRender(
-                      header.column.columnDef.header,
-                      header.getContext()
-                    )}
-                    <span className="ml-2">
-                      {{ asc: "🔼", desc: "🔽" }[header.column.getIsSorted()] ??
-                        "⇅"}
-                    </span>
-                  </div>
-                </th>
-              ))}
-            </tr>
-          ))}
-        </thead>
-        <tbody
-          style={{
-            height: `${rowVirtualizer.getTotalSize()}px`,
-            position: "relative",
-          }}
-        >
-          {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-            const row = rows[virtualRow.index];
-            return (
-              <tr
-                key={row.id}
-                style={{
-                  position: "absolute",
-                  top: 0,
-                  left: 0,
-                  width: "100%",
-                  height: `${virtualRow.size}px`,
-                  transform: `translateY(${virtualRow.start}px)`,
-                  display: "flex",
-                }}
-                className="hover:bg-gray-100"
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="border-b border-gray-300 px-4 py-2 truncate flex items-center"
-                    style={{ width: `${cell.column.getSize()}px` }}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </div>
+    <VirtualizedTable
+      table={table}
+      tableContainerRef={tableContainerRef}
+      rowVirtualizer={rowVirtualizer}
+    />
   );
 }
-
-const StatusIcon = ({ status }) => {
-  switch (status) {
-    case "pending":
-      return (
-        <FaSpinner className="animate-spin text-gray-500" title="Sending..." />
-      );
-    case "synced":
-      return <FaCheckCircle className="text-green-500" title="Synced" />;
-    case "failed":
-      return (
-        <FaExclamationTriangle
-          className="text-red-500"
-          title="Failed to save"
-        />
-      );
-    default:
-      return null;
-  }
-};

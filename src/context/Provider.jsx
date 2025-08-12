@@ -7,23 +7,26 @@ import { SettingsProvider } from "./SettingsContext.jsx";
 import { ThemeProviders } from "./ThemeContext.jsx";
 import { AuthProvider } from "./AuthContext.jsx";
 import { InventoryProvider } from "./InventoryContext.jsx";
+import { CashoutProvider } from "./CashoutProvider.jsx";
 
 export function AppProviders({ children }) {
   return (
     <AuthProvider>
-      <InventoryProvider>
-        <ThemeProviders>
-          <SettingsProvider>
-            <PaymentProvider>
-              <ItemSoldProvider>
-                <ItemRegProvider>
-                  <CartProvider>{children}</CartProvider>
-                </ItemRegProvider>
-              </ItemSoldProvider>
-            </PaymentProvider>
-          </SettingsProvider>
-        </ThemeProviders>
-      </InventoryProvider>
+      <CashoutProvider>
+        <InventoryProvider>
+          <ThemeProviders>
+            <SettingsProvider>
+              <PaymentProvider>
+                <ItemSoldProvider>
+                  <ItemRegProvider>
+                    <CartProvider>{children}</CartProvider>
+                  </ItemRegProvider>
+                </ItemSoldProvider>
+              </PaymentProvider>
+            </SettingsProvider>
+          </ThemeProviders>
+        </InventoryProvider>
+      </CashoutProvider>
     </AuthProvider>
   );
 }
