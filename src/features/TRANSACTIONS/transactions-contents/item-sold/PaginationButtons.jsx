@@ -12,7 +12,7 @@ export function PaginationButtons({
       <button
         onClick={onPrev}
         disabled={currentPage <= 1 || loading}
-        className="traditional-button"
+        className="traditional-button sm:text-[9px] md:text-[12px] lg:text-[15px]"
       >
         Previous
       </button>
@@ -22,7 +22,7 @@ export function PaginationButtons({
       <button
         onClick={onNext}
         disabled={currentPage >= totalPages || loading}
-        className="traditional-button"
+        className="traditional-button sm:text-[9px] md:text-[12px] lg:text-[15px]"
       >
         Next
       </button>

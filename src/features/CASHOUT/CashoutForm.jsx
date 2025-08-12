@@ -160,7 +160,7 @@ export function CashoutForm({
           <label htmlFor="notes" className="block text-sm font-medium">
             Notes
           </label>
-          <textarea
+          <input
             id="notes"
             className="traditional-input min-h-[60px]"
             {...notesFieldRegistration}

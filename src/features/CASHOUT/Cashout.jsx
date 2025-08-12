@@ -1,55 +1,41 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { CashoutCalendar } from "./CashoutCalendar";
+
 import { CashoutForm } from "./CashoutForm";
 import { CashoutTable } from "./CashoutTable";
 import { useAuth } from "../AUTHENTICATION/hooks/useAuth";
+import { CashoutFilters } from "./CashoutFIlters";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
+// Helper to format date object to 'YYYY-MM-DD' string for API calls
+const toLocalDateString = (date) => {
+  if (!date) return "";
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 export function Cashout() {
-  const [selection, setSelection] = useState({ date: new Date() });
+  // Standardize selection state to always have 'from' and 'to' properties
+  const [selection, setSelection] = useState({
+    from: new Date(),
+    to: new Date(),
+  });
   const [cashouts, setCashouts] = useState([]);
   const [loading, setLoading] = useState(true);
   const { session } = useAuth();
 
   const handleFilter = useCallback(
     async (currentSelection) => {
-      if (!session) return;
+      if (!session || !currentSelection.from) return;
 
       setSelection(currentSelection);
       setLoading(true);
 
       const params = new URLSearchParams();
-
-      // --- FIX: Manually format the date to avoid timezone conversion ---
-      if (currentSelection.date) {
-        const date = currentSelection.date;
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, "0"); // Months are 0-indexed
-        const day = String(date.getDate()).padStart(2, "0");
-        params.append("date", `${year}-${month}-${day}`);
-      } else if (
-        currentSelection.range &&
-        currentSelection.range.from &&
-        currentSelection.range.to
-      ) {
-        const from = currentSelection.range.from;
-        const to = currentSelection.range.to;
-
-        const fromYear = from.getFullYear();
-        const fromMonth = String(from.getMonth() + 1).padStart(2, "0");
-        const fromDay = String(from.getDate()).padStart(2, "0");
-
-        const toYear = to.getFullYear();
-        const toMonth = String(to.getMonth() + 1).padStart(2, "0");
-        const toDay = String(to.getDate()).padStart(2, "0");
-
-        params.append("startDate", `${fromYear}-${fromMonth}-${fromDay}`);
-        params.append("endDate", `${toYear}-${toMonth}-${toDay}`);
-      } else {
-        setLoading(false);
-        return;
-      }
+      params.append("startDate", toLocalDateString(currentSelection.from));
+      params.append("endDate", toLocalDateString(currentSelection.to));
 
       try {
         const response = await fetch(
@@ -71,15 +57,29 @@ export function Cashout() {
     [session]
   );
 
-  // --- NEW: Fetch data when the component mounts ---
+  // Fetch data when the component first mounts or when the session becomes available
   useEffect(() => {
     if (session) {
       handleFilter(selection);
     }
-  }, [session, handleFilter]); // Dependencies ensure this runs when session is ready
+  }, [session]);
 
-  const handleAddCashout = (newCashoutWithTempId) => {
+  const handleAddOptimistic = (newCashoutWithTempId) => {
     setCashouts((prevCashouts) => [newCashoutWithTempId, ...prevCashouts]);
+  };
+
+  const updateCashoutStatus = (tempId, newRecord) => {
+    setCashouts((prev) =>
+      prev.map((c) =>
+        c.id === tempId ? { ...newRecord, status: "synced" } : c
+      )
+    );
+  };
+
+  const setCashoutFailed = (tempId) => {
+    setCashouts((prev) =>
+      prev.map((c) => (c.id === tempId ? { ...c, status: "failed" } : c))
+    );
   };
 
   const handleDeleteCashout = async (idToDelete) => {
@@ -109,32 +109,23 @@ export function Cashout() {
     }
   };
 
-  const updateCashoutStatus = (tempId, newRecord) => {
-    setCashouts((prev) =>
-      prev.map((c) =>
-        c.id === tempId ? { ...newRecord, status: "synced" } : c
-      )
-    );
-  };
-
-  const setCashoutFailed = (tempId) => {
-    setCashouts((prev) =>
-      prev.map((c) => (c.id === tempId ? { ...c, status: "failed" } : c))
-    );
-  };
+  // The form needs a single date to record a cashout. We use the 'from' date of the selection.
+  const formSelection = { date: selection.from };
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4">
       <div className="md:col-span-1">
-        <CashoutCalendar onFilter={handleFilter} />
+        <CashoutFilters selection={selection} onFilter={handleFilter} />
+        <div className="mt-4">
+          <CashoutForm
+            selection={formSelection}
+            onAddOptimistic={handleAddOptimistic}
+            onSubmissionSuccess={updateCashoutStatus}
+            onSubmissionFailure={setCashoutFailed}
+          />
+        </div>
       </div>
-      <div className="md:col-span-2 flex flex-col gap-4">
-        <CashoutForm
-          selection={selection}
-          onAddCashout={handleAddCashout}
-          updateCashoutStatus={updateCashoutStatus}
-          setCashoutFailed={setCashoutFailed}
-        />
+      <div className="md:col-span-2">
         <CashoutTable
           data={cashouts}
           loading={loading}

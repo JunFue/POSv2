@@ -37,6 +37,7 @@ export function ItemSold() {
 
   const { session } = useAuth();
   const tableContainerRef = useRef(null);
+  const [showCalendar, setShowCalendar] = useState(false); // State to control calendar visibility
 
   useTodaysItemsSold(); // Preload cached items
 
@@ -141,6 +142,8 @@ export function ItemSold() {
         loading={loading && !isViewingToday}
         transactionNo={transactionNo}
         dateRange={dateRange}
+        showCalendar={showCalendar}
+        setShowCalendar={setShowCalendar}
       />
 
       <div className="relative h-[600px] overflow-auto" ref={tableContainerRef}>
