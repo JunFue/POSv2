@@ -1,3 +1,5 @@
+// src/features/cashout/components/CashoutForm.jsx
+
 import React, { useRef, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { CategoryDropdown } from "./CategoryDropdown";
@@ -5,8 +7,9 @@ import { useCashout } from "../../context/CashoutProvider";
 
 /**
  * CashoutForm
- * - Uses react-hook-form for efficient form state management.
- * - Gets `addCashout` function from the context.
+ * - Enhanced with keyboard navigation for rapid data entry.
+ * - Focus shifts sequentially using the 'Enter' key.
+ * - Submission is triggered by 'Shift+Enter' on the final field.
  */
 export function CashoutForm() {
   const { addCashout } = useCashout();
@@ -15,18 +18,48 @@ export function CashoutForm() {
     handleSubmit,
     reset,
     control,
+    clearErrors,
     formState: { errors },
   } = useForm({
     defaultValues: { category: "Food", amount: "", notes: "", receiptNo: "" },
   });
 
+  const categoryButtonRef = useRef(null);
   const amountRef = useRef(null);
+  const notesRef = useRef(null);
+  const receiptNoRef = useRef(null);
+
+  // FIX: Correctly destructure the 'ref' from each register call to avoid conflicts.
+  const { ref: amountFormRef, ...amountRegister } = register("amount", {
+    required: "Amount is required.",
+  });
+  const { ref: notesFormRef, ...notesRegister } = register("notes");
+  const { ref: receiptNoFormRef, ...receiptNoRegister } = register("receiptNo");
+
+  const handleKeyDown = (e, nextFieldRef) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      nextFieldRef.current?.focus();
+    }
+  };
+
+  const handleReceiptKeyDown = (e) => {
+    if (e.key === "Enter" && e.shiftKey) {
+      e.preventDefault();
+      handleSubmit(onSubmit)();
+    }
+  };
 
   const onSubmit = useCallback(
     (data) => {
-      addCashout(data).then(() => reset());
+      // DEBUG: Log the data from the form to verify its contents.
+      console.log("Data from form submission:", data);
+      addCashout(data);
+      reset();
+      clearErrors();
+      categoryButtonRef.current?.focus();
     },
-    [addCashout, reset]
+    [addCashout, reset, clearErrors]
   );
 
   return (
@@ -41,6 +74,7 @@ export function CashoutForm() {
           rules={{ required: "Category is required." }}
           render={({ field }) => (
             <CategoryDropdown
+              buttonRef={categoryButtonRef}
               selectedCategory={field.value}
               onSelectCategory={(category) => {
                 field.onChange(category);
@@ -61,11 +95,12 @@ export function CashoutForm() {
             type="number"
             step="0.01"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-            {...register("amount", {
-              required: "Amount is required.",
-              valueAsNumber: true,
-            })}
-            ref={amountRef}
+            {...amountRegister}
+            ref={(e) => {
+              amountFormRef(e);
+              amountRef.current = e;
+            }}
+            onKeyDown={(e) => handleKeyDown(e, notesRef)}
           />
           {errors.amount && (
             <span className="text-red-500 text-xs">
@@ -84,7 +119,12 @@ export function CashoutForm() {
             id="notes"
             rows="2"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-            {...register("notes")}
+            {...notesRegister}
+            ref={(e) => {
+              notesFormRef(e);
+              notesRef.current = e;
+            }}
+            onKeyDown={(e) => handleKeyDown(e, receiptNoRef)}
           />
         </div>
         <div>
@@ -98,7 +138,12 @@ export function CashoutForm() {
             id="receiptNo"
             type="text"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
-            {...register("receiptNo")}
+            {...receiptNoRegister}
+            ref={(e) => {
+              receiptNoFormRef(e);
+              receiptNoRef.current = e;
+            }}
+            onKeyDown={handleReceiptKeyDown}
           />
         </div>
         <div className="flex gap-4 pt-2">
@@ -110,7 +155,10 @@ export function CashoutForm() {
           </button>
           <button
             type="button"
-            onClick={() => reset()}
+            onClick={() => {
+              reset();
+              clearErrors();
+            }}
             className="w-full bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
           >
             Clear

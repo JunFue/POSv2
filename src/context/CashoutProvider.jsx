@@ -7,24 +7,10 @@ import React, {
   useContext,
 } from "react";
 import { format } from "date-fns";
+import { useAuth } from "../features/AUTHENTICATION/hooks/useAuth";
+import { supabase } from "../utils/supabaseClient";
 
-// Mock dependencies for the example to run standalone.
-const mockSupabase = {
-  channel: () => ({
-    on: () => ({
-      subscribe: () => ({ unsubscribe: () => {} }),
-    }),
-  }),
-  removeChannel: () => {},
-};
-
-// This mock demonstrates the problem: it returns a new object every time.
-const mockUseAuth = () => ({
-  session: { access_token: "fake-token", user: { id: "user-123" } },
-});
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "/api";
-
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || "";
 const CashoutContext = createContext();
 
 const toLocalDateString = (date) => {
@@ -32,18 +18,11 @@ const toLocalDateString = (date) => {
   return format(date, "yyyy-MM-dd");
 };
 
-export function CashoutProvider({
-  children,
-  supabase = mockSupabase,
-  useAuthHook = mockUseAuth,
-}) {
-  const { session } = useAuthHook();
-  // FIX: Extract primitive values from the session object.
-  // These values are stable across re-renders unless they actually change.
+export function CashoutProvider({ children }) {
+  const { session } = useAuth();
   const accessToken = session?.access_token;
   const userId = session?.user?.id;
 
-  // FIX: Use the stable `userId` to create the storage key.
   const CASHOUT_STORAGE_KEY = `cashoutData_${userId || "guest"}`;
 
   const getInitialCashouts = useCallback(() => {
@@ -63,12 +42,17 @@ export function CashoutProvider({
   }, [CASHOUT_STORAGE_KEY]);
 
   const [cashouts, setCashouts] = useState(getInitialCashouts);
-  const [loading, setLoading] = useState(cashouts.length === 0);
+  const [loading, setLoading] = useState(true);
   const [selection, setSelection] = useState({
     from: new Date(),
     to: new Date(),
   });
   const [error, setError] = useState(null);
+
+  // DEBUG: Add a console.log to see the cashouts state whenever it updates.
+  useEffect(() => {
+    console.log("Cashouts state updated:", cashouts);
+  }, [cashouts]);
 
   const selectionRef = useRef(selection);
   useEffect(() => {
@@ -92,8 +76,10 @@ export function CashoutProvider({
 
   const fetchCashouts = useCallback(
     async (currentSelection) => {
-      // FIX: Depend on the stable `accessToken` instead of the `session` object.
-      if (!accessToken) return;
+      if (!accessToken) {
+        setLoading(false);
+        return;
+      }
       setLoading(true);
       setError(null);
       setSelection(currentSelection);
@@ -105,7 +91,7 @@ export function CashoutProvider({
 
       try {
         const response = await fetch(
-          `${BACKEND_URL}/cashout?${params.toString()}`,
+          `${BACKEND_URL}/api/cashout?${params.toString()}`,
           {
             headers: { Authorization: `Bearer ${accessToken}` },
           }
@@ -120,30 +106,30 @@ export function CashoutProvider({
         setLoading(false);
       }
     },
-    [accessToken] // FIX: Dependency is now the stable primitive value.
+    [accessToken]
   );
 
   useEffect(() => {
-    // FIX: Check for `accessToken` to decide whether to fetch.
     if (accessToken) {
-      fetchCashouts({ from: new Date(), to: new Date() });
+      const initialSelection = { from: new Date(), to: new Date() };
+      fetchCashouts(initialSelection);
+    } else {
+      setLoading(false);
     }
-  }, [accessToken, fetchCashouts]); // FIX: Correctly list dependencies.
+  }, [accessToken]);
 
   useEffect(() => {
-    // FIX: Check for `accessToken` to set up the subscription.
-    if (!accessToken || !supabase) return;
+    if (!accessToken) return;
 
     const handleDbChange = () => {
-      console.log("LOG: Cashout change detected, re-fetching...");
       fetchCashouts(selectionRef.current);
     };
 
     const channel = supabase
-      .channel("public:cashout")
+      .channel("public:cashouts")
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "cashout" },
+        { event: "*", schema: "public", table: "cashouts" },
         handleDbChange
       )
       .subscribe();
@@ -151,32 +137,43 @@ export function CashoutProvider({
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [accessToken, supabase, fetchCashouts]); // FIX: Correctly list dependencies.
+  }, [accessToken, fetchCashouts]);
 
   const addCashout = useCallback(
     async (data) => {
       const date = selectionRef.current.from;
       const formattedDate = toLocalDateString(date);
       const tempId = `temp-${Date.now()}`;
+
       const optimisticRecord = {
         ...data,
         id: tempId,
+        receipt_no: data.receiptNo,
         cashout_date: formattedDate,
         status: "pending",
       };
+      delete optimisticRecord.receiptNo;
 
       setCashouts((prev) => [optimisticRecord, ...prev]);
       setError(null);
 
       try {
         if (!accessToken) throw new Error("Not authenticated");
-        const response = await fetch(`${BACKEND_URL}/cashout`, {
+
+        const payload = {
+          ...data,
+          receipt_no: data.receiptNo,
+          cashout_date: formattedDate,
+        };
+        delete payload.receiptNo;
+
+        const response = await fetch(`${BACKEND_URL}/api/cashout`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${accessToken}`,
           },
-          body: JSON.stringify({ ...data, cashout_date: formattedDate }),
+          body: JSON.stringify(payload),
         });
         if (!response.ok) throw new Error("Server error");
         const savedRecord = await response.json();
@@ -193,7 +190,7 @@ export function CashoutProvider({
         );
       }
     },
-    [accessToken] // FIX: Dependency is now the stable primitive value.
+    [accessToken]
   );
 
   const deleteCashout = useCallback(
@@ -205,10 +202,13 @@ export function CashoutProvider({
       try {
         if (String(idToDelete).startsWith("temp-")) return;
         if (!accessToken) throw new Error("Not authenticated");
-        const response = await fetch(`${BACKEND_URL}/cashout/${idToDelete}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${accessToken}` },
-        });
+        const response = await fetch(
+          `${BACKEND_URL}/api/cashout/${idToDelete}`,
+          {
+            method: "DELETE",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          }
+        );
         if (!response.ok) throw new Error("Failed to delete on server");
       } catch (err) {
         console.error("Failed to delete cashout, reverting:", err);
@@ -216,7 +216,7 @@ export function CashoutProvider({
         setCashouts(originalCashouts);
       }
     },
-    [accessToken] // FIX: Dependency is now the stable primitive value.
+    [accessToken]
   );
 
   const value = {

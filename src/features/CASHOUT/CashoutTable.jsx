@@ -55,15 +55,25 @@ export function CashoutTable({ data, loading, onDelete }) {
 
   const columns = useMemo(
     () => [
+      // FIX: Added a new "Sync" column for the status indicator
+      {
+        id: "sync",
+        header: "Sync",
+        cell: ({ row }) => (
+          <div className="flex justify-center items-center h-full">
+            <StatusIcon status={row.original.status} />
+          </div>
+        ),
+        size: 60,
+      },
       { accessorKey: "category", header: "Category", size: 150 },
       {
         accessorKey: "amount",
         header: "Amount",
-        // Use Intl.NumberFormat for robust currency formatting
         cell: (info) =>
-          new Intl.NumberFormat("en-US", {
+          new Intl.NumberFormat("en-PH", {
             style: "currency",
-            currency: "USD",
+            currency: "PHP",
           }).format(info.getValue()),
         size: 120,
       },
@@ -74,13 +84,12 @@ export function CashoutTable({ data, loading, onDelete }) {
         header: "Actions",
         cell: ({ row }) => (
           <div className="flex items-center gap-3">
-            <StatusIcon status={row.original.status} />
+            {/* FIX: Removed StatusIcon from this column */}
             <button
               onClick={() => onDelete(row.original.id)}
               className="text-gray-400 hover:text-red-600 transition-colors"
               title="Delete"
             >
-              {/* Use a consistent icon library */}
               <FaTrash />
             </button>
           </div>
@@ -92,7 +101,6 @@ export function CashoutTable({ data, loading, onDelete }) {
   );
 
   const table = useReactTable({
-    // Ensure data is always an array to prevent crashes
     data: data || [],
     columns,
     state: { sorting },
@@ -110,7 +118,6 @@ export function CashoutTable({ data, loading, onDelete }) {
     overscan: 5,
   });
 
-  // Improved loading state with skeleton rows
   if (loading) {
     return (
       <div className="overflow-auto rounded-lg bg-white shadow-md h-[500px]">
@@ -143,7 +150,6 @@ export function CashoutTable({ data, loading, onDelete }) {
     );
   }
 
-  // Clearer empty state
   if (!data || data.length === 0) {
     return (
       <div className="text-center p-10 bg-white rounded-lg shadow-md h-[500px] flex items-center justify-center">
@@ -154,7 +160,6 @@ export function CashoutTable({ data, loading, onDelete }) {
     );
   }
 
-  // Render the virtualized table
   return (
     <VirtualizedTable
       table={table}
