@@ -1,5 +1,3 @@
-// src/features/cashout/components/CashoutForm.jsx
-
 import React, { useRef, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { CategoryDropdown } from "./CategoryDropdown";
@@ -24,18 +22,20 @@ export function CashoutForm() {
     defaultValues: { category: "Food", amount: "", notes: "", receiptNo: "" },
   });
 
+  // Refs for all focusable form elements
   const categoryButtonRef = useRef(null);
   const amountRef = useRef(null);
   const notesRef = useRef(null);
   const receiptNoRef = useRef(null);
 
-  // FIX: Correctly destructure the 'ref' from each register call to avoid conflicts.
+  // FIX: Destructure the ref from the register function to avoid collision
   const { ref: amountFormRef, ...amountRegister } = register("amount", {
     required: "Amount is required.",
   });
   const { ref: notesFormRef, ...notesRegister } = register("notes");
   const { ref: receiptNoFormRef, ...receiptNoRegister } = register("receiptNo");
 
+  // Focuses the next element in the form
   const handleKeyDown = (e, nextFieldRef) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
@@ -43,21 +43,26 @@ export function CashoutForm() {
     }
   };
 
+  // Special handler for the last field to allow submission
   const handleReceiptKeyDown = (e) => {
     if (e.key === "Enter" && e.shiftKey) {
       e.preventDefault();
-      handleSubmit(onSubmit)();
+      handleSubmit(onSubmit)(); // Manually trigger form submission
     }
   };
 
   const onSubmit = useCallback(
     (data) => {
-      // DEBUG: Log the data from the form to verify its contents.
-      console.log("Data from form submission:", data);
-      addCashout(data);
-      reset();
-      clearErrors();
-      categoryButtonRef.current?.focus();
+      const payload = {
+        ...data,
+        amount: parseFloat(data.amount) || 0,
+      };
+
+      addCashout(payload).then(() => {
+        reset();
+        clearErrors();
+        categoryButtonRef.current?.focus();
+      });
     },
     [addCashout, reset, clearErrors]
   );
@@ -96,6 +101,7 @@ export function CashoutForm() {
             step="0.01"
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm p-2"
             {...amountRegister}
+            // FIX: This correctly merges the two refs
             ref={(e) => {
               amountFormRef(e);
               amountRef.current = e;

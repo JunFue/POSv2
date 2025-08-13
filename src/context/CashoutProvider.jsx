@@ -18,6 +18,19 @@ const toLocalDateString = (date) => {
   return format(date, "yyyy-MM-dd");
 };
 
+/**
+ * A helper function to transform cashout data from the backend (snake_case)
+ * to the frontend's preferred format (camelCase).
+ */
+const transformCashoutData = (data) => {
+  if (!data) return null;
+  const { receipt_no, ...rest } = data;
+  return {
+    ...rest,
+    receiptNo: receipt_no, // Translate snake_case to camelCase
+  };
+};
+
 export function CashoutProvider({ children }) {
   const { session } = useAuth();
   const accessToken = session?.access_token;
@@ -41,10 +54,8 @@ export function CashoutProvider({ children }) {
     }
   }, [CASHOUT_STORAGE_KEY]);
 
-  // FIX: Load initial data from localStorage first.
   const initialData = getInitialCashouts();
   const [cashouts, setCashouts] = useState(initialData);
-  // FIX: Only show the main loader if there's no cached data to display.
   const [loading, setLoading] = useState(initialData.length === 0);
   const [selection, setSelection] = useState({
     from: new Date(),
@@ -72,14 +83,13 @@ export function CashoutProvider({ children }) {
 
   const clearError = () => setError(null);
 
-  // This function is now primarily for user-initiated fetches (e.g., changing date filter)
   const fetchCashouts = useCallback(
     async (currentSelection) => {
       if (!accessToken) {
         setLoading(false);
         return;
       }
-      setLoading(true); // Show loader for explicit user actions
+      setLoading(true);
       setError(null);
       setSelection(currentSelection);
 
@@ -97,7 +107,13 @@ export function CashoutProvider({ children }) {
         );
         if (!response.ok) throw new Error("Failed to fetch cashouts");
         const data = await response.json();
-        setCashouts(data.map((item) => ({ ...item, status: "synced" })));
+
+        // FIX: Transform all incoming data to use camelCase
+        const transformedData = data.map((item) => ({
+          ...transformCashoutData(item),
+          status: "synced",
+        }));
+        setCashouts(transformedData);
       } catch (err) {
         console.error("Error fetching cashouts:", err);
         setError("Could not load data. Please check your connection.");
@@ -108,7 +124,6 @@ export function CashoutProvider({ children }) {
     [accessToken]
   );
 
-  // FIX: This effect handles the initial background fetch on page load.
   useEffect(() => {
     if (accessToken) {
       const initialSelection = { from: new Date(), to: new Date() };
@@ -117,7 +132,6 @@ export function CashoutProvider({ children }) {
         endDate: toLocalDateString(initialSelection.to),
       });
 
-      // Fetch fresh data in the background without triggering the main loader.
       fetch(`${BACKEND_URL}/api/cashout?${params.toString()}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
@@ -126,22 +140,23 @@ export function CashoutProvider({ children }) {
           return res.json();
         })
         .then((data) => {
-          // Silently update the UI with the fresh data.
-          setCashouts(data.map((item) => ({ ...item, status: "synced" })));
+          // FIX: Transform all incoming data to use camelCase
+          const transformedData = data.map((item) => ({
+            ...transformCashoutData(item),
+            status: "synced",
+          }));
+          setCashouts(transformedData);
         })
         .catch((err) => {
           console.error("Error during background fetch:", err);
-          // Optionally set a non-intrusive error message
         })
         .finally(() => {
-          // If the main loader was visible (no cached data), hide it now.
           if (loading) setLoading(false);
         });
     } else {
-      // If there's no token, ensure the loader is off.
       setLoading(false);
     }
-  }, [accessToken, loading]); // Rerunning on loading change is safe here.
+  }, [accessToken, loading]);
 
   useEffect(() => {
     if (!accessToken) return;
@@ -170,14 +185,14 @@ export function CashoutProvider({ children }) {
       const formattedDate = toLocalDateString(date);
       const tempId = `temp-${Date.now()}`;
 
+      // FIX: The optimistic record now uses the camelCase 'receiptNo' key
+      // consistently with the rest of the frontend state.
       const optimisticRecord = {
-        ...data,
+        ...data, // This comes from the form with 'receiptNo'
         id: tempId,
-        receipt_no: data.receiptNo,
         cashout_date: formattedDate,
         status: "pending",
       };
-      delete optimisticRecord.receiptNo;
 
       setCashouts((prev) => [optimisticRecord, ...prev]);
       setError(null);
@@ -185,12 +200,13 @@ export function CashoutProvider({ children }) {
       try {
         if (!accessToken) throw new Error("Not authenticated");
 
+        // FIX: The payload sent to the backend correctly uses 'receipt_no' (snake_case).
         const payload = {
           ...data,
-          receipt_no: data.receiptNo,
+          receipt_no: data.receiptNo, // Translate to snake_case for the API
           cashout_date: formattedDate,
         };
-        delete payload.receiptNo;
+        delete payload.receiptNo; // Clean up the camelCase key before sending
 
         const response = await fetch(`${BACKEND_URL}/api/cashout`, {
           method: "POST",
@@ -202,10 +218,15 @@ export function CashoutProvider({ children }) {
         });
         if (!response.ok) throw new Error("Server error");
         const savedRecord = await response.json();
+
+        // FIX: Transform the response from the server before updating state.
+        const transformedRecord = {
+          ...transformCashoutData(savedRecord),
+          status: "synced",
+        };
+
         setCashouts((prev) =>
-          prev.map((c) =>
-            c.id === tempId ? { ...savedRecord, status: "synced" } : c
-          )
+          prev.map((c) => (c.id === tempId ? transformedRecord : c))
         );
       } catch (err) {
         console.error("Failed to save cashout:", err);
