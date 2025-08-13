@@ -41,18 +41,16 @@ export function CashoutProvider({ children }) {
     }
   }, [CASHOUT_STORAGE_KEY]);
 
-  const [cashouts, setCashouts] = useState(getInitialCashouts);
-  const [loading, setLoading] = useState(true);
+  // FIX: Load initial data from localStorage first.
+  const initialData = getInitialCashouts();
+  const [cashouts, setCashouts] = useState(initialData);
+  // FIX: Only show the main loader if there's no cached data to display.
+  const [loading, setLoading] = useState(initialData.length === 0);
   const [selection, setSelection] = useState({
     from: new Date(),
     to: new Date(),
   });
   const [error, setError] = useState(null);
-
-  // DEBUG: Add a console.log to see the cashouts state whenever it updates.
-  useEffect(() => {
-    console.log("Cashouts state updated:", cashouts);
-  }, [cashouts]);
 
   const selectionRef = useRef(selection);
   useEffect(() => {
@@ -74,13 +72,14 @@ export function CashoutProvider({ children }) {
 
   const clearError = () => setError(null);
 
+  // This function is now primarily for user-initiated fetches (e.g., changing date filter)
   const fetchCashouts = useCallback(
     async (currentSelection) => {
       if (!accessToken) {
         setLoading(false);
         return;
       }
-      setLoading(true);
+      setLoading(true); // Show loader for explicit user actions
       setError(null);
       setSelection(currentSelection);
 
@@ -109,14 +108,40 @@ export function CashoutProvider({ children }) {
     [accessToken]
   );
 
+  // FIX: This effect handles the initial background fetch on page load.
   useEffect(() => {
     if (accessToken) {
       const initialSelection = { from: new Date(), to: new Date() };
-      fetchCashouts(initialSelection);
+      const params = new URLSearchParams({
+        startDate: toLocalDateString(initialSelection.from),
+        endDate: toLocalDateString(initialSelection.to),
+      });
+
+      // Fetch fresh data in the background without triggering the main loader.
+      fetch(`${BACKEND_URL}/api/cashout?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("Background fetch failed");
+          return res.json();
+        })
+        .then((data) => {
+          // Silently update the UI with the fresh data.
+          setCashouts(data.map((item) => ({ ...item, status: "synced" })));
+        })
+        .catch((err) => {
+          console.error("Error during background fetch:", err);
+          // Optionally set a non-intrusive error message
+        })
+        .finally(() => {
+          // If the main loader was visible (no cached data), hide it now.
+          if (loading) setLoading(false);
+        });
     } else {
+      // If there's no token, ensure the loader is off.
       setLoading(false);
     }
-  }, [accessToken]);
+  }, [accessToken, loading]); // Rerunning on loading change is safe here.
 
   useEffect(() => {
     if (!accessToken) return;
