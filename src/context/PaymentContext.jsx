@@ -6,6 +6,8 @@ import {
   useCallback,
 } from "react";
 import { supabase } from "../utils/supabaseClient";
+import { useCashoutTotal } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useCashoutTotal";
+// TODO: Adjust the import path to correctly locate your useCashoutTotal hook.
 
 // Helper to get today's date in YYYY-MM-DD format
 const getTodaysDateString = () => {
@@ -14,9 +16,10 @@ const getTodaysDateString = () => {
 };
 
 // Helper function to calculate net sales
-const calculateNetSales = (payments) => {
-  if (!Array.isArray(payments) || payments.length === 0) {
-    return 0;
+// It now accepts totalCashouts to include in the calculation.
+const calculateNetSales = (payments, totalCashouts = 0) => {
+  if (!Array.isArray(payments)) {
+    return 0 - totalCashouts;
   }
   const grossSales = payments.reduce(
     (sum, p) => sum + parseFloat(p.amount_to_pay || p.amountToPay || 0),
@@ -26,7 +29,9 @@ const calculateNetSales = (payments) => {
     (sum, p) => sum + parseFloat(p.discount || 0),
     0
   );
-  const netSales = grossSales - totalDiscount;
+
+  // Subtract discounts and total cashouts from gross sales.
+  const netSales = grossSales - totalDiscount - totalCashouts;
 
   return netSales;
 };
@@ -36,6 +41,9 @@ const PaymentContext = createContext();
 export function PaymentProvider({ children }) {
   const [todaysPayments, setTodaysPayments] = useState([]);
   const [todaysNetSales, setTodaysNetSales] = useState(0);
+
+  // 1. Get the total cashouts using the custom hook.
+  const totalCashouts = useCashoutTotal();
 
   // Function to fetch initial data from the database
   const fetchInitialPayments = useCallback(async () => {
@@ -61,16 +69,16 @@ export function PaymentProvider({ children }) {
   const addTodaysPayment = useCallback((paymentRecord) => {
     setTodaysPayments((prevPayments) => {
       const newPayments = [paymentRecord, ...prevPayments];
-
       return newPayments;
     });
   }, []);
 
-  // Effect to recalculate totals when todaysPayments changes
+  // 2. Effect to recalculate totals when todaysPayments OR totalCashouts changes
   useEffect(() => {
-    const newNetSales = calculateNetSales(todaysPayments);
+    // Pass the totalCashouts to the calculation function.
+    const newNetSales = calculateNetSales(todaysPayments, totalCashouts);
     setTodaysNetSales(newNetSales);
-  }, [todaysPayments]);
+  }, [todaysPayments, totalCashouts]); // 3. Add totalCashouts to the dependency array.
 
   // Supabase real-time subscription
   useEffect(() => {
@@ -87,7 +95,6 @@ export function PaymentProvider({ children }) {
             .split("T")[0];
 
           if (eventDate === getTodaysDateString()) {
-            // Instead of merging, we re-fetch to ensure consistency
             fetchInitialPayments();
           }
         }
