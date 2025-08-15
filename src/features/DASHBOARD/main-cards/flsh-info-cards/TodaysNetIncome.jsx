@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { usePageVisibility } from "../../../../hooks/usePageVisibility";
 import { MiniCard } from "./MiniCard";
-import { useTodaysNetIncome } from "./hooks/useTodaysNetIncome";
-import { useTodaysTotalSales } from "./hooks/useTodaysTotalSales";
+import { useFetchTodaysNet } from "./hooks/useFetchTodaysNet";
+import { usePaymentContext } from "../../../../context/PaymentContext";
 
 // Helper to format numbers as PHP currency
 const formatToPHP = (value) =>
@@ -13,10 +13,10 @@ const formatToPHP = (value) =>
 
 export function TodaysNetIncome({ onHide }) {
   // Hook for the server-side source of truth
-  const { income: fetchedIncome, fetchTodaysNetIncome } = useTodaysNetIncome();
+  const { income: fetchedIncome, fetchTodaysNetIncome } = useFetchTodaysNet();
 
   // This hook now directly returns the correct, up-to-date number from the context
-  const localTotalSales = useTodaysTotalSales();
+  const { todaysNetSales } = usePaymentContext();
 
   // The state that will actually be displayed in the UI
   const [displayIncome, setDisplayIncome] = useState("Loading...");
@@ -26,8 +26,8 @@ export function TodaysNetIncome({ onHide }) {
   // EFFECT 1: Optimistic Update from our reliable local calculation
   useEffect(() => {
     // Since localTotalSales is now reliable, we can use it directly.
-    setDisplayIncome(formatToPHP(localTotalSales));
-  }, [localTotalSales]);
+    setDisplayIncome(formatToPHP(todaysNetSales));
+  }, [todaysNetSales]);
 
   // EFFECT 2: Source of Truth Sync (override with fetched value when it arrives)
   useEffect(() => {

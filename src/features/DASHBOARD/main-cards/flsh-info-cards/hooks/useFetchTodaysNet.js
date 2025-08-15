@@ -4,7 +4,7 @@ import { getDailyIncome } from "../../../../../api/dashboardService";
 const CACHE_KEY = "todaysNetIncome";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-export function useTodaysNetIncome() {
+export function useFetchTodaysNet() {
   const [income, setIncome] = useState("Loading...");
   const [error, setError] = useState(null);
 
