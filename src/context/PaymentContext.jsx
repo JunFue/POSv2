@@ -11,12 +11,29 @@ import { useNetSales } from "../features/DASHBOARD/main-cards/flsh-info-cards/ho
 import { useDailyGrossIncome } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useDailyGrossIncome";
 import { useSupabaseSubscription } from "../hooks/useSupabaseSubscription";
 
+const CACHE_KEY = "todaysPaymentsData";
+
+// Helper function to safely get and parse data from localStorage.
+const getCachedPayments = () => {
+  const cached = localStorage.getItem(CACHE_KEY);
+  if (cached) {
+    try {
+      return JSON.parse(cached);
+    } catch (e) {
+      console.error("Failed to parse cached payments:", e);
+      return [];
+    }
+  }
+  return [];
+};
+
 const getTodaysDateString = () => new Date().toISOString().split("T")[0];
 
 const PaymentContext = createContext();
 
 export function PaymentProvider({ children }) {
-  const [todaysPayments, setTodaysPayments] = useState([]);
+  // 1. Initialize state from localStorage for an instant UI.
+  const [todaysPayments, setTodaysPayments] = useState(getCachedPayments);
 
   const totalCashouts = useCashoutTotal();
   const todaysNetSales = useNetSales(todaysPayments, totalCashouts);
@@ -33,16 +50,19 @@ export function PaymentProvider({ children }) {
     if (error) {
       console.error("LOG: (DB Fetch) Error fetching initial payments:", error);
     } else {
-      setTodaysPayments(data || []);
+      const freshData = data || [];
+      // 2. Update both the state and the localStorage cache with fresh data.
+      setTodaysPayments(freshData);
+      localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
     }
   }, []);
 
+  // 3. On mount, fetch the latest data in the background.
   useEffect(() => {
     fetchInitialPayments();
   }, [fetchInitialPayments]);
 
-  // 2. Use the hook to listen for changes on the 'payments' table.
-  // The callback will only refetch if the change happened today.
+  // 4. The subscription will now fetch and update the cache automatically.
   useSupabaseSubscription("public:payments", "payments", (payload) => {
     const eventDate = new Date(
       payload.new?.transaction_date || payload.old?.transaction_date
@@ -56,12 +76,17 @@ export function PaymentProvider({ children }) {
   });
 
   const addTodaysPayment = useCallback((paymentRecord) => {
-    setTodaysPayments((prevPayments) => [paymentRecord, ...prevPayments]);
+    setTodaysPayments((prevPayments) => {
+      const newPayments = [paymentRecord, ...prevPayments];
+      // Also update cache when adding a payment locally
+      localStorage.setItem(CACHE_KEY, JSON.stringify(newPayments));
+      return newPayments;
+    });
   }, []);
 
   const value = {
     todaysPayments,
-    setTodaysPayments,
+    setTodaysPayments, // You might not need to export this anymore
     todaysNetSales,
     todaysGrossIncome,
     addTodaysPayment,

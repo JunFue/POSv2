@@ -12,13 +12,10 @@ export function Payments() {
   const [totalItems, setTotalItems] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(10);
-  // --- FIX: Initialize loading based on whether initial data exists ---
-  // We are not loading if today's payments are already available from localStorage.
-  const [loading, setLoading] = useState(() => {
-    const isToday =
-      new Date().toISOString().split("T")[0] === getTodaysDateString();
-    return isToday && todaysPayments.length > 0 ? false : true;
-  });
+  // --- FIX: Initialize loading state to false ---
+  // We trust the PaymentContext to provide either cached or fresh data instantly.
+  // Loading will only be true when a user action (like filtering) triggers it.
+  const [loading, setLoading] = useState(false);
   const [dateRange, setDateRange] = useState({
     from: new Date(),
     to: new Date(),
@@ -38,11 +35,9 @@ export function Payments() {
     const toDate = dateRange.to.toISOString().split("T")[0];
     const today = getTodaysDateString();
 
-    if (fromDate === today && toDate === today) {
-      return todaysPayments;
-    } else {
-      return paymentData;
-    }
+    return fromDate === today && toDate === today
+      ? todaysPayments
+      : paymentData;
   }, [todaysPayments, paymentData, dateRange]);
 
   const columns = useMemo(
@@ -96,19 +91,16 @@ export function Payments() {
         setDateRange={setDateRange}
       />
       <div className="relative mt-4">
-        {/* --- FIX: Improved conditional rendering logic --- */}
-        {/* Show loading indicator ONLY if we are loading AND there is no data to display */}
-        {loading && paymentsToDisplay.length === 0 ? (
+        {/* This rendering logic will now work correctly */}
+        {loading ? (
           <div className="absolute inset-0 flex items-center justify-center bg-background shadow-input bg-opacity-50">
             Loading...
           </div>
         ) : paymentsToDisplay.length === 0 ? (
-          // Show this if not loading and data is empty
           <div className="text-center py-10">
             <p className="text-gray-500">No recorded payments</p>
           </div>
         ) : (
-          // Always show the table if there is data, even if a background fetch is happening
           <VirtualizedTable
             table={table}
             tableContainerRef={tableContainerRef}

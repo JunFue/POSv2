@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { FaCalendarAlt } from "react-icons/fa";
 import { Calendar } from "../../../../components/Calendar";
 import { usePaymentsFetcher } from "./hooks/usePaymentsFetcher";
-import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
 
 export function PaymentsFilter({
   onFilter,
@@ -16,12 +15,9 @@ export function PaymentsFilter({
   setDateRange,
   dateRange,
 }) {
-  const { user } = useAuth();
   const [transactionNo, setTransactionNo] = useState("");
   const [showCalendar, setShowCalendar] = useState(false);
   const calendarRef = useRef(null);
-  // --- FIX: Add a ref to track if the initial fetch has been made ---
-  const initialFetchDone = useRef(false);
 
   const { fetchPayments } = usePaymentsFetcher({ setLoading });
 
@@ -35,16 +31,9 @@ export function PaymentsFilter({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Initial data fetch on component mount
-  useEffect(() => {
-    // --- FIX: Check the ref before fetching ---
-    // Only run the fetch if the user is authenticated and the fetch hasn't happened yet.
-    if (user && !initialFetchDone.current) {
-      fetchPayments(1, rowsPerPage, dateRange).then(onFilter);
-      // Set the ref to true to prevent this effect from running again on re-mount.
-      initialFetchDone.current = true;
-    }
-  }, [user, fetchPayments, onFilter, dateRange, rowsPerPage]);
+  // --- FIX: The initial data fetch useEffect has been removed ---
+  // The PaymentContext is now responsible for loading the initial "today's payments".
+  // This component will only fetch when a filter is applied.
 
   const handleFetchAndFilter = (page, limit, range, transNo) => {
     fetchPayments(page, limit, range, transNo).then(onFilter);
@@ -69,10 +58,19 @@ export function PaymentsFilter({
     const todayRange = { from: new Date(), to: new Date() };
     setDateRange(todayRange);
     setCurrentPage(1);
-    handleFetchAndFilter(1, rowsPerPage, todayRange);
+    // When resetting, we don't need to fetch if we are back to today's date,
+    // as the context already provides this data.
+    // We only fetch if the user was viewing a different date range.
+    if (
+      dateRange.from.toISOString().split("T")[0] !==
+      new Date().toISOString().split("T")[0]
+    ) {
+      handleFetchAndFilter(1, rowsPerPage, todayRange);
+    }
   };
 
-  // Pagination handlers
+  // ... rest of the component remains the same
+  // (Pagination handlers, JSX, etc.)
   const handleNextPage = () => {
     const nextPage = currentPage + 1;
     setCurrentPage(nextPage);
