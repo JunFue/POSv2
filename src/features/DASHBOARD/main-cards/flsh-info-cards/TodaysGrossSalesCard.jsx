@@ -1,55 +1,61 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { supabase } from "../../../../utils/supabaseClient";
-import { getTodaysGrossSales } from "../../../../api/dashboardService";
+import React from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MiniCard } from "./MiniCard";
+import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
+import { useSupabaseSubscription } from "../../../../hooks/useSupabaseSubscription";
 
-const CACHE_KEY = "todaysGrossSales";
+// We get the backend URL from environment variables to avoid hardcoding.
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export function TodaysGrossSalesCard({ onHide }) {
-  const [salesValue, setSalesValue] = useState("Loading...");
+  const queryKey = ["todaysGrossSales"];
+  const queryClient = useQueryClient();
+  // 2. Get the auth token from the useAuth hook.
+  const { token } = useAuth();
 
-  const fetchSales = useCallback(async () => {
-    try {
-      const data = await getTodaysGrossSales();
-      const formattedSales = new Intl.NumberFormat("en-PH", {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: queryKey,
+    // 3. The fetching logic is now simpler and uses the token from the context.
+    queryFn: async () => {
+      if (!token) {
+        throw new Error("User not authenticated.");
+      }
+
+      // Construct the API endpoint URL
+      const today = new Date().toISOString().slice(0, 10);
+      const url = `${BACKEND_URL}/api/flash-info/today-gross-sales?date=${today}`;
+
+      // Fetch the data
+      const response = await fetch(url, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+
+      return response.json();
+    },
+    // 4. Add 'token' as a dependency. React Query will only run this query if the token exists.
+    enabled: !!token,
+  });
+
+  // The real-time subscription logic remains the same.
+  useSupabaseSubscription("public:payments:sales", "payments", () => {
+    queryClient.invalidateQueries({ queryKey: queryKey });
+  });
+
+  const salesValue = isLoading
+    ? "Loading..."
+    : isError
+    ? "Error"
+    : new Intl.NumberFormat("en-PH", {
         style: "currency",
         currency: "PHP",
-      }).format(data.totalSales);
-      setSalesValue(formattedSales);
-      // Cache the new value
-      localStorage.setItem(CACHE_KEY, formattedSales);
-    } catch (error) {
-      console.error("GrossSalesCard: Error fetching total sales:", error);
-      setSalesValue("Error");
-    }
-  }, []);
-
-  useEffect(() => {
-    // Load from cache on first mount for instant UI
-    const cachedSales = localStorage.getItem(CACHE_KEY);
-    if (cachedSales) {
-      setSalesValue(cachedSales);
-    }
-
-    // Fetch latest data
-    fetchSales();
-
-    // Subscribe to real-time changes
-    const channel = supabase
-      .channel("public:payments:sales")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "payments" },
-        () => {
-          fetchSales();
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [fetchSales]);
+      }).format(data?.totalSales || 0);
 
   return (
     <MiniCard title="Today's Gross Sales" value={salesValue} onHide={onHide} />
