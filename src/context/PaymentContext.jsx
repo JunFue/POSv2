@@ -5,15 +5,16 @@ import {
   useContext,
   useCallback,
 } from "react";
-import { supabase } from "../utils/supabaseClient";
+
 import { useCashoutTotal } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useCashoutTotal";
 import { useNetSales } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useNetSales";
 import { useDailyGrossIncome } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useDailyGrossIncome";
 import { useSupabaseSubscription } from "../hooks/useSupabaseSubscription";
+import { useAuth } from "../features/AUTHENTICATION/hooks/useAuth";
 
 const CACHE_KEY = "todaysPaymentsData";
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-// Helper function to safely get and parse data from localStorage.
 const getCachedPayments = () => {
   const cached = localStorage.getItem(CACHE_KEY);
   if (cached) {
@@ -32,61 +33,70 @@ const getTodaysDateString = () => new Date().toISOString().split("T")[0];
 const PaymentContext = createContext();
 
 export function PaymentProvider({ children }) {
-  // 1. Initialize state from localStorage for an instant UI.
   const [todaysPayments, setTodaysPayments] = useState(getCachedPayments);
+  const { session } = useAuth();
 
   const totalCashouts = useCashoutTotal();
   const todaysNetSales = useNetSales(todaysPayments, totalCashouts);
   const todaysGrossIncome = useDailyGrossIncome(todaysPayments);
 
   const fetchInitialPayments = useCallback(async () => {
-    const today = getTodaysDateString();
-    const { data, error } = await supabase
-      .from("payments")
-      .select("*")
-      .gte("transaction_date", `${today}T00:00:00.000Z`)
-      .lte("transaction_date", `${today}T23:59:59.999Z`);
+    if (!session?.access_token) {
+      console.log("No session found, skipping payments list fetch.");
+      return;
+    }
 
-    if (error) {
-      console.error("LOG: (DB Fetch) Error fetching initial payments:", error);
-    } else {
-      const freshData = data || [];
-      // 2. Update both the state and the localStorage cache with fresh data.
+    console.log("Fetching latest payments list from backend server...");
+    const today = getTodaysDateString();
+    // --- FIX: Using the correct endpoint to fetch the LIST of payments ---
+    const url = `${BACKEND_URL}/api/payments?startDate=${today}&endDate=${today}&limit=1000`;
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP Error: ${response.status}`);
+      }
+
+      const result = await response.json();
+      const freshData = result.data || [];
+
+      console.log("Fetched new payments list. Count:", freshData.length);
       setTodaysPayments(freshData);
       localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+    } catch (error) {
+      console.error("LOG: (API Fetch) Error fetching payments list:", error);
     }
-  }, []);
+  }, [session]);
 
-  // 3. On mount, fetch the latest data in the background.
   useEffect(() => {
     fetchInitialPayments();
   }, [fetchInitialPayments]);
 
-  // 4. The subscription will now fetch and update the cache automatically.
-  useSupabaseSubscription("public:payments", "payments", (payload) => {
-    const eventDate = new Date(
-      payload.new?.transaction_date || payload.old?.transaction_date
-    )
-      .toISOString()
-      .split("T")[0];
-
-    if (eventDate === getTodaysDateString()) {
-      fetchInitialPayments();
-    }
+  useSupabaseSubscription("public:payments", "payments", () => {
+    console.log("Supabase change detected! Refetching payments list.");
+    fetchInitialPayments();
   });
 
   const addTodaysPayment = useCallback((paymentRecord) => {
     setTodaysPayments((prevPayments) => {
       const newPayments = [paymentRecord, ...prevPayments];
-      // Also update cache when adding a payment locally
       localStorage.setItem(CACHE_KEY, JSON.stringify(newPayments));
       return newPayments;
     });
   }, []);
 
+  useEffect(() => {
+    console.log("Gross income from context recalculated:", todaysGrossIncome);
+  }, [todaysGrossIncome]);
+
   const value = {
     todaysPayments,
-    setTodaysPayments, // You might not need to export this anymore
+    setTodaysPayments,
     todaysNetSales,
     todaysGrossIncome,
     addTodaysPayment,

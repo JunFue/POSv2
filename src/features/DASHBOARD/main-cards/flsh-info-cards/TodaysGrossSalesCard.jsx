@@ -1,14 +1,12 @@
 import React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MiniCard } from "./MiniCard";
-import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
 import { useSupabaseSubscription } from "../../../../hooks/useSupabaseSubscription";
+import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-// Use a key to store the raw data object from the API.
 const CACHE_KEY = "todaysGrossSalesData";
 
-// Helper function to safely get and parse data from localStorage.
 const getCachedData = () => {
   const cached = localStorage.getItem(CACHE_KEY);
   if (cached) {
@@ -16,20 +14,24 @@ const getCachedData = () => {
       return JSON.parse(cached);
     } catch (e) {
       console.error("Failed to parse cached sales data:", e);
-      return undefined; // Return undefined if parsing fails.
+      return undefined;
     }
   }
   return undefined;
 };
 
 export function TodaysGrossSalesCard({ onHide }) {
-  const queryKey = ["todaysGrossSales"];
-  const queryClient = useQueryClient();
   const { token } = useAuth();
+  // --- FIX: Make the queryKey dependent on the token ---
+  // This tells React Query that this query is unique to the current user's session.
+  // If the token is null or changes, React Query will treat it as a new query.
+  const queryKey = ["todaysGrossSales", token];
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, isError } = useQuery({
+  const { data, isError } = useQuery({
     queryKey: queryKey,
     queryFn: async () => {
+      // This check is still useful as a safeguard.
       if (!token) throw new Error("User not authenticated.");
 
       const today = new Date().toISOString().slice(0, 10);
@@ -46,33 +48,31 @@ export function TodaysGrossSalesCard({ onHide }) {
 
       return response.json();
     },
+    // This ensures the query doesn't run until the token is available.
     enabled: !!token,
-    // 1. Show placeholder data on initial load.
-    // This data is displayed immediately while the actual query runs in the background.
-    placeholderData: getCachedData(),
-    // 2. When new data is fetched successfully, update our localStorage cache.
+    initialData: getCachedData(),
     onSuccess: (freshData) => {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
+      // We'll also make the localStorage key user-specific to avoid cache collisions
+      // between different users on the same browser.
+      if (token) {
+        localStorage.setItem(
+          `${CACHE_KEY}-${token}`,
+          JSON.stringify(freshData)
+        );
+      }
     },
   });
 
-  // 3. This part remains unchanged. It correctly triggers a refetch on live updates.
   useSupabaseSubscription("public:payments:sales", "payments", () => {
     queryClient.invalidateQueries({ queryKey: queryKey });
   });
 
-  // Use the placeholder data if the query is loading for the first time.
-  const displayData = data || getCachedData();
-
-  const salesValue =
-    isLoading && !displayData
-      ? "Loading..."
-      : isError
-      ? "Error"
-      : new Intl.NumberFormat("en-PH", {
-          style: "currency",
-          currency: "PHP",
-        }).format(displayData?.totalSales || 0);
+  const salesValue = isError
+    ? "Error"
+    : new Intl.NumberFormat("en-PH", {
+        style: "currency",
+        currency: "PHP",
+      }).format(data?.totalSales || 0);
 
   return (
     <MiniCard title="Today's Gross Sales" value={salesValue} onHide={onHide} />
