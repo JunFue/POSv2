@@ -8,7 +8,8 @@ import {
 
 import { useCashoutTotal } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useCashoutTotal";
 import { useNetSales } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useNetSales";
-import { useDailyGrossIncome } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useDailyGrossIncome";
+// --- 1. Import the new useGrossSales hook ---
+import { useGrossSales } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useGrossSales";
 import { useSupabaseSubscription } from "../hooks/useSupabaseSubscription";
 import { useAuth } from "../features/AUTHENTICATION/hooks/useAuth";
 
@@ -38,7 +39,8 @@ export function PaymentProvider({ children }) {
 
   const totalCashouts = useCashoutTotal();
   const todaysNetSales = useNetSales(todaysPayments, totalCashouts);
-  const todaysGrossIncome = useDailyGrossIncome(todaysPayments);
+  // --- 2. Use the new hook to calculate gross sales ---
+  const todaysGrossSales = useGrossSales(todaysPayments);
 
   const fetchInitialPayments = useCallback(async () => {
     if (!session?.access_token) {
@@ -48,7 +50,6 @@ export function PaymentProvider({ children }) {
 
     console.log("Fetching latest payments list from backend server...");
     const today = getTodaysDateString();
-    // --- FIX: Using the correct endpoint to fetch the LIST of payments ---
     const url = `${BACKEND_URL}/api/payments?startDate=${today}&endDate=${today}&limit=1000`;
 
     try {
@@ -90,15 +91,12 @@ export function PaymentProvider({ children }) {
     });
   }, []);
 
-  useEffect(() => {
-    console.log("Gross income from context recalculated:", todaysGrossIncome);
-  }, [todaysGrossIncome]);
-
+  // --- 3. Provide the new todaysGrossSales value through the context ---
   const value = {
     todaysPayments,
     setTodaysPayments,
     todaysNetSales,
-    todaysGrossIncome,
+    todaysGrossSales, // Changed from todaysGrossIncome
     addTodaysPayment,
   };
 

@@ -1,80 +1,34 @@
-import React from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import React, { useState, useEffect } from "react";
 import { MiniCard } from "./MiniCard";
-import { useSupabaseSubscription } from "../../../../hooks/useSupabaseSubscription";
-import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
+import { usePaymentContext } from "../../../../context/PaymentContext";
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
-const CACHE_KEY = "todaysGrossSalesData";
-
-const getCachedData = () => {
-  const cached = localStorage.getItem(CACHE_KEY);
-  if (cached) {
-    try {
-      return JSON.parse(cached);
-    } catch (e) {
-      console.error("Failed to parse cached sales data:", e);
-      return undefined;
-    }
-  }
-  return undefined;
-};
+// Helper to format numbers as PHP currency
+const formatToPHP = (value) =>
+  new Intl.NumberFormat("en-PH", {
+    style: "currency",
+    currency: "PHP",
+  }).format(value || 0); // Default to 0 if value is undefined
 
 export function TodaysGrossSalesCard({ onHide }) {
-  const { token } = useAuth();
-  // --- FIX: Make the queryKey dependent on the token ---
-  // This tells React Query that this query is unique to the current user's session.
-  // If the token is null or changes, React Query will treat it as a new query.
-  const queryKey = ["todaysGrossSales", token];
-  const queryClient = useQueryClient();
+  // 1. Consume the pre-calculated gross sales value from the context.
+  const { todaysGrossSales } = usePaymentContext();
 
-  const { data, isError } = useQuery({
-    queryKey: queryKey,
-    queryFn: async () => {
-      // This check is still useful as a safeguard.
-      if (!token) throw new Error("User not authenticated.");
+  // 2. State that will be displayed in the UI.
+  const [displaySales, setDisplaySales] = useState("Loading...");
 
-      const today = new Date().toISOString().slice(0, 10);
-      const url = `${BACKEND_URL}/api/flash-info/today-gross-sales?date=${today}`;
+  // 3. An effect to optimistically update the UI whenever the value from the context changes.
+  useEffect(() => {
+    // The context provides the up-to-date number directly.
+    // We just need to format it for display.
+    setDisplaySales(formatToPHP(todaysGrossSales));
+  }, [todaysGrossSales]); // This effect runs whenever todaysGrossSales is recalculated in the context.
 
-      const response = await fetch(url, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) throw new Error(`HTTP Error: ${response.status}`);
-
-      return response.json();
-    },
-    // This ensures the query doesn't run until the token is available.
-    enabled: !!token,
-    initialData: getCachedData(),
-    onSuccess: (freshData) => {
-      // We'll also make the localStorage key user-specific to avoid cache collisions
-      // between different users on the same browser.
-      if (token) {
-        localStorage.setItem(
-          `${CACHE_KEY}-${token}`,
-          JSON.stringify(freshData)
-        );
-      }
-    },
-  });
-
-  useSupabaseSubscription("public:payments:sales", "payments", () => {
-    queryClient.invalidateQueries({ queryKey: queryKey });
-  });
-
-  const salesValue = isError
-    ? "Error"
-    : new Intl.NumberFormat("en-PH", {
-        style: "currency",
-        currency: "PHP",
-      }).format(data?.totalSales || 0);
-
+  // 4. The component is now a simple "dumb" component that just displays the value.
   return (
-    <MiniCard title="Today's Gross Sales" value={salesValue} onHide={onHide} />
+    <MiniCard
+      title="Today's Gross Sales"
+      value={displaySales}
+      onHide={onHide}
+    />
   );
 }
