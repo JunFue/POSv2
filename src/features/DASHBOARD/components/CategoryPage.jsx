@@ -6,7 +6,6 @@ import { MonthlyLogTable } from "./MonthlyLogTable.jsx";
 import { useAuth } from "../../AUTHENTICATION/hooks/useAuth.js";
 import { supabase } from "../../../utils/supabaseClient.js";
 import { usePageVisibility } from "../../../hooks/usePageVisibility.js";
-// --- FIX: Import the new service ---
 import { getCategoricalSales } from "../../../api/categoryPageService.js";
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
@@ -44,7 +43,7 @@ export function CategoryPage() {
     if (!categoryName || !user?.id) return;
 
     try {
-      // --- FIX: Use the new service function ---
+      // This function call remains the same, but the underlying service now hits the correct URL
       const result = await getCategoricalSales(today, categoryName, user.id);
 
       const newGrossSales = result.totalSales;

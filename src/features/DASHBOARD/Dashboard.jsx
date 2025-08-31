@@ -3,10 +3,11 @@ import { Responsive, WidthProvider } from "react-grid-layout";
 import { DashboardCard } from "../../features/DASHBOARD/main-cards/DashboardCard";
 import { FlashInfo } from "../../features/DASHBOARD/main-cards/FlashInfo";
 import { DailyReport } from "../../features/DASHBOARD/main-cards/DailyReport";
-import { CashoutReport } from "../../features/DASHBOARD/components/CashoutReport";
+
 import { CashFlow } from "../../features/DASHBOARD/main-cards/CashFlow";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import { CashoutReport } from "./main-cards/CashoutReport";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 

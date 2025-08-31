@@ -28,7 +28,7 @@ export const getCategoricalSales = async (date, classification, userId) => {
   const token = await getAuthToken();
   const queryParams = new URLSearchParams({ date, classification, userId });
 
-  // Use the absolute URL, just like your other working services
+  // This URL now correctly matches the simplified backend route
   const url = `${BACKEND_URL}/api/categorical-sales?${queryParams.toString()}`;
 
   const response = await fetch(url, {

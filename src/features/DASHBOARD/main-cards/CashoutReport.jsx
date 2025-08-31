@@ -10,8 +10,7 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { ReportCalendar } from "./ReportCalendar";
-// 1. Import the new service functions
+import { ReportCalendar } from "../components/ReportCalendar";
 import {
   getMonthlyTotalExpenses,
   getMonthlyBreakdown,
@@ -51,17 +50,51 @@ export function CashoutReport() {
       currency: "PHP",
     }).format(value);
 
-  // --- Data Fetching Callbacks (Now using the service) ---
+  // --- Custom Label Renderer for Pie Chart ---
+  const renderPieLabel = ({
+    value,
+    cx,
+    cy,
+    midAngle,
+    innerRadius,
+    outerRadius,
+    percent,
+  }) => {
+    const RADIAN = Math.PI / 180;
+    // Position the label inside the slice for a cleaner look
+    const radius = innerRadius + (outerRadius - innerRadius) * 0.6;
+    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+    // Don't render a label for very small slices to avoid clutter
+    if (percent < 0.05) {
+      return null;
+    }
+
+    return (
+      <text
+        x={x}
+        y={y}
+        fill="#fff"
+        textAnchor={x > cx ? "start" : "end"}
+        dominantBaseline="central"
+        className="text-xs font-semibold"
+      >
+        {formatCurrency(value)}
+      </text>
+    );
+  };
+
   const fetchMonthlyData = useCallback(
     async (range) => {
       if (!token) return;
       try {
-        // 2. Use the imported service functions
         const totalData = await getMonthlyTotalExpenses(token, range);
         setTotalMonthlyExpenses(totalData.totalExpenses || 0);
 
         const breakdownData = await getMonthlyBreakdown(token, range);
-        setMonthlyBreakdown(breakdownData || []);
+        // Ensure breakdownData is always an array
+        setMonthlyBreakdown(Array.isArray(breakdownData) ? breakdownData : []);
       } catch (error) {
         console.error("Error fetching monthly data:", error);
         setTotalMonthlyExpenses(0);
@@ -76,7 +109,6 @@ export function CashoutReport() {
       if (!token) return;
       setLoading(true);
       try {
-        // 3. Use the imported service function
         const data = await getDailyCashouts(token, date);
         setDailyExpensesList(data || []);
         const dailyTotal = data.reduce((sum, item) => sum + item.amount, 0);
@@ -92,7 +124,6 @@ export function CashoutReport() {
     [token]
   );
 
-  // --- useEffect Hooks (No changes needed here) ---
   useEffect(() => {
     fetchMonthlyData(monthlyRange);
   }, [fetchMonthlyData, monthlyRange]);
@@ -158,7 +189,8 @@ export function CashoutReport() {
                 cy="50%"
                 outerRadius={80}
                 fill="#8884d8"
-                label
+                labelLine={false}
+                label={renderPieLabel}
               >
                 {monthlyBreakdown.map((entry, index) => (
                   <Cell
