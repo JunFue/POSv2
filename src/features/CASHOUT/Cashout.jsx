@@ -13,6 +13,7 @@ import { CashoutFilters } from "./CashoutFilters";
 export function Cashout() {
   // FIX: Consume the context here to get the data and functions.
   const { cashouts, loading, deleteCashout } = useCashout();
+  console.log(cashouts);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 p-6 max-w-7xl mx-auto">
