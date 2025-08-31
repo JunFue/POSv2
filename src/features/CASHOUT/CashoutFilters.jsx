@@ -51,11 +51,11 @@ export function CashoutFilters() {
         )}`;
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
+    <div className="bg-background p-4 rounded-lg shadow-md">
       <div className="relative" ref={calendarRef}>
         <label
           htmlFor="dateRange"
-          className="block text-sm font-medium text-gray-700"
+          className="block text-sm font-medium text-head-text"
         >
           Date Range
         </label>
@@ -66,10 +66,10 @@ export function CashoutFilters() {
             value={displayValue}
             onFocus={() => setShowCalendar(true)}
             readOnly
-            className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 cursor-pointer"
+            className="w-full bg-background border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5 cursor-pointer"
           />
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3">
-            <FaCalendarDay className="h-5 w-5 text-gray-400" />
+            <FaCalendarDay className="h-5 w-5 text-head-text" />
           </div>
         </div>
         {showCalendar && (

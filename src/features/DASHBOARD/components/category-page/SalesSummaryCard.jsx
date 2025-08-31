@@ -8,10 +8,16 @@ const StatCard = ({ title, value, className }) => (
 );
 
 export function SalesSummaryCard({ data }) {
-  const { grossSales, totalQuantitySold, freeQuantity, netQuantity } = data;
+  const {
+    grossSales,
+    totalQuantitySold,
+    freeQuantity,
+    netQuantity,
+    cashOnHand,
+  } = data;
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
       <StatCard
         title="Today's Gross Sales"
         value={`₱${grossSales.toLocaleString()}`}
@@ -30,6 +36,12 @@ export function SalesSummaryCard({ data }) {
       <StatCard
         title="Net Quantity"
         value={netQuantity}
+        className="bg-background text-body-text traditional-input"
+      />
+      {/* --- New StatCard for Cash on Hand --- */}
+      <StatCard
+        title="Cash on Hand"
+        value={`₱${cashOnHand?.toLocaleString() || 0}`}
         className="bg-background text-body-text traditional-input"
       />
     </div>

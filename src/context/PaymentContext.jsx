@@ -44,11 +44,9 @@ export function PaymentProvider({ children }) {
 
   const fetchInitialPayments = useCallback(async () => {
     if (!session?.access_token) {
-      console.log("No session found, skipping payments list fetch.");
       return;
     }
 
-    console.log("Fetching latest payments list from backend server...");
     const today = getTodaysDateString();
     const url = `${BACKEND_URL}/api/payments?startDate=${today}&endDate=${today}&limit=1000`;
 
@@ -66,7 +64,6 @@ export function PaymentProvider({ children }) {
       const result = await response.json();
       const freshData = result.data || [];
 
-      console.log("Fetched new payments list. Count:", freshData.length);
       setTodaysPayments(freshData);
       localStorage.setItem(CACHE_KEY, JSON.stringify(freshData));
     } catch (error) {
@@ -79,7 +76,6 @@ export function PaymentProvider({ children }) {
   }, [fetchInitialPayments]);
 
   useSupabaseSubscription("public:payments", "payments", () => {
-    console.log("Supabase change detected! Refetching payments list.");
     fetchInitialPayments();
   });
 

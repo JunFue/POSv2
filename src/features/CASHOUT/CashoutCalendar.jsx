@@ -79,7 +79,7 @@ export function CashoutCalendar({ onFilter }) {
     <div className="flex justify-between items-center py-2 px-1">
       <button
         onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-        className="p-2 rounded-full hover:bg-gray-100"
+        className="p-2 rounded-full hover:bg-background"
         aria-label="Previous month"
       >
         &lt;
@@ -89,7 +89,7 @@ export function CashoutCalendar({ onFilter }) {
       </span>
       <button
         onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-        className="p-2 rounded-full hover:bg-gray-100"
+        className="p-2 rounded-full hover:bg-background"
         aria-label="Next month"
       >
         &gt;
@@ -98,7 +98,7 @@ export function CashoutCalendar({ onFilter }) {
   );
 
   const renderDays = () => (
-    <div className="grid grid-cols-7 text-center font-semibold text-xs text-gray-500 my-2">
+    <div className="grid grid-cols-7 text-center font-semibold text-xs text-head-text my-2">
       {["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"].map((day) => (
         <div key={day}>{day}</div>
       ))}
@@ -191,13 +191,13 @@ export function CashoutCalendar({ onFilter }) {
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-4 flex flex-col border border-gray-200 w-full">
+    <div className="bg-background rounded-lg shadow-lg p-4 flex flex-col border border-gray-200 w-full">
       <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2 bg-gray-100 rounded-full p-1">
+        <div className="flex items-center gap-2 bg-background rounded-full p-1">
           <button
             onClick={() => setMode("single")}
             className={`px-3 py-1 text-sm rounded-full ${
-              mode === "single" ? "bg-white shadow" : ""
+              mode === "single" ? "bg-background shadow" : ""
             }`}
             title="Single Day"
           >
@@ -206,7 +206,7 @@ export function CashoutCalendar({ onFilter }) {
           <button
             onClick={() => setMode("range")}
             className={`px-3 py-1 text-sm rounded-full ${
-              mode === "range" ? "bg-white shadow" : ""
+              mode === "range" ? "bg-background shadow" : ""
             }`}
             title="Date Range"
           >
@@ -215,7 +215,7 @@ export function CashoutCalendar({ onFilter }) {
         </div>
         <button
           onClick={handleReset}
-          className="p-2 rounded-full hover:bg-gray-100"
+          className="p-2 rounded-full hover:bg-background"
           title="Reset"
         >
           <FaUndo />

@@ -78,7 +78,7 @@ export function CashoutTable({ data, loading, onDelete }) {
         size: 120,
       },
       { accessorKey: "notes", header: "Notes", size: 250 },
-      { accessorKey: "receipt_no", header: "Receipt No.", size: 120 },
+      { accessorKey: "receiptNo", header: "Receipt No.", size: 120 },
       {
         id: "actions",
         header: "Actions",
@@ -120,7 +120,7 @@ export function CashoutTable({ data, loading, onDelete }) {
 
   if (loading) {
     return (
-      <div className="overflow-auto rounded-lg bg-white shadow-md h-[500px]">
+      <div className="overflow-auto shadow-input h-[500px]">
         <table className="w-full" style={{ tableLayout: "fixed" }}>
           <thead className="bg-gray-50 sticky top-0 z-10">
             {table.getHeaderGroups().map((headerGroup) => (
@@ -152,8 +152,8 @@ export function CashoutTable({ data, loading, onDelete }) {
 
   if (!data || data.length === 0) {
     return (
-      <div className="text-center p-10 bg-white rounded-lg shadow-md h-[500px] flex items-center justify-center">
-        <p className="text-gray-500">
+      <div className="text-center p-10 shadow-input h-[500px] flex items-center justify-center">
+        <p className="text-head-text">
           No cashout records for the selected date(s).
         </p>
       </div>

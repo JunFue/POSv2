@@ -1,6 +1,7 @@
 import React, { useRef, useCallback } from "react";
 import { useForm, Controller } from "react-hook-form";
-import { CategoryDropdown } from "./CategoryDropdown";
+import { ClassificationDropdown } from "./ClassificationDropdown";
+import { CategoryDropdown } from "./CategoryDropdown"; // 1. Import the new dropdown
 import { useCashout } from "../../context/CashoutProvider";
 
 /**
@@ -19,11 +20,18 @@ export function CashoutForm() {
     clearErrors,
     formState: { errors },
   } = useForm({
-    defaultValues: { category: "Food", amount: "", notes: "", receiptNo: "" },
+    defaultValues: {
+      classification: "Food",
+      category: "", // 2. Add category to form state
+      amount: "",
+      notes: "",
+      receiptNo: "",
+    },
   });
 
   // Refs for all focusable form elements
-  const categoryButtonRef = useRef(null);
+  const classificationButtonRef = useRef(null);
+  const categoryButtonRef = useRef(null); // 3. Add ref for the new dropdown
   const amountRef = useRef(null);
   const notesRef = useRef(null);
   const receiptNoRef = useRef(null);
@@ -61,18 +69,35 @@ export function CashoutForm() {
       addCashout(payload).then(() => {
         reset();
         clearErrors();
-        categoryButtonRef.current?.focus();
+        classificationButtonRef.current?.focus();
       });
     },
     [addCashout, reset, clearErrors]
   );
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-md">
+    <div className="bg-background p-4 rounded-lg shadow-md">
       <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-4">
         <h3 className="text-lg font-semibold text-gray-800 border-b pb-2">
           New Entry
         </h3>
+        <Controller
+          name="classification"
+          control={control}
+          rules={{ required: "Classification is required." }}
+          render={({ field }) => (
+            <ClassificationDropdown
+              buttonRef={classificationButtonRef}
+              selectedClassification={field.value}
+              onSelectClassification={(classification) => {
+                field.onChange(classification);
+                categoryButtonRef.current?.focus(); // 4. Focus next dropdown
+              }}
+            />
+          )}
+        />
+
+        {/* --- 5. Add the new CategoryDropdown to the form --- */}
         <Controller
           name="category"
           control={control}
@@ -88,10 +113,12 @@ export function CashoutForm() {
             />
           )}
         />
+        {/* --- End of new dropdown section --- */}
+
         <div>
           <label
             htmlFor="amount"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-head-text"
           >
             Amount
           </label>
@@ -117,7 +144,7 @@ export function CashoutForm() {
         <div>
           <label
             htmlFor="notes"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-head-text"
           >
             Notes
           </label>
@@ -136,7 +163,7 @@ export function CashoutForm() {
         <div>
           <label
             htmlFor="receiptNo"
-            className="block text-sm font-medium text-gray-700"
+            className="block text-sm font-medium text-head-text"
           >
             Receipt No.
           </label>
@@ -153,10 +180,7 @@ export function CashoutForm() {
           />
         </div>
         <div className="flex gap-4 pt-2">
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
-          >
+          <button type="submit" className="w-full traditional-buttonc">
             Record
           </button>
           <button
@@ -165,7 +189,7 @@ export function CashoutForm() {
               reset();
               clearErrors();
             }}
-            className="w-full bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition-colors"
+            className="w-full traditional-button"
           >
             Clear
           </button>
