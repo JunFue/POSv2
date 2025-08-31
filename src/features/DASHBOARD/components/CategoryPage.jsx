@@ -1,82 +1,35 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useContext, useEffect } from "react";
 import { useParams } from "react-router";
 import { SalesSummaryCard } from "./category-page/SalesSummaryCard.jsx";
 import { ItemsSoldTable } from "./category-page/ItemSoldTable.jsx";
 import { MonthlyLogTable } from "./category-page/MonthlyLogTable.jsx";
-import { useAuth } from "../../AUTHENTICATION/hooks/useAuth.js";
 import { supabase } from "../../../utils/supabaseClient.js";
 import { usePageVisibility } from "../../../hooks/usePageVisibility.js";
-import { getCategoricalSales } from "../../../api/categoryPageService.js";
-
-const CACHE_TTL_MS = 5 * 60 * 1000;
-
-function debounce(func, delay) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
-}
-
-const LoadingSpinner = () => (
-  <div className="flex justify-center items-center p-8">
-    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
-  </div>
-);
+import { useCategoricalGrossSales } from "./category-page/hooks/useCategoricalGrossSales.js";
+import { PaymentContext } from "../../../context/PaymentContext.jsx";
 
 export function CategoryPage() {
   const { categoryName } = useParams();
-  const { user } = useAuth(); // We don't need the token directly anymore
   const isVisible = usePageVisibility();
+  const { todaysPayments } = useContext(PaymentContext);
+  console.log(todaysPayments);
 
-  const today = new Date().toISOString().split("T")[0];
-  const CACHE_KEY = `categoricalSales-${categoryName}-${today}`;
+  // The component is now much cleaner. All the complex logic is in the hook.
+  const { grossSales, syncWithServer, error } =
+    useCategoricalGrossSales(categoryName);
 
-  const [summaryData, setSummaryData] = useState({ grossSales: 0 });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [dataForCategory, setDataForCategory] = useState(null);
-
-  const fetchGrossSales = useCallback(async () => {
-    if (!categoryName || !user?.id) return;
-
-    try {
-      // This function call remains the same, but the underlying service now hits the correct URL
-      const result = await getCategoricalSales(today, categoryName, user.id);
-
-      const newGrossSales = result.totalSales;
-      setSummaryData({ grossSales: newGrossSales });
-      setDataForCategory(categoryName);
-
-      const cacheData = { value: newGrossSales, timestamp: Date.now() };
-      localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [categoryName, user, today, CACHE_KEY]);
-
-  const debouncedFetchRef = useRef(debounce(fetchGrossSales, 500));
-
+  // This effect now only manages the Supabase real-time subscription.
   useEffect(() => {
-    setLoading(true);
-    setError(null);
+    // This is the callback that runs when a change is detected in the database.
+    const handleDatabaseChange = () => {
+      console.log("Supabase change detected, triggering background sync...");
+      syncWithServer();
+    };
 
-    const cachedItem = localStorage.getItem(CACHE_KEY);
-    if (cachedItem) {
-      const { value, timestamp } = JSON.parse(cachedItem);
-      if (Date.now() - timestamp < CACHE_TTL_MS) {
-        setSummaryData({ grossSales: value });
-        setDataForCategory(categoryName);
-        setLoading(false);
-      }
-    }
-
-    if (user?.id) {
-      fetchGrossSales();
+    // Perform an initial sync when the component mounts or becomes visible
+    // to ensure the data is accurate from the start.
+    if (isVisible) {
+      syncWithServer();
     }
 
     const channel = supabase
@@ -84,17 +37,17 @@ export function CategoryPage() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "transactions" },
-        () => {
-          debouncedFetchRef.current();
-        }
+        handleDatabaseChange
       );
 
-    if (isVisible) channel.subscribe();
+    if (isVisible) {
+      channel.subscribe();
+    }
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [categoryName, fetchGrossSales, isVisible, CACHE_KEY, user]);
+  }, [categoryName, isVisible, syncWithServer]);
 
   return (
     <div className="p-6 bg-background min-h-screen">
@@ -105,16 +58,26 @@ export function CategoryPage() {
         Sales and logs for the current category.
       </p>
 
-      {loading && <LoadingSpinner />}
-      {error && <p className="text-red-500 text-center">Error: {error}</p>}
-
-      {!loading && !error && dataForCategory === categoryName && (
-        <>
-          <SalesSummaryCard data={summaryData} />
-          <ItemsSoldTable data={[]} />
-          <MonthlyLogTable data={[]} />
-        </>
+      {/* A small warning can be shown if the background sync fails. */}
+      {error && (
+        <p className="text-yellow-600 text-center text-sm mb-4">
+          Warning: {error}
+        </p>
       )}
+
+      {/* The loading state is gone! The SalesSummaryCard renders instantly 
+        with the value from the local context.
+      */}
+      <SalesSummaryCard
+        data={{
+          grossSales,
+          totalQuantitySold: "N/A",
+          freeQuantity: "N/A",
+          netQuantity: "N/A",
+        }}
+      />
+      <ItemsSoldTable data={[]} />
+      <MonthlyLogTable data={[]} />
     </div>
   );
 }
