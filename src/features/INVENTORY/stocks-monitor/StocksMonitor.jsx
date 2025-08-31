@@ -26,7 +26,7 @@ export function StocksMonitor() {
   return (
     <div className="mt-4 overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
       <table className="min-w-full divide-y divide-gray-200 text-sm">
-        <thead className="bg-gray-50">
+        <thead className="bg-background">
           <tr>
             <th className="whitespace-nowrap px-4 py-2 text-left font-medium text-head-text">
               Item Name
@@ -39,7 +39,7 @@ export function StocksMonitor() {
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
+        <tbody className="divide-y divide-gray-200 bg-background">
           {inventory.map((item) => (
             <tr key={item.id} className="hover:bg-gray-50">
               <td className="whitespace-nowrap px-4 py-2 font-medium text-head-text">

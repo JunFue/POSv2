@@ -6,10 +6,10 @@ import {
   useCallback,
 } from "react";
 
-import { useCashoutTotal } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useCashoutTotal";
-import { useNetSales } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useNetSales";
+import { useCashoutTotal } from "../features/DASHBOARD/components/main-cards/flsh-info-cards/hooks/useCashoutTotal";
+import { useNetSales } from "../features/DASHBOARD/components/main-cards/flsh-info-cards/hooks/useNetSales";
 // --- 1. Import the new useGrossSales hook ---
-import { useGrossSales } from "../features/DASHBOARD/main-cards/flsh-info-cards/hooks/useGrossSales";
+import { useGrossSales } from "../features/DASHBOARD/components/main-cards/flsh-info-cards/hooks/useGrossSales";
 import { useSupabaseSubscription } from "../hooks/useSupabaseSubscription";
 import { useAuth } from "../features/AUTHENTICATION/hooks/useAuth";
 

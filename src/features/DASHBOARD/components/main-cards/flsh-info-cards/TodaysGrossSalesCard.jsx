@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { MiniCard } from "./MiniCard";
-import { usePaymentContext } from "../../../../context/PaymentContext";
+import { usePaymentContext } from "../../../../../context/PaymentContext";
 
 // Helper to format numbers as PHP currency
 const formatToPHP = (value) =>

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { useAuth } from "../../AUTHENTICATION/hooks/useAuth";
+import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
 import { format, addDays, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { FaCalendarAlt, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import {
@@ -10,12 +10,12 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-import { ReportCalendar } from "../components/ReportCalendar";
+import { ReportCalendar } from "./components/ReportCalendar";
 import {
   getMonthlyTotalExpenses,
   getMonthlyBreakdown,
   getDailyCashouts,
-} from "../services/reportService";
+} from "../../services/reportService";
 
 const COLORS = [
   "#0088FE",

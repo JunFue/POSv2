@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { usePageVisibility } from "../../../../hooks/usePageVisibility";
+import { usePageVisibility } from "../../../../../hooks/usePageVisibility";
 import { MiniCard } from "./MiniCard";
 import { useFetchTodaysNet } from "./hooks/useFetchTodaysNet";
-import { usePaymentContext } from "../../../../context/PaymentContext";
+import { usePaymentContext } from "../../../../../context/PaymentContext";
 
 // Helper to format numbers as PHP currency
 const formatToPHP = (value) =>

@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { getDailyIncome } from "../../../../../api/dashboardService";
+import { getDailyIncome } from "../../../../../../api/dashboardService";
 
 const CACHE_KEY = "todaysNetIncome";
 const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
