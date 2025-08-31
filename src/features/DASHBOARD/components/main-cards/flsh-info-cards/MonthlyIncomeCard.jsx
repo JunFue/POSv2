@@ -2,10 +2,10 @@ import React, { useState, useEffect, useCallback } from "react";
 import { FaCalendarAlt } from "react-icons/fa";
 import { IncomeRangeCalendar } from "./IncomeRangeCalendar";
 import { startOfMonth, endOfMonth } from "date-fns";
-import { getMonthlyIncome } from "../../../../api/dashboardService";
-// --- NEW: Import the Supabase client ---
-import { supabase } from "../../../../utils/supabaseClient";
+
 import { MiniCard } from "./MiniCard";
+import { getMonthlyIncome } from "../../../../../api/dashboardService";
+import { supabase } from "../../../../../utils/supabaseClient";
 
 export function MonthlyIncomeCard({ onHide }) {
   const [incomeValue, setIncomeValue] = useState("Loading...");

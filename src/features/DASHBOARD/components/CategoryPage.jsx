@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router";
-import { SalesSummaryCard } from "./SalesSummaryCard.jsx";
-import { ItemsSoldTable } from "./ItemSoldTable.jsx";
-import { MonthlyLogTable } from "./MonthlyLogTable.jsx";
+import { SalesSummaryCard } from "./category-page/SalesSummaryCard.jsx";
+import { ItemsSoldTable } from "./category-page/ItemSoldTable.jsx";
+import { MonthlyLogTable } from "./category-page/MonthlyLogTable.jsx";
 import { useAuth } from "../../AUTHENTICATION/hooks/useAuth.js";
 import { supabase } from "../../../utils/supabaseClient.js";
 import { usePageVisibility } from "../../../hooks/usePageVisibility.js";

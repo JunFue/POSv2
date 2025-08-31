@@ -2,7 +2,7 @@ import React from "react";
 // REMOVED: No longer need useState, useEffect, useCallback, useAuth, or supabase client here.
 import { MiniCard } from "./MiniCard";
 import { useCashoutTotal } from "./hooks/useCashoutTotal";
-import { useCurrencyFormatter } from "../../../../utils/useCurrencyFormatter";
+import { useCurrencyFormatter } from "../../../../../utils/useCurrencyFormatter";
 
 export function DailyExpensesCard({ onHide }) {
   const formatCurrency = useCurrencyFormatter({

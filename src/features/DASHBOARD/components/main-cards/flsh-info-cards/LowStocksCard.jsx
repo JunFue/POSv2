@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useCallback } from "react";
 
 import { FaCog, FaExclamationTriangle } from "react-icons/fa";
-import { useAuth } from "../../../AUTHENTICATION/hooks/useAuth";
-import { supabase } from "../../../../utils/supabaseClient";
+
 import { MiniCard } from "./MiniCard";
+import { useAuth } from "../../../../AUTHENTICATION/hooks/useAuth";
+import { supabase } from "../../../../../utils/supabaseClient";
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 const CACHE_KEY = "lowStocks";
