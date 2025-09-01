@@ -24,8 +24,6 @@ export const useSupabaseSubscription = (channelName, table, callback) => {
         "postgres_changes",
         { event: "*", schema: "public", table: table },
         (payload) => {
-          // When a change occurs, execute the callback function.
-          console.log(`Change detected on ${table}:`, payload);
           callback(payload);
         }
       )

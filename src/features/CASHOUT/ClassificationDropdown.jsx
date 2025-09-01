@@ -43,13 +43,11 @@ export function ClassificationDropdown({
 
   const handleAddClassification = (newClassification) => {
     if (newClassification) {
-      console.log("Add classification:", newClassification);
       alert(`"${newClassification}" would be added here.`);
     }
   };
 
   const handleDeleteClassification = (classification) => {
-    console.log("Delete classification:", classification);
     alert(`"${classification}" would be deleted here.`);
   };
 
