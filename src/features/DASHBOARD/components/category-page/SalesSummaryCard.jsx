@@ -14,10 +14,11 @@ export function SalesSummaryCard({ data }) {
     freeQuantity,
     netQuantity,
     cashOnHand,
+    totalCashout,
   } = data;
 
   return (
-    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-5">
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
       <StatCard
         title="Today's Gross Sales"
         value={`₱${grossSales.toLocaleString()}`}
@@ -38,10 +39,15 @@ export function SalesSummaryCard({ data }) {
         value={netQuantity}
         className="bg-background text-body-text traditional-input"
       />
-      {/* --- New StatCard for Cash on Hand --- */}
       <StatCard
         title="Cash on Hand"
         value={`₱${cashOnHand?.toLocaleString() || 0}`}
+        className="bg-background text-body-text traditional-input"
+      />
+      {/* --- New StatCard for Total Cashout --- */}
+      <StatCard
+        title="Total Cashout"
+        value={`₱${totalCashout?.toLocaleString() || 0}`}
         className="bg-background text-body-text traditional-input"
       />
     </div>

@@ -1,29 +1,44 @@
 import { useMemo } from "react";
-import { useCashout } from "../../../../../context/CashoutProvider";
 import { useCategoricalGrossSales } from "./useCategoricalGrossSales";
+import { useCashout } from "../../../../../context/CashoutProvider";
 
 export const useCashOnHand = (categoryName) => {
-  // 1. Get the gross sales for the current category.
   const { grossSales } = useCategoricalGrossSales(categoryName);
-
-  // Get the cashouts from the context.
   const { cashouts } = useCashout();
 
-  // 2. Compute the total cashout amount for the current category.
+  console.log("[useCashOnHand] Gross Sales Input:", grossSales);
+  console.log("[useCashOnHand] All Cashouts from Context:", cashouts);
+
   const totalCashout = useMemo(() => {
     const cashoutList = Array.isArray(cashouts) ? cashouts : [];
     if (!categoryName || cashoutList.length === 0) {
       return 0;
     }
 
-    return cashoutList
-      .filter((cashout) => cashout.category === categoryName)
-      .reduce((sum, cashout) => sum + parseFloat(cashout.amount || 0), 0);
+    const filteredCashouts = cashoutList.filter(
+      (cashout) => cashout.category === categoryName
+    );
+
+    console.log(
+      `[useCashOnHand] Filtered Cashouts for ${categoryName}:`,
+      filteredCashouts
+    );
+
+    const total = filteredCashouts.reduce(
+      (sum, cashout) => sum + parseFloat(cashout.amount || 0),
+      0
+    );
+
+    console.log(`[useCashOnHand] Total Cashout for ${categoryName}:`, total);
+    return total;
   }, [cashouts, categoryName]);
 
-  // 3. Subtract the cashout total from the gross sales.
   const cashOnHand = useMemo(() => {
-    return grossSales - totalCashout;
+    const result = grossSales - totalCashout;
+    console.log(
+      `[useCashOnHand] Final Calculation: ${grossSales} - ${totalCashout} = ${result}`
+    );
+    return result;
   }, [grossSales, totalCashout]);
 
   return cashOnHand;

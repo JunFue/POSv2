@@ -4,12 +4,15 @@ import { SalesSummaryCard } from "./category-page/SalesSummaryCard.jsx";
 import { ItemsSoldTable } from "./category-page/ItemSoldTable.jsx";
 import { MonthlyLogTable } from "./category-page/MonthlyLogTable.jsx";
 import { useCategoricalGrossSales } from "./category-page/hooks/useCategoricalGrossSales.js";
+import { useCashOnHand } from "./category-page/hooks/useCashOnHand.js";
+import { useTotalCashoutByCategory } from "./category-page/hooks/useTotalCashoutByCategory.js";
 
 export function CategoryPage() {
   const { categoryName } = useParams();
 
-  // The hook now only returns the computed data.
   const { grossSales } = useCategoricalGrossSales(categoryName);
+  const cashOnHand = useCashOnHand(categoryName);
+  const totalCashout = useTotalCashoutByCategory(categoryName);
 
   return (
     <div className="p-6 bg-background min-h-screen">
@@ -23,6 +26,8 @@ export function CategoryPage() {
       <SalesSummaryCard
         data={{
           grossSales,
+          cashOnHand,
+          totalCashout,
           totalQuantitySold: "N/A",
           freeQuantity: "N/A",
           netQuantity: "N/A",
