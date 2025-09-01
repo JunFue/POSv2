@@ -37,7 +37,7 @@ export const CounterForm = forwardRef((props, ref) => {
       availableStocks: "",
       change: "",
       quantity: "",
-      additionalInfo: "",
+      customPrice: "",
       grandTotal: "0.00",
     },
   });
@@ -47,7 +47,14 @@ export const CounterForm = forwardRef((props, ref) => {
   const barcodeRef = useRef(null);
   const quantityRef = useRef(null);
   const discountRef = useRef(null);
-  const inputRefs = { costumerNameRef, barcodeRef, quantityRef, discountRef };
+  const customPriceRef = useRef(null);
+  const inputRefs = {
+    costumerNameRef,
+    barcodeRef,
+    quantityRef,
+    discountRef,
+    customPriceRef,
+  };
 
   const addToCart = useAddToCart(form, inputRefs);
 
@@ -64,27 +71,17 @@ export const CounterForm = forwardRef((props, ref) => {
     inputRefs
   );
 
-  /**
-   * --- FIX ---
-   * This function now correctly handles a numeric `stockValue`.
-   * The .trim() call, which caused the error, has been removed.
-   */
   const handleAddToCartWithStockCheck = (data) => {
-    // Get the value, which could be a number (e.g., 50) or a string (e.g., "N/A").
     const stockValue = getValues("availableStocks");
-
-    // parseFloat will correctly handle both numbers and string representations of numbers.
     const stockNumber = parseFloat(stockValue);
 
-    // Check if the result is not a valid number (e.g., from "N/A") or if stock is zero or less.
     if (isNaN(stockNumber) || stockNumber <= 0) {
       setAlertMessage(
         "This item is out of stock and cannot be added to the cart."
       );
-      return; // Stop the function here
+      return;
     }
 
-    // If stock is valid, call the original addToCart function
     addToCart(data);
   };
 
@@ -156,7 +153,13 @@ export const CounterForm = forwardRef((props, ref) => {
   return (
     <div className="relative shiny-gradient p-1 text-accent-100">
       <CounterFormFields
-        ref={{ costumerNameRef, barcodeRef, quantityRef, discountRef }}
+        ref={{
+          costumerNameRef,
+          barcodeRef,
+          quantityRef,
+          discountRef,
+          customPriceRef,
+        }}
         register={register}
         handleSubmit={handleSubmit(handleAddToCartWithStockCheck)}
         onBarcodeChange={handleBarcodeChange}

@@ -1,4 +1,3 @@
-// useAddToCart.js
 import { useContext } from "react";
 import { CartContext } from "../../../context/CartContext";
 import { ItemRegData } from "../../../context/ItemRegContext";
@@ -12,7 +11,6 @@ export function useAddToCart(form, inputRefs) {
   const { barcodeRef, quantityRef } = inputRefs;
 
   return function addToCart(data) {
-    // ✅ now this part does not call hooks; safe to use in event handlers
     if (!data.barcode || !data.quantity) {
       alert("Please enter barcode and quantity.");
       return;
@@ -47,12 +45,20 @@ export function useAddToCart(form, inputRefs) {
       return;
     }
 
+    let priceToUse = currentItem.price;
+    const customPrice = parseFloat(data.customPrice);
+
+    // Use custom price if it's a valid, non-negative number
+    if (data.customPrice && !isNaN(customPrice) && customPrice >= 0) {
+      priceToUse = customPrice;
+    }
+
     setCartData((prev) => [
       ...prev,
       {
         barcode: data.barcode,
         item: currentItem.name,
-        price: currentItem.price,
+        price: priceToUse,
         quantity: quantity,
         total() {
           return this.price * this.quantity;
@@ -62,6 +68,7 @@ export function useAddToCart(form, inputRefs) {
 
     setValue("barcode", "");
     setValue("quantity", "");
+    setValue("customPrice", "");
     setValue("availableStocks", "");
     barcodeRef.current?.focus();
   };
