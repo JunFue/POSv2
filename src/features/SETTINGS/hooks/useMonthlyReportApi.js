@@ -1,45 +1,50 @@
-// This is a placeholder API module.
-// In a real application, you would replace the setTimeout calls
-// with actual fetch requests to your backend.
+import { format } from "date-fns";
 
-const fetchTableOneData = async (range, token) => {
-  console.log(
-    "Fetching data for Table One with range:",
-    range,
-    "and token:",
-    token
-  );
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 800));
-  // Return mock data
-  return [
-    { id: 1, name: "Item A", sales: 150 },
-    { id: 2, name: "Item B", sales: 250 },
-  ];
-};
-
-const fetchTableTwoData = async (range, token) => {
-  console.log(
-    "Fetching data for Table Two with range:",
-    range,
-    "and token:",
-    token
-  );
-  // Simulate network delay
-  await new Promise((resolve) => setTimeout(resolve, 1200));
-  // Return mock data
-  return [
-    { id: 1, category: "Food", expenses: 120 },
-    { id: 2, category: "Supplies", expenses: 80 },
-  ];
+// Helper to format date objects into 'YYYY-MM-DD' strings for the API query
+const toApiDateString = (date) => {
+  if (!date) return "";
+  return format(date, "yyyy-MM-dd");
 };
 
 export const fetchMonthlyReportApi = async (range, token) => {
-  // Use Promise.all to fetch data from both tables concurrently
-  const [tableOneData, tableTwoData] = await Promise.all([
-    fetchTableOneData(range, token),
-    fetchTableTwoData(range, token),
-  ]);
+  const { from, to } = range;
 
-  return { tableOneData, tableTwoData };
+  // Construct the URL with query parameters for the date range
+  const startDate = toApiDateString(from);
+  const endDate = toApiDateString(to);
+
+  // Use import.meta.env for Vite and match the variable from your .env file
+  const API_BASE_URL =
+    import.meta.env.VITE_BACKEND_URL || "http://localhost:3000";
+  const url = `${API_BASE_URL}/api/monthly-report?startDate=${startDate}&endDate=${endDate}`;
+
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // The token is sent in the header for authentication
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!response.ok) {
+      // If the server response is not OK (e.g., 401, 500), throw an error
+      const errorData = await response.json();
+      throw new Error(errorData.msg || "Failed to fetch report data.");
+    }
+
+    const data = await response.json();
+
+    // The backend returns an object with `transactions` and `cashouts` properties
+    // We rename them here to match the original placeholder structure
+    return {
+      tableOneData: data.transactions,
+      tableTwoData: data.cashouts,
+    };
+  } catch (error) {
+    console.error("Error fetching monthly report:", error);
+    // Re-throw the error so it can be caught by the calling function in the context
+    throw error;
+  }
 };

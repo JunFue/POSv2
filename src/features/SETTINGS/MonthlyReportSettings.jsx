@@ -9,16 +9,26 @@ const toLocalDateString = (date) => {
 };
 
 export function MonthlyReportSettings() {
-  const { dateRange, fetchAndSaveReport, loading, error } = useMonthlyReport();
+  // --- CHANGE 1: Destructure `reportData` from the context ---
+  const { reportData, dateRange, fetchAndSaveReport, loading, error } =
+    useMonthlyReport();
+
   const [selectedRange, setSelectedRange] = useState(dateRange);
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false); // State to manage calendar visibility
-  const calendarRef = useRef(null); // Ref to detect clicks outside the calendar
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const calendarRef = useRef(null);
 
   useEffect(() => {
     setSelectedRange(dateRange);
   }, [dateRange]);
 
-  // Effect to handle clicks outside the calendar to close it
+  // --- CHANGE 2: Add useEffect to log data when it changes ---
+  useEffect(() => {
+    // Check if reportData is not null or undefined before logging
+    if (reportData) {
+      console.log("Fetched Monthly Report Data:", reportData);
+    }
+  }, [reportData]); // This effect runs whenever `reportData` is updated
+
   useEffect(() => {
     function handleClickOutside(event) {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
@@ -34,7 +44,6 @@ export function MonthlyReportSettings() {
   const handleCalendarChange = (selection) => {
     if (selection.range) {
       setSelectedRange(selection.range);
-      // Optional: close calendar when a full range is selected
       if (selection.range.from && selection.range.to) {
         setIsCalendarOpen(false);
       }
@@ -45,7 +54,8 @@ export function MonthlyReportSettings() {
     if (selectedRange.from && selectedRange.to) {
       fetchAndSaveReport(selectedRange);
     } else {
-      alert("Please select a complete date range.");
+      // Replaced alert with a console log to avoid blocking UI in some environments
+      console.warn("Please select a complete date range.");
     }
   };
 
@@ -63,9 +73,7 @@ export function MonthlyReportSettings() {
         Set the default date range for your monthly financial reports.
       </p>
 
-      {/* Main container for the input and calendar */}
       <div className="space-y-4">
-        {/* Container for the input and the toggled calendar */}
         <div className="relative" ref={calendarRef}>
           <label
             htmlFor="reportRange"
@@ -78,14 +86,18 @@ export function MonthlyReportSettings() {
             id="reportRange"
             value={displayValue}
             readOnly
-            onClick={() => setIsCalendarOpen(!isCalendarOpen)} // Toggle calendar on click
+            onClick={() => setIsCalendarOpen(!isCalendarOpen)}
             className="w-full bg-background border-2 border-gray-300/50 text-body-text text-md rounded-lg p-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
 
-          {/* Conditionally rendered calendar with positioning */}
           {isCalendarOpen && (
             <div className="absolute top-full mt-2 w-full z-20">
-              <Calendar value={selectedRange} onChange={handleCalendarChange} />
+              <Calendar
+                value={selectedRange}
+                onChange={handleCalendarChange}
+                initialMode="range"
+                allowedModes={["range"]}
+              />
             </div>
           )}
         </div>
