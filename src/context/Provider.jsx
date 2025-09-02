@@ -9,30 +9,31 @@ import { AuthProvider } from "./AuthContext.jsx";
 import { InventoryProvider } from "./InventoryContext.jsx";
 import { CashoutProvider } from "./CashoutProvider.jsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { MonthlyReportProvider } from "./MonthlyReportContext.jsx";
 
 export function AppProviders({ children }) {
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <CashoutProvider>
-          <InventoryProvider>
-            <ThemeProviders>
-              <SettingsProvider>
-                <PaymentProvider>
-                  <ItemSoldProvider>
-                    <ItemRegProvider>
-                      <CartProvider>{children}</CartProvider>
-                    </ItemRegProvider>
-                  </ItemSoldProvider>
-                </PaymentProvider>
-              </SettingsProvider>
-            </ThemeProviders>
-          </InventoryProvider>
-        </CashoutProvider>
+        <MonthlyReportProvider>
+          <CashoutProvider>
+            <InventoryProvider>
+              <ThemeProviders>
+                <SettingsProvider>
+                  <PaymentProvider>
+                    <ItemSoldProvider>
+                      <ItemRegProvider>
+                        <CartProvider>{children}</CartProvider>
+                      </ItemRegProvider>
+                    </ItemSoldProvider>
+                  </PaymentProvider>
+                </SettingsProvider>
+              </ThemeProviders>
+            </InventoryProvider>
+          </CashoutProvider>
+        </MonthlyReportProvider>
       </AuthProvider>
     </QueryClientProvider>
   );
 }
-
-// ...existing code if any...

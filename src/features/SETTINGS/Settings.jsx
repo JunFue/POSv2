@@ -1,72 +1,30 @@
 import { useContext } from "react";
 import { SettingsContext } from "../../context/SettingsContext";
-import { ThemeContext } from "../../context/ThemeContext";
-import { supabase } from "../../utils/supabaseClient";
-import { useAuth } from "../AUTHENTICATION/hooks/useAuth";
-import { deleteUserAccount } from "../../api/userService";
+import { MonthlyReportSettings } from "./MonthlyReportSettings";
+import { ThemeSettings } from "./ThemeSettings";
 
 export function Settings() {
   const { setShowSettings } = useContext(SettingsContext);
-  const { theme, setTheme, availableThemes } = useContext(ThemeContext);
-  const { user } = useAuth();
-
-  const handleDeleteAccount = async () => {
-    if (!user) {
-      alert("Could not find user. Please log in again.");
-      return;
-    }
-    if (
-      window.confirm(
-        "Are you sure you want to permanently delete your account? This action cannot be undone."
-      )
-    ) {
-      try {
-        await deleteUserAccount(user.id);
-        alert("Account deleted successfully.");
-        await supabase.auth.signOut();
-        window.location.reload();
-      } catch (error) {
-        console.error("Error deleting account:", error);
-        alert(`An error occurred: ${error.message}`);
-      }
-    }
-  };
 
   return (
-    <div className="absolute top-[5vh] left-[35vw] w-[30vw] min-h-[20vw] traditional-glass flex flex-col justify-between gap-4 text-body-text z-2">
-      <div>
+    // Full-screen overlay with a semi-transparent backdrop
+    <div className="fixed inset-0 z-10 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+      {/* Main settings panel with improved styling */}
+      <div className="relative w-full max-w-2xl min-h-[400px] traditional-glass text-body-text rounded-xl shadow-lg p-8">
+        {/* Close button moved here for better separation of concerns */}
         <button
           onClick={() => setShowSettings(false)}
-          className="absolute top-6 right-6 text-2xl font-bold"
+          className="absolute top-4 right-4 text-3xl font-bold text-head-text hover:text-gray-400 transition-colors"
+          aria-label="Close settings"
         >
           &times;
         </button>
-        <h1 className="text-2xl font-bold mb-2 text-head-text">Settings</h1>
-        <div className="mt-4">
-          <p className="text-sm mb-2">Change Theme</p>
-          <div className="grid grid-cols-2 gap-2">
-            {availableThemes.map((themeName) => (
-              <button
-                key={themeName}
-                onClick={() => setTheme(themeName)}
-                className={`capitalize p-2 rounded-md text-center text-xs transition-all text-body-text! glass-button ${
-                  theme === themeName ? "bg-background! font-bold" : ""
-                }`}
-              >
-                {themeName}
-              </button>
-            ))}
-          </div>
+
+        {/* Main content area */}
+        <div className="flex flex-col gap-6">
+          <ThemeSettings />
+          <MonthlyReportSettings />
         </div>
-      </div>
-      <div className="mt-6 pt-4 border-t border-red-300/50">
-        <h2 className="text-lg font-bold text-red-700">Danger Zone</h2>
-        <button
-          onClick={handleDeleteAccount}
-          className="w-full bg-red-600 text-body-text font-bold py-2 px-4 rounded-md hover:bg-red-700 transition-colors"
-        >
-          Delete My Account
-        </button>
       </div>
     </div>
   );
