@@ -1,18 +1,15 @@
 import { format } from "date-fns";
-import { useMonthlyReport } from "../../context/MonthlyReportContext";
+
 import { useEffect, useState, useRef } from "react";
+
+import { useMonthlyReport } from "../../context/MonthlyReportContext";
 import { Calendar } from "../../components/Calendar";
 
-const toLocalDateString = (date) => {
-  if (!date) return "";
-  return format(date, "yyyy-MM-dd");
-};
+const toLocalDateString = (date) => (date ? format(date, "yyyy-MM-dd") : "");
 
-export function MonthlyReportSettings() {
-  // --- CHANGE 1: Destructure `reportData` from the context ---
-  const { reportData, dateRange, fetchAndSaveReport, loading, error } =
-    useMonthlyReport();
-
+export function MonthlyReportSettings({ onClose }) {
+  // --- CHANGE: The context now provides `setAndSaveDateRange` ---
+  const { dateRange, setAndSaveDateRange } = useMonthlyReport();
   const [selectedRange, setSelectedRange] = useState(dateRange);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const calendarRef = useRef(null);
@@ -21,25 +18,15 @@ export function MonthlyReportSettings() {
     setSelectedRange(dateRange);
   }, [dateRange]);
 
-  // --- CHANGE 2: Add useEffect to log data when it changes ---
   useEffect(() => {
-    // Check if reportData is not null or undefined before logging
-    if (reportData) {
-      console.log("Fetched Monthly Report Data:", reportData);
-    }
-  }, [reportData]); // This effect runs whenever `reportData` is updated
-
-  useEffect(() => {
-    function handleClickOutside(event) {
+    const handleClickOutside = (event) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
         setIsCalendarOpen(false);
       }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [calendarRef]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleCalendarChange = (selection) => {
     if (selection.range) {
@@ -50,12 +37,13 @@ export function MonthlyReportSettings() {
     }
   };
 
+  // --- CHANGE: This function no longer fetches data ---
   const handleSaveChanges = () => {
     if (selectedRange.from && selectedRange.to) {
-      fetchAndSaveReport(selectedRange);
+      setAndSaveDateRange(selectedRange);
+      onClose(); // Close the settings dialog
     } else {
-      // Replaced alert with a console log to avoid blocking UI in some environments
-      console.warn("Please select a complete date range.");
+      alert("Please select a complete date range.");
     }
   };
 
@@ -72,7 +60,6 @@ export function MonthlyReportSettings() {
       <p className="text-sm text-body-text/80 mb-4">
         Set the default date range for your monthly financial reports.
       </p>
-
       <div className="space-y-4">
         <div className="relative" ref={calendarRef}>
           <label
@@ -89,7 +76,6 @@ export function MonthlyReportSettings() {
             onClick={() => setIsCalendarOpen(!isCalendarOpen)}
             className="w-full bg-background border-2 border-gray-300/50 text-body-text text-md rounded-lg p-3 cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
-
           {isCalendarOpen && (
             <div className="absolute top-full mt-2 w-full z-20">
               <Calendar
@@ -101,15 +87,11 @@ export function MonthlyReportSettings() {
             </div>
           )}
         </div>
-
-        {error && <p className="text-red-500 text-xs mt-2">{error}</p>}
-
         <button
           onClick={handleSaveChanges}
-          disabled={loading}
-          className="w-full bg-teal-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-teal-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-opacity-50"
+          className="w-full bg-teal-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500"
         >
-          {loading ? "Saving..." : "Save Changes"}
+          Save Changes
         </button>
       </div>
     </div>

@@ -4,7 +4,7 @@ import {
   getCoreRowModel,
   flexRender,
 } from "@tanstack/react-table";
-import { useMonthlyLogData } from "./hooks/useMonthlyLogData"; // Import the new hook
+import { useMonthlyLogData } from "./hooks/useMonthlyLogData";
 
 // Helper for currency formatting
 const formatCurrency = (value) => {
@@ -15,14 +15,13 @@ const formatCurrency = (value) => {
 };
 
 export function MonthlyLogTable() {
-  // Get processed data directly from the new hook
-  const dailyLogs = useMonthlyLogData();
+  // FIXED: Properly destructure the object returned by the hook
+  const { dailyLogs, loading, error } = useMonthlyLogData();
 
-  // --- ADDED CONSOLE LOG ---
-  // This will show you the final computed data from the hook in your browser's developer console.
+  // Console log for debugging
   console.log("Computed data from useMonthlyLogData:", dailyLogs);
 
-  // Define columns (This part remains the same)
+  // Define columns
   const columns = useMemo(
     () => [
       {
@@ -63,12 +62,31 @@ export function MonthlyLogTable() {
     []
   );
 
-  // Use the useReactTable hook (This part remains the same)
+  // Use the useReactTable hook
   const table = useReactTable({
     columns,
-    data: dailyLogs,
+    data: dailyLogs || [], // Add fallback to empty array
     getCoreRowModel: getCoreRowModel(),
   });
+
+  // Handle loading and error states
+  if (loading) {
+    return (
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Monthly Log</h2>
+        <div className="text-center py-10 text-gray-500">Loading...</div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Monthly Log</h2>
+        <div className="text-center py-10 text-red-500">Error: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="mt-8">

@@ -1,82 +1,78 @@
-import { useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useMonthlyReport } from "../../../../../context/MonthlyReportContext";
-import { eachDayOfInterval, format, startOfDay } from "date-fns";
 import { useParams } from "react-router";
+import { useAuth } from "../../../../AUTHENTICATION/hooks/useAuth";
+import { format } from "date-fns";
 
-const formatDate = (date) => format(new Date(date), "yyyy-MM-dd");
+const toApiDateString = (date) => (date ? format(date, "yyyy-MM-dd") : "");
 
 export function useMonthlyLogData() {
-  const { reportData, dateRange } = useMonthlyReport();
+  const [dailyLogs, setDailyLogs] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  const { dateRange } = useMonthlyReport();
   const { categoryName } = useParams();
+  const { token } = useAuth();
 
-  const dailyLogs = useMemo(() => {
-    if (!reportData || !dateRange || !dateRange.from || !dateRange.to) {
-      return [];
-    }
+  // --- DIAGNOSTIC: Use a ref to track render counts ---
+  const renderCount = useRef(1);
+  useEffect(() => {
+    console.log(
+      `%cuseMonthlyLogData hook rendered: ${renderCount.current} times`,
+      "color: gray"
+    );
+    renderCount.current += 1;
+  });
 
-    const allDatesInRange = eachDayOfInterval({
-      start: startOfDay(dateRange.from),
-      end: startOfDay(dateRange.to),
-    }).map(formatDate);
+  const dateRangeKey = useMemo(() => {
+    if (!dateRange.from || !dateRange.to) return null;
+    return `${dateRange.from.toISOString()}_${dateRange.to.toISOString()}`;
+  }, [dateRange]);
 
-    // --- 1. Calculate total sales for the category per day ---
-    const transactionsByDate = (reportData.tableOneData || [])
-      .filter((t) => t.classification === categoryName)
-      .reduce((acc, t) => {
-        const date = formatDate(t.transactionDate);
-        if (!acc[date]) acc[date] = 0;
-        acc[date] += parseFloat(t.totalPrice);
-        return acc;
-      }, {});
+  useEffect(() => {
+    // --- DIAGNOSTIC: Log why this effect is running ---
+    console.log(
+      "%cData fetching effect is running because a dependency changed.",
+      "color: blue"
+    );
 
-    // --- 2. Calculate total discounts per day (from all categories) ---
-    const discountsByDate = (reportData.paymentsData || []).reduce((acc, p) => {
-      const date = formatDate(p.transaction_date);
-      if (!acc[date]) acc[date] = 0;
-      acc[date] += parseFloat(p.discount);
-      return acc;
-    }, {});
+    const fetchLogs = async () => {
+      if (!dateRangeKey || !categoryName || !token) {
+        console.log("Fetch skipped: Missing required data.");
+        return;
+      }
 
-    // --- 3. Calculate total cashouts for the category per day ---
-    const cashoutsByDate = (reportData.tableTwoData || [])
-      .filter((c) => c.category === categoryName)
-      .reduce((acc, c) => {
-        const date = formatDate(c.cashout_date);
-        if (!acc[date]) acc[date] = 0;
-        acc[date] += parseFloat(c.amount);
-        return acc;
-      }, {});
+      console.log("%cFetching new data from the server...", "color: orange");
+      setLoading(true);
+      setError(null);
 
-    let runningBalance = 0;
-    const logs = allDatesInRange.map((dateStr) => {
-      const forwarded = runningBalance;
+      const startDate = toApiDateString(dateRange.from);
+      const endDate = toApiDateString(dateRange.to);
+      const API_URL = import.meta.env.VITE_BACKEND_URL || "";
+      const url = `${API_URL}/api/category-logs?categoryName=${categoryName}&startDate=${startDate}&endDate=${endDate}`;
 
-      // Get the gross cash-in from sales
-      let grossCashIn = transactionsByDate[dateStr] || 0;
+      try {
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!response.ok) {
+          throw new Error("Failed to fetch daily logs from the server.");
+        }
+        const data = await response.json();
+        setDailyLogs(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-      // Get the total discount for the day
-      const dailyDiscount = discountsByDate[dateStr] || 0;
+    fetchLogs();
 
-      // --- 4. Apply the discount logic ---
-      // If the category is "DETOX", subtract the day's total discount
-      const finalCashIn =
-        categoryName === "DETOX" ? grossCashIn - dailyDiscount : grossCashIn;
+    // --- THE FIX: The unstable `dateRange` object has been removed. ---
+    // This effect now ONLY re-runs when the category or date range *values* actually change.
+  }, [categoryName, dateRangeKey, token]);
 
-      const cashOut = cashoutsByDate[dateStr] || 0;
-      const balance = forwarded + finalCashIn - cashOut;
-      runningBalance = balance;
-
-      return {
-        date: dateStr,
-        forwarded,
-        cashIn: finalCashIn, // Use the final, adjusted value
-        cashOut,
-        balance,
-      };
-    });
-
-    return logs;
-  }, [reportData, dateRange, categoryName]);
-
-  return dailyLogs;
+  return { dailyLogs, loading, error };
 }
