@@ -13,8 +13,7 @@ import { AppProviders } from "./context/Provider.jsx";
 import { POS } from "./features/SALES_TERMINAL/POS.jsx";
 import { FaAnglesRight } from "react-icons/fa6";
 
-// --- LAZY-LOADED COMPONENTS ---
-// Correctly handle the `default` export from the dynamically imported modules.
+// --- LAZY-LOADED ROUTE COMPONENTS ---
 const Dashboard = lazy(() =>
   import("./features/DASHBOARD/Dashboard.jsx").then((module) => ({
     default: module.Dashboard,
@@ -41,7 +40,6 @@ const Inventory = lazy(() =>
   }))
 );
 
-// A reusable loading spinner component for the Suspense fallback.
 const CenteredSpinner = () => (
   <div className="w-full h-full flex items-center justify-center p-10">
     <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-teal-500"></div>
@@ -54,26 +52,25 @@ function App() {
   const [posWidth, setPosWidth] = useState(() => {
     try {
       const savedWidth = localStorage.getItem(POS_PANEL_WIDTH_KEY);
-      if (savedWidth) {
-        return JSON.parse(savedWidth);
-      }
+      return savedWidth ? JSON.parse(savedWidth) : window.innerWidth / 3;
     } catch (error) {
-      console.error("Error reading panel width from localStorage", error);
+      alert(error);
+      return window.innerWidth / 3;
     }
-    return window.innerWidth / 3;
   });
 
   const [isPosVisible, setIsPosVisible] = useState(true);
-
   const isResizing = useRef(false);
   const animationFrameId = useRef(null);
 
-  const handleMouseDown = useCallback((e) => {
+  // Renamed to handle both mouse and touch start events
+  const handleDragStart = useCallback((e) => {
     e.preventDefault();
     isResizing.current = true;
   }, []);
 
-  const handleMouseUp = useCallback(() => {
+  // Renamed to handle both mouse and touch end events
+  const handleDragEnd = useCallback(() => {
     if (isResizing.current) {
       isResizing.current = false;
       if (isPosVisible) {
@@ -86,13 +83,15 @@ function App() {
     }
   }, [posWidth, isPosVisible]);
 
-  const handleMouseMove = useCallback((e) => {
+  // Renamed and updated to handle both mouse and touch move events
+  const handleDragMove = useCallback((e) => {
     if (isResizing.current) {
-      const clientX = e.clientX;
+      // Get the horizontal position from either the mouse or touch event
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
-
       animationFrameId.current = requestAnimationFrame(() => {
         const minWidth = 350;
         const hideThreshold = 200;
@@ -103,7 +102,6 @@ function App() {
         } else {
           setIsPosVisible(true);
         }
-
         const newWidth = Math.max(minWidth, Math.min(clientX, maxWidth));
         setPosWidth(newWidth);
       });
@@ -114,18 +112,28 @@ function App() {
     setIsPosVisible(true);
   }, []);
 
+  // Updated to include event listeners for both mouse and touch events
   useEffect(() => {
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
+    // Add listeners for mouse events
+    window.addEventListener("mousemove", handleDragMove);
+    window.addEventListener("mouseup", handleDragEnd);
+    // Add listeners for touch events
+    window.addEventListener("touchmove", handleDragMove);
+    window.addEventListener("touchend", handleDragEnd);
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      // Clean up mouse event listeners
+      window.removeEventListener("mousemove", handleDragMove);
+      window.removeEventListener("mouseup", handleDragEnd);
+      // Clean up touch event listeners
+      window.removeEventListener("touchmove", handleDragMove);
+      window.removeEventListener("touchend", handleDragEnd);
+
       if (animationFrameId.current) {
         cancelAnimationFrame(animationFrameId.current);
       }
     };
-  }, [handleMouseMove, handleMouseUp]);
+  }, [handleDragMove, handleDragEnd]);
 
   return (
     <AppProviders>
@@ -140,28 +148,32 @@ function App() {
           </button>
         )}
 
-        {isPosVisible && (
-          <>
-            <div
-              className="h-full flex-shrink-0"
-              style={{ width: `${posWidth}px` }}
-            >
-              <POS />
-            </div>
-            <div
-              role="separator"
-              aria-orientation="vertical"
-              className="w-2 h-full cursor-col-resize bg-gray-700/40 hover:bg-teal-500 transition-colors duration-200"
-              onMouseDown={handleMouseDown}
-            />
-          </>
-        )}
+        <div
+          className="h-full flex-shrink-0 transition-all duration-500 ease-in-out"
+          style={{ width: isPosVisible ? `${posWidth}px` : "0px" }}
+        >
+          <div
+            className="w-full h-full transition-opacity duration-300 ease-in-out overflow-hidden"
+            style={{ opacity: isPosVisible ? 1 : 0 }}
+          >
+            <POS />
+          </div>
+        </div>
+
+        {/* Resizer Handle now listens for both mouse and touch events */}
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          className={`w-2 h-full cursor-col-resize bg-gray-700/40 hover:bg-teal-500 transition-opacity duration-300 ${
+            !isPosVisible && "opacity-0 pointer-events-none"
+          }`}
+          onMouseDown={handleDragStart}
+          onTouchStart={handleDragStart}
+        />
 
         <div className="flex flex-col flex-grow h-full min-w-0 p-2 gap-2">
           <Nav />
           <div className="shadow-neumorphic overflow-y-auto flex-grow rounded-xl">
-            {/* --- SUSPENSE WRAPPER --- */}
-            {/* This will show the spinner while a lazy-loaded component is being fetched. */}
             <Suspense fallback={<CenteredSpinner />}>
               <Routes>
                 <Route path="/*" element={<Dashboard />} />
