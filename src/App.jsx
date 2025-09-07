@@ -1,20 +1,56 @@
 import "./index.css";
 import { Nav } from "./components/NAVIGATION/Nav.jsx";
-import { Cashout } from "./features/CASHOUT/Cashout.jsx";
-import { Inventory } from "./features/INVENTORY/Inventory.jsx";
-import { Transactions } from "./features/TRANSACTIONS/Transactions.jsx";
 import { Routes, Route } from "react-router";
-import React, { useState, useRef, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useCallback,
+  useEffect,
+  lazy,
+  Suspense,
+} from "react";
 import { AppProviders } from "./context/Provider.jsx";
-import { CategoryPage } from "./features/DASHBOARD/components/CategoryPage.jsx";
-import { Dashboard } from "./features/DASHBOARD/Dashboard.jsx";
 import { POS } from "./features/SALES_TERMINAL/POS.jsx";
 import { FaAnglesRight } from "react-icons/fa6";
+
+// --- LAZY-LOADED COMPONENTS ---
+// Correctly handle the `default` export from the dynamically imported modules.
+const Dashboard = lazy(() =>
+  import("./features/DASHBOARD/Dashboard.jsx").then((module) => ({
+    default: module.Dashboard,
+  }))
+);
+const CategoryPage = lazy(() =>
+  import("./features/DASHBOARD/components/CategoryPage.jsx").then((module) => ({
+    default: module.CategoryPage,
+  }))
+);
+const Cashout = lazy(() =>
+  import("./features/CASHOUT/Cashout.jsx").then((module) => ({
+    default: module.Cashout,
+  }))
+);
+const Transactions = lazy(() =>
+  import("./features/TRANSACTIONS/Transactions.jsx").then((module) => ({
+    default: module.Transactions,
+  }))
+);
+const Inventory = lazy(() =>
+  import("./features/INVENTORY/Inventory.jsx").then((module) => ({
+    default: module.Inventory,
+  }))
+);
+
+// A reusable loading spinner component for the Suspense fallback.
+const CenteredSpinner = () => (
+  <div className="w-full h-full flex items-center justify-center p-10">
+    <div className="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-teal-500"></div>
+  </div>
+);
 
 const POS_PANEL_WIDTH_KEY = "posPanelWidth";
 
 function App() {
-  // State to hold the width of the POS panel.
   const [posWidth, setPosWidth] = useState(() => {
     try {
       const savedWidth = localStorage.getItem(POS_PANEL_WIDTH_KEY);
@@ -27,10 +63,10 @@ function App() {
     return window.innerWidth / 3;
   });
 
-  // New state to manage the visibility of the POS panel.
   const [isPosVisible, setIsPosVisible] = useState(true);
 
   const isResizing = useRef(false);
+  const animationFrameId = useRef(null);
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault();
@@ -40,7 +76,6 @@ function App() {
   const handleMouseUp = useCallback(() => {
     if (isResizing.current) {
       isResizing.current = false;
-      // Only save the width if the panel is visible upon mouse release.
       if (isPosVisible) {
         try {
           localStorage.setItem(POS_PANEL_WIDTH_KEY, JSON.stringify(posWidth));
@@ -51,30 +86,30 @@ function App() {
     }
   }, [posWidth, isPosVisible]);
 
-  const handleMouseMove = useCallback(
-    (e) => {
-      if (isResizing.current) {
+  const handleMouseMove = useCallback((e) => {
+    if (isResizing.current) {
+      const clientX = e.clientX;
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
+
+      animationFrameId.current = requestAnimationFrame(() => {
         const minWidth = 350;
-        const hideThreshold = 200; // Dragging left past this point hides the panel.
+        const hideThreshold = 200;
         const maxWidth = window.innerWidth * 0.7;
 
-        // If the user drags past the threshold, hide the panel.
-        // If they drag back to the right, show it again.
-        if (e.clientX < hideThreshold) {
+        if (clientX < hideThreshold) {
           setIsPosVisible(false);
         } else {
           setIsPosVisible(true);
         }
 
-        // We still calculate the width, but it will only be applied if the panel is visible.
-        const newWidth = Math.max(minWidth, Math.min(e.clientX, maxWidth));
+        const newWidth = Math.max(minWidth, Math.min(clientX, maxWidth));
         setPosWidth(newWidth);
-      }
-    },
-    [] // Setter functions from useState are stable and don't need to be dependencies.
-  );
+      });
+    }
+  }, []);
 
-  // New handler to show the POS panel when the floating button is clicked.
   const handleShowPos = useCallback(() => {
     setIsPosVisible(true);
   }, []);
@@ -86,13 +121,15 @@ function App() {
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      if (animationFrameId.current) {
+        cancelAnimationFrame(animationFrameId.current);
+      }
     };
   }, [handleMouseMove, handleMouseUp]);
 
   return (
     <AppProviders>
       <div className="flex w-screen h-screen bg-background text-body-text overflow-hidden">
-        {/* Floating button to unhide the POS panel */}
         {!isPosVisible && (
           <button
             onClick={handleShowPos}
@@ -103,18 +140,14 @@ function App() {
           </button>
         )}
 
-        {/* The POS Panel and its resizer are now conditionally rendered */}
         {isPosVisible && (
           <>
-            {/* POS Panel */}
             <div
               className="h-full flex-shrink-0"
               style={{ width: `${posWidth}px` }}
             >
               <POS />
             </div>
-
-            {/* Resizer Handle */}
             <div
               role="separator"
               aria-orientation="vertical"
@@ -124,21 +157,24 @@ function App() {
           </>
         )}
 
-        {/* Main Content Panel */}
         <div className="flex flex-col flex-grow h-full min-w-0 p-2 gap-2">
           <Nav />
           <div className="shadow-neumorphic overflow-y-auto flex-grow rounded-xl">
-            <Routes>
-              <Route path="/*" element={<Dashboard />} />
-              <Route path="dashboard" element={<Dashboard />} />
-              <Route
-                path="dashboard/category/:categoryName"
-                element={<CategoryPage />}
-              />
-              <Route path="cashout" element={<Cashout />} />
-              <Route path="transactions/*" element={<Transactions />} />
-              <Route path="inventory/*" element={<Inventory />} />
-            </Routes>
+            {/* --- SUSPENSE WRAPPER --- */}
+            {/* This will show the spinner while a lazy-loaded component is being fetched. */}
+            <Suspense fallback={<CenteredSpinner />}>
+              <Routes>
+                <Route path="/*" element={<Dashboard />} />
+                <Route path="dashboard" element={<Dashboard />} />
+                <Route
+                  path="dashboard/category/:categoryName"
+                  element={<CategoryPage />}
+                />
+                <Route path="cashout" element={<Cashout />} />
+                <Route path="transactions/*" element={<Transactions />} />
+                <Route path="inventory/*" element={<Inventory />} />
+              </Routes>
+            </Suspense>
           </div>
         </div>
       </div>

@@ -1,9 +1,12 @@
 import React from "react";
-// BsThreeDotsVertical is no longer needed and has been removed.
 
-export function DashboardCard({ children, title, ...props }) {
-  // The state for the dropdown menu has been removed.
-
+// By wrapping the component in React.memo, we prevent it from re-rendering
+// if its props (children, title) have not changed.
+export const DashboardCard = React.memo(function DashboardCard({
+  children,
+  title,
+  ...props
+}) {
   return (
     <div
       {...props}
@@ -12,7 +15,6 @@ export function DashboardCard({ children, title, ...props }) {
       {/* Card Header */}
       <div className="drag-handle flex justify-between items-center p-4 text-body-text cursor-grab">
         <h3 className="font-bold text-lg">{title}</h3>
-        {/* The entire div for the three-dots menu has been removed from here. */}
       </div>
 
       {/* Card Content */}
@@ -21,4 +23,4 @@ export function DashboardCard({ children, title, ...props }) {
       </div>
     </div>
   );
-}
+});
