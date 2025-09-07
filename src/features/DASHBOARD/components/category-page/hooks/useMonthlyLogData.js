@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useMonthlyReport } from "../../../../../context/MonthlyReportContext";
 import { useParams } from "react-router";
 import { useAuth } from "../../../../AUTHENTICATION/hooks/useAuth";
@@ -15,35 +15,17 @@ export function useMonthlyLogData() {
   const { categoryName } = useParams();
   const { token } = useAuth();
 
-  // --- DIAGNOSTIC: Use a ref to track render counts ---
-  const renderCount = useRef(1);
-  useEffect(() => {
-    console.log(
-      `%cuseMonthlyLogData hook rendered: ${renderCount.current} times`,
-      "color: gray"
-    );
-    renderCount.current += 1;
-  });
-
   const dateRangeKey = useMemo(() => {
     if (!dateRange.from || !dateRange.to) return null;
     return `${dateRange.from.toISOString()}_${dateRange.to.toISOString()}`;
   }, [dateRange]);
 
   useEffect(() => {
-    // --- DIAGNOSTIC: Log why this effect is running ---
-    console.log(
-      "%cData fetching effect is running because a dependency changed.",
-      "color: blue"
-    );
-
     const fetchLogs = async () => {
       if (!dateRangeKey || !categoryName || !token) {
-        console.log("Fetch skipped: Missing required data.");
         return;
       }
 
-      console.log("%cFetching new data from the server...", "color: orange");
       setLoading(true);
       setError(null);
 
@@ -60,6 +42,9 @@ export function useMonthlyLogData() {
           throw new Error("Failed to fetch daily logs from the server.");
         }
         const data = await response.json();
+        // --- ADDED CONSOLE LOG ---
+        // This will log the fetched data to your browser's developer console.
+        console.log("Fetched daily logs:", data);
         setDailyLogs(data);
       } catch (err) {
         setError(err.message);

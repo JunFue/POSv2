@@ -5,28 +5,34 @@ import {
   flexRender,
 } from "@tanstack/react-table";
 import { useMonthlyLogData } from "./hooks/useMonthlyLogData";
+import { format } from "date-fns";
 
 // Helper for currency formatting
 const formatCurrency = (value) => {
-  return `₱${value.toLocaleString(undefined, {
+  const numberValue = parseFloat(value) || 0;
+  return `₱${numberValue.toLocaleString("en-PH", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   })}`;
 };
 
+// Helper for date formatting
+const formatDate = (dateString) => {
+  if (!dateString) return "";
+  // Handles the ISO string with 'Z' from the database
+  return format(new Date(dateString), "MMMM d, yyyy");
+};
+
 export function MonthlyLogTable() {
-  // FIXED: Properly destructure the object returned by the hook
   const { dailyLogs, loading, error } = useMonthlyLogData();
 
-  // Console log for debugging
-  console.log("Computed data from useMonthlyLogData:", dailyLogs);
-
-  // Define columns
+  // Define columns for the table
   const columns = useMemo(
     () => [
       {
         header: "Date",
-        accessorKey: "date",
+        accessorKey: "log_date",
+        cell: (info) => formatDate(info.getValue()),
       },
       {
         header: "Forwarded",
@@ -35,7 +41,7 @@ export function MonthlyLogTable() {
       },
       {
         header: "Cash-in",
-        accessorKey: "cashIn",
+        accessorKey: "cash_in",
         cell: (info) => (
           <span className="text-green-600">
             + {formatCurrency(info.getValue())}
@@ -44,7 +50,7 @@ export function MonthlyLogTable() {
       },
       {
         header: "Cash-out",
-        accessorKey: "cashOut",
+        accessorKey: "cash_out",
         cell: (info) => (
           <span className="text-red-600">
             - {formatCurrency(info.getValue())}
@@ -62,44 +68,43 @@ export function MonthlyLogTable() {
     []
   );
 
-  // Use the useReactTable hook
   const table = useReactTable({
     columns,
-    data: dailyLogs || [], // Add fallback to empty array
+    data: dailyLogs || [],
     getCoreRowModel: getCoreRowModel(),
   });
 
-  // Handle loading and error states
   if (loading) {
     return (
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Monthly Log</h2>
-        <div className="text-center py-10 text-gray-500">Loading...</div>
+      <div className="mt-8 text-center p-10">
+        <p className="text-gray-500">Loading monthly logs...</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Monthly Log</h2>
-        <div className="text-center py-10 text-red-500">Error: {error}</div>
+      <div className="mt-8 text-center p-10 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-red-600 font-medium">Error loading data</p>
+        <p className="text-red-500 text-sm mt-1">
+          {error.message || "Something went wrong."}
+        </p>
       </div>
     );
   }
 
   return (
     <div className="mt-8">
-      <h2 className="text-xl font-semibold mb-4">Monthly Log</h2>
-      <div className="overflow-x-auto rounded-lg shadow max-h-96">
-        <table className="min-w-full divide-y divide-head-text">
-          <thead className="bg-background sticky top-0">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">Monthly Log</h2>
+      <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm max-h-96">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50 sticky top-0">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="px-6 py-3 text-left text-xs font-medium text-head-text uppercase tracking-wider"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                   >
                     {header.isPlaceholder
                       ? null
@@ -112,21 +117,24 @@ export function MonthlyLogTable() {
               </tr>
             ))}
           </thead>
-          <tbody className="bg-background divide-y divide-head-text traditional-input overflow-auto no-scrollbar">
+          <tbody className="bg-white divide-y divide-gray-200">
             {table.getRowModel().rows.length === 0 ? (
               <tr>
                 <td
                   colSpan={columns.length}
                   className="text-center py-10 text-gray-500"
                 >
-                  Select a date range in the settings to view the log.
+                  No data available for the selected range.
                 </td>
               </tr>
             ) : (
               table.getRowModel().rows.map((row) => (
-                <tr key={row.id}>
+                <tr key={row.id} className="hover:bg-gray-50">
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="px-6 py-4 whitespace-nowrap">
+                    <td
+                      key={cell.id}
+                      className="px-6 py-4 whitespace-nowrap text-sm text-gray-700"
+                    >
                       {flexRender(
                         cell.column.columnDef.cell,
                         cell.getContext()
