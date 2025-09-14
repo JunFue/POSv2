@@ -29,28 +29,12 @@ const POSSkeleton = () => (
 
 export function POS() {
   return (
-    <div className="h-full w-full bg-background p-4 shadow-lg flex flex-col overflow-hidden">
-      {/* ================================================================= */}
-      {/* CRITICAL LCP CONTENT - Renders Immediately */}
-      {/* ================================================================= */}
-      <header className="flex flex-col items-center mb-1">
-        <h1 className="sm:text-2xl lg:text-3xl xl:text-4xl font-bold text-head-text">
-          POINT OF SALE
-        </h1>
-        {/* Other lightweight header elements can go here */}
-      </header>
-      <div className="relative shiny-gradient p-1 text-accent-100"></div>
-      {/* ================================================================= */}
-
-      {/* ================================================================= */}
-      {/* DEFERRED CONTENT - Renders After Initial Paint */}
-      {/* ================================================================= */}
+    <div className="h-full w-full bg-background shadow-lg flex flex-col overflow-hidden">
       <div className="flex-grow overflow-y-auto mt-4">
         <Suspense fallback={<POSSkeleton />}>
           <POSContents />
         </Suspense>
       </div>
-      {/* ================================================================= */}
     </div>
   );
 }

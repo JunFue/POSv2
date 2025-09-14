@@ -22,7 +22,7 @@ export function POSContents() {
   const [isShowAuth, setIsShowAuth] = useState(false);
 
   const { user } = useAuth();
-
+  const name = user.user_metadata?.fullName || user.email;
   const handleDone = () => {
     counterFormRef.current?.completeTransaction();
   };
@@ -40,16 +40,16 @@ export function POSContents() {
   return (
     <div className="rounded-[20px] bg-background shadow-neumorphic p-3">
       <header className="flex flex-col items-center mb-1">
+        <h1 className="sm:text-2xl lg:text-3xl 2xl:text-3xl font-bold text-head-text">
+          POINT OF SALE
+        </h1>
         {user ? (
           <p className="text-xs md:text-[16px] text-head-text font-bold">
-            Welcome, {user.email}!
+            Welcome, {name}!
           </p>
         ) : (
           <p className="text-sm text-body-text">Please sign in.</p>
         )}
-        <h1 className="sm:text-2xl lg:text-3xl 2xl:text-4xl font-bold text-head-text">
-          POINT OF SALE
-        </h1>
       </header>
 
       <CounterForm
