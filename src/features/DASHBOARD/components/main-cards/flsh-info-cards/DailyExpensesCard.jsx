@@ -2,10 +2,19 @@ import React from "react";
 // REMOVED: No longer need useState, useEffect, useCallback, useAuth, or supabase client here.
 import { MiniCard } from "./MiniCard";
 import { useCashoutTotal } from "./hooks/useCashoutTotal";
-import { useCurrencyFormatter } from "../../../../../utils/useCurrencyFormatter";
 
 export function DailyExpensesCard({ onHide }) {
-  const useCurrencyFormatter = useCurrencyFormatter({
+  const formatCurrency = (value) => {
+    // Guard against non-numeric inputs to prevent errors.
+    if (typeof value !== "number" || isNaN(value)) {
+      return "";
+    }
+    return new Intl.NumberFormat("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    }).format(value);
+  };
+  const useCurrencyFormatter = formatCurrency({
     locale: "en-PH",
     currency: "PHP",
   });
