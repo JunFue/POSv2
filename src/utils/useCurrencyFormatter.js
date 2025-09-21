@@ -22,12 +22,12 @@ export const useCurrencyFormatter = (options = {}) => {
 
   // useCallback ensures the function returned by the hook is stable,
   // preventing unnecessary re-renders in child components that receive it as a prop.
-  const formatCurrency = useCallback(
+  const useCurrencyFormatter = useCallback(
     (value) => {
       return formatter.format(value || 0);
     },
     [formatter]
   );
 
-  return formatCurrency;
+  return useCurrencyFormatter;
 };

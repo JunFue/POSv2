@@ -5,7 +5,7 @@ import { useCashoutTotal } from "./hooks/useCashoutTotal";
 import { useCurrencyFormatter } from "../../../../../utils/useCurrencyFormatter";
 
 export function DailyExpensesCard({ onHide }) {
-  const formatCurrency = useCurrencyFormatter({
+  const useCurrencyFormatter = useCurrencyFormatter({
     locale: "en-PH",
     currency: "PHP",
   });
@@ -22,7 +22,7 @@ export function DailyExpensesCard({ onHide }) {
     <MiniCard
       title="Daily Expenses"
       // 3. Format the value from the hook directly in the render method.
-      value={formatCurrency(cashoutTotal)}
+      value={useCurrencyFormatter(cashoutTotal)}
       onHide={onHide}
     />
   );

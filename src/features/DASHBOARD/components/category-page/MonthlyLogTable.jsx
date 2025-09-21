@@ -8,7 +8,7 @@ import { useMonthlyLogData } from "./hooks/useMonthlyLogData";
 import { format } from "date-fns";
 
 // Helper for currency formatting
-const formatCurrency = (value) => {
+const useCurrencyFormatter = (value) => {
   const numberValue = parseFloat(value) || 0;
   return `₱${numberValue.toLocaleString("en-PH", {
     minimumFractionDigits: 2,
@@ -37,14 +37,14 @@ export function MonthlyLogTable() {
       {
         header: "Forwarded",
         accessorKey: "forwarded",
-        cell: (info) => formatCurrency(info.getValue()),
+        cell: (info) => useCurrencyFormatter(info.getValue()),
       },
       {
         header: "Cash-in",
         accessorKey: "cash_in",
         cell: (info) => (
           <span className="text-green-600">
-            + {formatCurrency(info.getValue())}
+            + {useCurrencyFormatter(info.getValue())}
           </span>
         ),
       },
@@ -53,7 +53,7 @@ export function MonthlyLogTable() {
         accessorKey: "cash_out",
         cell: (info) => (
           <span className="text-red-600">
-            - {formatCurrency(info.getValue())}
+            - {useCurrencyFormatter(info.getValue())}
           </span>
         ),
       },
@@ -61,7 +61,9 @@ export function MonthlyLogTable() {
         header: "Balance",
         accessorKey: "balance",
         cell: (info) => (
-          <span className="font-medium">{formatCurrency(info.getValue())}</span>
+          <span className="font-medium">
+            {useCurrencyFormatter(info.getValue())}
+          </span>
         ),
       },
     ],

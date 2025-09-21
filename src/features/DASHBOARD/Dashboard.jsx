@@ -3,12 +3,12 @@ import { Responsive, WidthProvider } from "react-grid-layout";
 import { DashboardCard } from "./components/main-cards/DashboardCard";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import Report from "./components/report-generator/Report";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 const LAYOUT_STORAGE_key = "dashboard-layouts-v1";
 
 // Lazy-load the dashboard components to improve initial load time.
-// Correctly handle the `default` export for each module.
 const FlashInfo = lazy(() =>
   import("./components/main-cards/FlashInfo").then((module) => ({
     default: module.FlashInfo,
@@ -55,6 +55,7 @@ const generateLayout = () => {
 };
 
 export function Dashboard() {
+  const [view, setView] = useState("dashboard"); // 'dashboard' or 'report'
   const [layouts, setLayouts] = useState(() => {
     try {
       const savedLayouts = localStorage.getItem(LAYOUT_STORAGE_key);
@@ -74,11 +75,9 @@ export function Dashboard() {
     }
   };
 
-  // useMemo will prevent the card elements from being recreated on every render.
   const memoizedCards = useMemo(
     () =>
       initialCards.map((card) => {
-        // Here we render the component reference, not a new instance.
         const Component = card.component;
         return (
           <DashboardCard key={card.id} title={card.title}>
@@ -88,20 +87,39 @@ export function Dashboard() {
           </DashboardCard>
         );
       }),
-    [] // Empty dependency array means this only runs once.
+    []
   );
 
   return (
-    <ResponsiveGridLayout
-      className="layout"
-      layouts={layouts}
-      breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
-      cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
-      rowHeight={70}
-      onLayoutChange={handleLayoutChange}
-      draggableHandle=".drag-handle"
-    >
-      {memoizedCards}
-    </ResponsiveGridLayout>
+    <div>
+      <div className="p-4 flex justify-end bg-gray-100">
+        <button
+          onClick={() => setView(view === "dashboard" ? "report" : "dashboard")}
+          className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all"
+        >
+          Switch to {view === "dashboard" ? "Report View" : "Dashboard View"}
+        </button>
+      </div>
+
+      {view === "dashboard" ? (
+        <ResponsiveGridLayout
+          className="layout"
+          layouts={layouts}
+          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480, xxs: 0 }}
+          cols={{ lg: 12, md: 10, sm: 6, xs: 4, xxs: 2 }}
+          rowHeight={70}
+          onLayoutChange={handleLayoutChange}
+          draggableHandle=".drag-handle"
+        >
+          {memoizedCards}
+        </ResponsiveGridLayout>
+      ) : (
+        <Suspense
+          fallback={<div className="p-8 text-center">Loading Report...</div>}
+        >
+          <Report />
+        </Suspense>
+      )}
+    </div>
   );
 }
