@@ -12,12 +12,9 @@ import { TodaysNetIncome } from "./flsh-info-cards/TodaysNetIncome";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
-// --- START: Added localStorage keys ---
 const LAYOUTS_STORAGE_KEY = "flashinfo-layouts";
 const CARDS_STORAGE_KEY = "flashinfo-cards";
-// --- END: Added localStorage keys ---
 
-// 2. The state now only defines the metadata for each card
 const initialCards = [
   {
     id: "todays-gross-sales",
@@ -49,17 +46,14 @@ const initialCards = [
     isVisible: true,
     layout: { x: 2, y: 1, w: 2, h: 1 },
   },
-  // ... add other card metadata here
 ];
 
-// 3. A map to easily link a card ID to its component
 const cardComponentMap = {
   "todays-gross-sales": TodaysGrossSalesCard,
   "daily-income": TodaysNetIncome,
   "monthly-income": MonthlyIncomeCard,
   "daily-expenses": DailyExpensesCard,
   "low-stocks": LowStocksCard,
-  // ... add other card components here
 };
 
 const generateLayouts = (cards) => {
@@ -71,7 +65,6 @@ const generateLayouts = (cards) => {
 };
 
 export function FlashInfo() {
-  // --- START: Load state from localStorage ---
   const [cards, setCards] = useState(() => {
     try {
       const storedCards = localStorage.getItem(CARDS_STORAGE_KEY);
@@ -91,11 +84,9 @@ export function FlashInfo() {
       return generateLayouts(cards);
     }
   });
-  // --- END: Load state from localStorage ---
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
-  // --- START: Save cards state to localStorage on change ---
   useEffect(() => {
     try {
       localStorage.setItem(CARDS_STORAGE_KEY, JSON.stringify(cards));
@@ -103,7 +94,6 @@ export function FlashInfo() {
       console.error("Error saving cards to localStorage", error);
     }
   }, [cards]);
-  // --- END: Save cards state to localStorage on change ---
 
   const handleToggleVisibility = (cardId) => {
     setCards(
@@ -114,14 +104,12 @@ export function FlashInfo() {
   };
 
   const onLayoutChange = (layout, newLayouts) => {
-    // --- START: Save layouts to localStorage on change ---
     try {
       localStorage.setItem(LAYOUTS_STORAGE_KEY, JSON.stringify(newLayouts));
       setLayouts(newLayouts);
     } catch (error) {
       console.error("Error saving layouts to localStorage", error);
     }
-    // --- END: Save layouts to localStorage on change ---
   };
 
   const visibleCards = cards.filter((card) => card.isVisible);
@@ -134,40 +122,45 @@ export function FlashInfo() {
           .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
         `}
       </style>
-      <div className="absolute top-4 right-3 z-20">
-        <button
-          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="p-2 text-head-text hover:text-body-text"
-        >
-          <FaCog />
-        </button>
-        {isDropdownOpen && (
-          <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg">
-            <p className="p-3 text-sm font-bold text-body-text border-b border-gray-700">
-              Show/Hide Cards
-            </p>
-            <ul className="p-1 max-h-48 overflow-y-auto scrollbar-hide">
-              {cards.map((card) => (
-                <li
-                  key={card.id}
-                  className="flex items-center p-2 text-sm text-body-text rounded hover:bg-gray-700"
-                >
-                  <input
-                    type="checkbox"
-                    id={`toggle-${card.id}`}
-                    checked={card.isVisible}
-                    onChange={() => handleToggleVisibility(card.id)}
-                    className="mr-3 h-4 w-4 rounded bg-gray-600 border-gray-500 text-blue-500 focus:ring-blue-600"
-                  />
-                  <label htmlFor={`toggle-${card.id}`}>{card.title}</label>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
+
+      {/* Container for settings button, using flexbox to prevent overlap */}
+      <div className="flex justify-end">
+        <div className="relative z-20">
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="p-2 text-head-text hover:text-body-text"
+          >
+            <FaCog />
+          </button>
+          {isDropdownOpen && (
+            <div className="absolute right-0 mt-2 w-56 bg-gray-800 border border-gray-700 rounded-md shadow-lg">
+              <p className="p-3 text-sm font-bold text-body-text border-b border-gray-700">
+                Show/Hide Cards
+              </p>
+              <ul className="p-1 max-h-48 overflow-y-auto scrollbar-hide">
+                {cards.map((card) => (
+                  <li
+                    key={card.id}
+                    className="flex items-center p-2 text-sm text-body-text rounded hover:bg-gray-700"
+                  >
+                    <input
+                      type="checkbox"
+                      id={`toggle-${card.id}`}
+                      checked={card.isVisible}
+                      onChange={() => handleToggleVisibility(card.id)}
+                      className="mr-3 h-4 w-4 rounded bg-gray-600 border-gray-500 text-blue-500 focus:ring-blue-600"
+                    />
+                    <label htmlFor={`toggle-${card.id}`}>{card.title}</label>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="w-full h-full overflow-y-auto scrollbar-hide">
+      {/* Grid container now grows to fill the remaining space */}
+      <div className="flex-grow w-full h-full overflow-y-auto scrollbar-hide">
         <ResponsiveGridLayout
           layouts={layouts}
           onLayoutChange={onLayoutChange}

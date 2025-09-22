@@ -1,3 +1,5 @@
+// ./components/main-cards/DailyReport.jsx
+
 import React from "react";
 
 export function DailyReport() {
@@ -18,8 +20,8 @@ export function DailyReport() {
   ];
 
   return (
-    // The root container is now a flex column that fills the available height.
-    <div className="flex flex-col h-full">
+    // Padding (e.g., p-4) is ADDED to this root container.
+    <div className="flex flex-col h-full p-4">
       <style>
         {`
           .scrollbar-hide::-webkit-scrollbar {
@@ -32,9 +34,7 @@ export function DailyReport() {
         `}
       </style>
 
-      {/* The list now grows to fill the space, handles its own scrolling,
-        and has a minimum height to prevent any initial collapse.
-      */}
+      {/* The list now correctly fills the padded container. */}
       <ul className="space-y-2 flex-grow overflow-y-auto scrollbar-hide pr-2 min-h-[100px]">
         {reportItems.map((item, index) => (
           <li
