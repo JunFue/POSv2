@@ -40,11 +40,11 @@ export const DashboardHeader = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
-    <div className="p-4 flex justify-end items-center gap-4 bg-gray-100">
+    <div className="p-4 flex justify-end items-center gap-4 bg-background">
       <div className="relative">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-          className="p-3 bg-gray-600 text-white font-semibold rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 transition-all"
+          className="p-3 bg-gray-600 text-body-text font-semibold rounded-lg shadow-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-opacity-75 transition-all"
           aria-label="Customize Dashboard Cards"
         >
           <FaCog />
@@ -59,7 +59,7 @@ export const DashboardHeader = ({
 
       <button
         onClick={onSwitchView}
-        className="px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all"
+        className="px-4 py-2 bg-blue-600 text-body-text font-semibold rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75 transition-all"
       >
         Switch to{" "}
         {currentView === "dashboard" ? "Report View" : "Dashboard View"}
