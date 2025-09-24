@@ -1,78 +1,9 @@
 import { Link } from "react-router";
-import { useState, useEffect } from "react";
-import { getCategories } from "../../api/categoryService";
-import { supabase } from "../../utils/supabaseClient";
-import { usePageVisibility } from "../../hooks/usePageVisibility";
-
-const CACHE_KEY = "navCategoriesData";
-const CACHE_TTL_MS = 15 * 60 * 1000;
-
-// A simple debounce utility
-function debounce(func, delay) {
-  let timeoutId;
-  return (...args) => {
-    clearTimeout(timeoutId);
-    timeoutId = setTimeout(() => {
-      func.apply(this, args);
-    }, delay);
-  };
-}
+import { useCategoryContext } from "./CategoryContext";
 
 export function Nav() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const isVisible = usePageVisibility();
-
-  useEffect(() => {
-    // --- FIX: All logic is now wrapped in an `if (isVisible)` block ---
-    // This ensures we only fetch data and subscribe when the page is active.
-    if (isVisible) {
-      const fetchCategories = async () => {
-        try {
-          const data = await getCategories();
-          setCategories(data);
-          const cacheData = { value: data, timestamp: Date.now() };
-          localStorage.setItem(CACHE_KEY, JSON.stringify(cacheData));
-        } catch (error) {
-          console.error("Nav component error:", error.message);
-          setCategories([]);
-        } finally {
-          setLoading(false);
-        }
-      };
-
-      // --- Initial Load ---
-      const cachedItem = localStorage.getItem(CACHE_KEY);
-      if (cachedItem) {
-        const { value, timestamp } = JSON.parse(cachedItem);
-        if (Date.now() - timestamp < CACHE_TTL_MS) {
-          setCategories(value);
-          setLoading(false);
-        }
-      }
-      // Always fetch fresh data when the component becomes visible.
-      fetchCategories();
-
-      const debouncedFetch = debounce(fetchCategories, 500);
-
-      // --- Real-time Subscription ---
-      const channel = supabase
-        .channel("public:categories")
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "categories" },
-          () => {
-            debouncedFetch();
-          }
-        );
-
-      channel.subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [isVisible]); // The dependency array is correct.
+  // Data fetching is now handled by the context
+  const { categories, loading } = useCategoryContext();
 
   const links = [
     {

@@ -8,8 +8,12 @@ import { useCashOnHand } from "./category-page/hooks/useCashOnHand.js";
 import { useTotalCashoutByCategory } from "./category-page/hooks/useTotalCashoutByCategory.js";
 import { ItemSoldContext } from "../../../context/ItemSoldContext.jsx";
 
-export function CategoryPage() {
-  const { categoryName } = useParams();
+export function CategoryPage({
+  categoryName: categoryNameProp,
+  isWidget = false,
+}) {
+  const { categoryName: categoryNameFromURL } = useParams();
+  const categoryName = categoryNameProp || categoryNameFromURL;
 
   const { grossSales } = useCategoricalGrossSales(categoryName);
   const cashOnHand = useCashOnHand(categoryName);
@@ -43,13 +47,17 @@ export function CategoryPage() {
   }, [todaysItemSold, categoryName]);
 
   return (
-    <div className="p-6 bg-background min-h-screen">
-      <h1 className="text-3xl font-bold text-gray-800">
-        Category: {categoryName}
-      </h1>
-      <p className="text-gray-600 mb-6">
-        Sales and logs for the current category, computed in real-time.
-      </p>
+    <div className={isWidget ? "h-full" : "p-6 bg-background min-h-screen"}>
+      {!isWidget && (
+        <>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Category: {categoryName}
+          </h1>
+          <p className="text-gray-600 mb-6">
+            Sales and logs for the current category, computed in real-time.
+          </p>
+        </>
+      )}
 
       <SalesSummaryCard
         data={{

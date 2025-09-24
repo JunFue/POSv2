@@ -10,29 +10,32 @@ import { InventoryProvider } from "./InventoryContext.jsx";
 import { CashoutProvider } from "./CashoutProvider.jsx";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { MonthlyReportProvider } from "./MonthlyReportContext.jsx";
+import { CategoryProvider } from "../components/NAVIGATION/CategoryContext.jsx";
 
 export function AppProviders({ children }) {
   const queryClient = new QueryClient();
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <MonthlyReportProvider>
-          <CashoutProvider>
-            <InventoryProvider>
-              <ThemeProviders>
-                <SettingsProvider>
-                  <PaymentProvider>
-                    <ItemSoldProvider>
-                      <ItemRegProvider>
-                        <CartProvider>{children}</CartProvider>
-                      </ItemRegProvider>
-                    </ItemSoldProvider>
-                  </PaymentProvider>
-                </SettingsProvider>
-              </ThemeProviders>
-            </InventoryProvider>
-          </CashoutProvider>
-        </MonthlyReportProvider>
+        <CategoryProvider>
+          <MonthlyReportProvider>
+            <CashoutProvider>
+              <InventoryProvider>
+                <ThemeProviders>
+                  <SettingsProvider>
+                    <PaymentProvider>
+                      <ItemSoldProvider>
+                        <ItemRegProvider>
+                          <CartProvider>{children}</CartProvider>
+                        </ItemRegProvider>
+                      </ItemSoldProvider>
+                    </PaymentProvider>
+                  </SettingsProvider>
+                </ThemeProviders>
+              </InventoryProvider>
+            </CashoutProvider>
+          </MonthlyReportProvider>
+        </CategoryProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

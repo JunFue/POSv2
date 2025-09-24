@@ -4,7 +4,10 @@ import { DashboardCard } from "./components/main-cards/DashboardCard";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import Report from "./components/report-generator/Report";
+
+import { CategoryPage } from "./components/CategoryPage";
 import { FaCog } from "react-icons/fa";
+import { useCategoryContext } from "../../components/NAVIGATION/CategoryContext";
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
@@ -49,9 +52,9 @@ const initialCardData = [
   { id: "4", title: "Cash Flow", component: CashFlow },
 ];
 
-// Generates the default layout for the cards
-const generateLayout = () => {
-  return initialCardData.map((card, index) => ({
+// Generates the default layout for all cards (initial + categories)
+const generateLayout = (allCards) => {
+  return allCards.map((card, index) => ({
     i: card.id,
     x: (index * 4) % 12,
     y: Math.floor(index / 3) * 4,
@@ -61,6 +64,17 @@ const generateLayout = () => {
 };
 
 export function Dashboard() {
+  const { categories: categoryData } = useCategoryContext();
+
+  const allInitialCards = useMemo(() => {
+    const categoryCards = categoryData.map((cat) => ({
+      id: `category-${cat.id}`,
+      title: `${cat.name} Overview`,
+      component: () => <CategoryPage categoryName={cat.name} isWidget={true} />,
+    }));
+    return [...initialCardData, ...categoryCards];
+  }, [categoryData]);
+
   const [view, setView] = useState("dashboard");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -79,7 +93,7 @@ export function Dashboard() {
       console.error("Error parsing cards from localStorage", error);
     }
     // Merge base card data with stored visibility preferences
-    return initialCardData.map((card) => ({
+    return allInitialCards.map((card) => ({
       ...card,
       isVisible: storedCardsConfig[card.id]?.isVisible ?? true,
     }));
@@ -89,10 +103,12 @@ export function Dashboard() {
   const [layouts, setLayouts] = useState(() => {
     try {
       const savedLayouts = localStorage.getItem(LAYOUT_STORAGE_KEY);
-      return savedLayouts ? JSON.parse(savedLayouts) : { lg: generateLayout() };
+      return savedLayouts
+        ? JSON.parse(savedLayouts)
+        : { lg: generateLayout(allInitialCards) };
     } catch (error) {
       console.error("Error loading layout from localStorage:", error);
-      return { lg: generateLayout() };
+      return { lg: generateLayout(allInitialCards) };
     }
   });
 
@@ -107,7 +123,7 @@ export function Dashboard() {
     } catch (error) {
       console.error("Error saving cards to localStorage", error);
     }
-  }, [cards]);
+  }, [cards, allInitialCards]);
 
   // Handler for saving layout changes
   const handleLayoutChange = (layout, allLayouts) => {
@@ -147,7 +163,7 @@ export function Dashboard() {
             </DashboardCard>
           );
         }),
-    [cards]
+    [cards, handleToggleVisibility]
   );
 
   return (
