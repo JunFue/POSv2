@@ -5,7 +5,6 @@ import React, { Suspense } from "react";
 import {
   Dashboard,
   Cashout,
-  CategoryPage,
   Inventory,
   Transactions,
 } from "./components/loaders/lazyComponents.js";
@@ -29,10 +28,6 @@ function App() {
               <Routes>
                 <Route path="/*" element={<Dashboard />} />
                 <Route path="dashboard" element={<Dashboard />} />
-                <Route
-                  path="dashboard/category/:categoryName"
-                  element={<CategoryPage />}
-                />
                 <Route path="cashout" element={<Cashout />} />
                 <Route path="transactions/*" element={<Transactions />} />
                 <Route path="inventory/*" element={<Inventory />} />

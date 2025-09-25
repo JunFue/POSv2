@@ -10,17 +10,15 @@ export function MonthlyReportSettings({ onClose }) {
 
   const [selectedRange, setSelectedRange] = useState(dateRange);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
-  // --- FIX: Added error state to replace alert() ---
   const [error, setError] = useState("");
+  const [isSaved, setIsSaved] = useState(false);
 
   const calendarRef = useRef(null);
 
-  // Syncs local state if the global context dateRange changes
   useEffect(() => {
     setSelectedRange(dateRange);
   }, [dateRange]);
 
-  // Handles closing the calendar when clicking outside of it
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (calendarRef.current && !calendarRef.current.contains(event.target)) {
@@ -31,13 +29,22 @@ export function MonthlyReportSettings({ onClose }) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  useEffect(() => {
+    if (isSaved) {
+      const timer = setTimeout(() => {
+        setIsSaved(false);
+        if (onClose) onClose();
+      }, 2000);
+      return () => clearTimeout(timer);
+    }
+  }, [isSaved, onClose]);
+
   const handleCalendarChange = (selection) => {
     if (selection.range) {
       setSelectedRange(selection.range);
-      // If a full range is selected, automatically close the calendar
       if (selection.range.from && selection.range.to) {
         setIsCalendarOpen(false);
-        setError(""); // Clear error on new valid selection
+        setError("");
       }
     }
   };
@@ -45,10 +52,9 @@ export function MonthlyReportSettings({ onClose }) {
   const handleSaveChanges = () => {
     if (selectedRange.from && selectedRange.to) {
       setAndSaveDateRange(selectedRange);
-      setError(""); // Clear any existing errors
-      if (onClose) onClose(); // Close the settings dialog
+      setError("");
+      setIsSaved(true);
     } else {
-      // --- FIX: Set an error message in state instead of using alert() ---
       setError("Please select a complete date range.");
     }
   };
@@ -94,14 +100,18 @@ export function MonthlyReportSettings({ onClose }) {
           )}
         </div>
 
-        {/* --- FIX: Display error message from state --- */}
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           onClick={handleSaveChanges}
-          className="w-full bg-teal-600 text-white font-bold py-2.5 px-4 rounded-lg hover:bg-teal-700 transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500"
+          disabled={isSaved}
+          className={`w-full text-white font-bold py-2.5 px-4 rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+            isSaved
+              ? "bg-green-500 focus:ring-green-500"
+              : "bg-teal-600 hover:bg-teal-700 focus:ring-teal-500"
+          }`}
         >
-          Save Changes
+          {isSaved ? "Saved!" : "Save Changes"}
         </button>
       </div>
     </div>

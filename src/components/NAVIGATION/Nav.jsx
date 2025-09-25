@@ -1,35 +1,10 @@
 import { Link } from "react-router";
-import { useCategoryContext } from "./CategoryContext";
 
 export function Nav() {
-  // Data fetching is now handled by the context
-  const { categories, loading } = useCategoryContext();
-
   const links = [
     {
       path: "/dashboard",
       label: "Dashboard",
-      flyoutText: (
-        <>
-          <div>
-            <Link to="/dashboard" className="block hover:text-emerald-700">
-              Overview
-            </Link>
-          </div>
-          {loading && <div>Loading...</div>}
-          {!loading &&
-            categories.map((cat) => (
-              <div key={cat.id}>
-                <Link
-                  to={`/dashboard/category/${encodeURIComponent(cat.name)}`}
-                  className="block hover:text-emerald-700"
-                >
-                  {cat.name}
-                </Link>
-              </div>
-            ))}
-        </>
-      ),
     },
     {
       path: "/cashout",
