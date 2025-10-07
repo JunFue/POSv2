@@ -2,47 +2,90 @@ import { useEffect, useState } from "react";
 import { useMonthlyReport } from "../../../../../context/MonthlyReportContext";
 import { useCurrencyFormatter } from "./useCurrencyFormatter";
 import { getMonthlyIncome } from "../../../../../api/dashboardService";
+// --- UPDATED IMPORT ---
+import { useCashout } from "../../../../../context/CashoutProvider";
 
 export const OverallSummary = () => {
   const formatCurrency = useCurrencyFormatter();
   const { dateRange } = useMonthlyReport();
+
   const [summaryData, setSummaryData] = useState({
     totalRevenue: 0,
     totalExpenses: 0,
     netIncome: 0,
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
 
+  // State for income data
+  const [incomeData, setIncomeData] = useState(null);
+  const [incomeLoading, setIncomeLoading] = useState(true);
+  const [incomeError, setIncomeError] = useState(null);
+
+  // --- UPDATED HOOK USAGE ---
+  // Get cashouts (expenses) from the CashoutProvider context.
+  // The provider is expected to handle filtering by the dateRange internally.
+  const {
+    cashouts,
+    loading: cashoutsLoading,
+    error: cashoutsError,
+  } = useCashout();
+
+  // Effect for fetching income data
   useEffect(() => {
     if (dateRange.from && dateRange.to) {
-      const fetchData = async () => {
-        console.log("Fetching data for date range:", dateRange);
-        setIsLoading(true);
-        setError(null);
+      const fetchIncome = async () => {
+        setIncomeLoading(true);
+        setIncomeError(null);
         try {
-          console.log("Attempting to fetch monthly income...");
-          const incomeData = await getMonthlyIncome(dateRange);
-          console.log("Successfully fetched income data:", incomeData);
-
-          // Assuming the API returns an object with a 'totalNetIncome' property
-          const totalRevenue = incomeData.totalNetIncome || 0;
-
-          // --- MOCK DATA (to be replaced) ---
-          const totalExpenses = 15000; // Replace with API call
-          const netIncome = totalRevenue - totalExpenses;
-
-          setSummaryData({ totalRevenue, totalExpenses, netIncome });
+          const data = await getMonthlyIncome(dateRange);
+          // --- CONSOLE LOG ADDED ---
+          console.log("✅ Successfully fetched income data:", data);
+          setIncomeData(data);
         } catch (err) {
-          setError("Failed to fetch summary data.");
+          setIncomeError("Failed to fetch summary data.");
           console.error("Error fetching summary data:", err);
         } finally {
-          setIsLoading(false);
+          setIncomeLoading(false);
         }
       };
-      fetchData();
+      fetchIncome();
     }
   }, [dateRange]);
+
+  // --- ADDED FOR DEBUGGING ---
+  // This effect will log the state of your data sources whenever they change.
+  useEffect(() => {
+    console.log("🧐 Data source check:", {
+      incomeData,
+      cashouts,
+    });
+  }, [incomeData, cashouts]);
+
+  // Effect for calculating summary data when both income and expenses are fetched
+  useEffect(() => {
+    // Only calculate if both data sources have a valid value.
+    if (incomeData && cashouts) {
+      console.log("✅ Both income and cashouts data are available.");
+      console.log("🚀 Calculating summary with received data...", {
+        incomeData,
+        cashouts,
+      });
+
+      const totalRevenue = incomeData.totalNetIncome || 0;
+
+      // Defensively calculate total expenses, ensuring cashouts is an array.
+      const totalExpenses = Array.isArray(cashouts)
+        ? cashouts.reduce((sum, expense) => sum + (expense.amount || 0), 0)
+        : 0;
+
+      const netIncome = totalRevenue - totalExpenses;
+
+      setSummaryData({ totalRevenue, totalExpenses, netIncome });
+    }
+  }, [incomeData, cashouts]);
+
+  // Combine loading and error states from both hooks for the UI
+  const isLoading = incomeLoading || cashoutsLoading;
+  const error = incomeError || cashoutsError;
 
   if (isLoading) {
     return (

@@ -40,7 +40,7 @@ export const DashboardHeader = ({
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   return (
-    <div className="p-4 flex justify-end items-center gap-4 bg-background">
+    <div className="p-4 flex justify-end items-center gap-4 bg-background border-b-3">
       <div className="relative">
         <button
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}
