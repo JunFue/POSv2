@@ -29,24 +29,34 @@ const COLORS = [
 const Categ = ({ title, categoryData }) => {
   const formatCurrency = useCurrencyFormatter();
 
-  if (!categoryData || !categoryData.expenseData) {
-    return null;
+  if (
+    !categoryData ||
+    !categoryData.expenseData ||
+    categoryData.expenseData.values.length === 0
+  ) {
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-xl font-bold text-gray-700 mb-4">{title}</h3>
+        <p className="text-gray-500">
+          No expense data available for this category.
+        </p>
+      </div>
+    );
   }
 
-  // Calculate total expenses by summing the values from the expenseData object.
-  const totalExpenses = categoryData.expenseData.values.reduce(
+  const { expenseData } = categoryData;
+
+  // Calculate total expenses from the provided data.
+  const totalExpenses = expenseData.values.reduce(
     (sum, value) => sum + value,
     0
   );
-  const totalRevenue = categoryData.initialSales;
-  const netIncome = totalRevenue - totalExpenses;
 
   // Prepare the data for the pie chart from the expenseData.
-  const chartData =
-    categoryData.expenseData.labels.map((label, index) => ({
-      name: label,
-      value: categoryData.expenseData.values[index],
-    })) || [];
+  const chartData = expenseData.labels.map((label, index) => ({
+    name: label,
+    value: expenseData.values[index],
+  }));
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -54,20 +64,10 @@ const Categ = ({ title, categoryData }) => {
       <div className="space-y-4">
         {/* Summary for the category */}
         <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-          <p className="font-semibold text-gray-600">Total Revenue:</p>
-          <p className="font-bold text-green-600">
-            {formatCurrency(totalRevenue)}
-          </p>
-        </div>
-        <div className="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
           <p className="font-semibold text-gray-600">Total Expenses:</p>
           <p className="font-bold text-red-600">
             {formatCurrency(totalExpenses)}
           </p>
-        </div>
-        <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg border border-blue-200">
-          <p className="font-semibold text-gray-700">Net Income:</p>
-          <p className="font-bold text-blue-600">{formatCurrency(netIncome)}</p>
         </div>
 
         {/* Chart Visualization for Expense Breakdown */}
