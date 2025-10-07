@@ -1,18 +1,70 @@
-import { cat1Data, cat2Data } from "./mockdata";
+import { useEffect, useState } from "react";
+import { useMonthlyReport } from "../../../../../context/MonthlyReportContext";
 import { useCurrencyFormatter } from "./useCurrencyFormatter";
+import { getMonthlyIncome } from "../../../../../api/dashboardService";
 
 export const OverallSummary = () => {
-  // Call the custom hook to get the formatting function.
   const formatCurrency = useCurrencyFormatter();
+  const { dateRange } = useMonthlyReport();
+  const [summaryData, setSummaryData] = useState({
+    totalRevenue: 0,
+    totalExpenses: 0,
+    netIncome: 0,
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Calculate total revenue by summing up totalSales from both categories
-  const totalRevenue = cat1Data.totalSales + cat2Data.totalSales;
+  useEffect(() => {
+    if (dateRange.from && dateRange.to) {
+      const fetchData = async () => {
+        console.log("Fetching data for date range:", dateRange);
+        setIsLoading(true);
+        setError(null);
+        try {
+          console.log("Attempting to fetch monthly income...");
+          const incomeData = await getMonthlyIncome(dateRange);
+          console.log("Successfully fetched income data:", incomeData);
 
-  // Calculate total expenses by summing up expenses from both categories
-  const totalExpenses = cat1Data.expenses + cat2Data.expenses;
+          // Assuming the API returns an object with a 'totalNetIncome' property
+          const totalRevenue = incomeData.totalNetIncome || 0;
 
-  // Calculate net income
-  const netIncome = totalRevenue - totalExpenses;
+          // --- MOCK DATA (to be replaced) ---
+          const totalExpenses = 15000; // Replace with API call
+          const netIncome = totalRevenue - totalExpenses;
+
+          setSummaryData({ totalRevenue, totalExpenses, netIncome });
+        } catch (err) {
+          setError("Failed to fetch summary data.");
+          console.error("Error fetching summary data:", err);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchData();
+    }
+  }, [dateRange]);
+
+  if (isLoading) {
+    return (
+      <section className="bg-white p-6 rounded-lg shadow-md mb-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-700 mb-4">
+          A. Overall Summary
+        </h2>
+        <p>Loading summary...</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="bg-white p-6 rounded-lg shadow-md mb-6 text-center">
+        <h2 className="text-2xl font-bold text-gray-700 mb-4">
+          A. Overall Summary
+        </h2>
+        <p className="text-red-500">{error}</p>
+      </section>
+    );
+  }
 
   return (
     <section className="bg-white p-6 rounded-lg shadow-md mb-6">
@@ -25,7 +77,7 @@ export const OverallSummary = () => {
             Total Revenue
           </h3>
           <p className="text-2xl font-bold text-green-600 mt-1">
-            {formatCurrency(totalRevenue)}
+            {formatCurrency(summaryData.totalRevenue)}
           </p>
         </div>
         <div className="p-4 bg-gray-50 rounded-lg">
@@ -33,7 +85,7 @@ export const OverallSummary = () => {
             Expenses
           </h3>
           <p className="text-2xl font-bold text-red-600 mt-1">
-            {formatCurrency(totalExpenses)}
+            {formatCurrency(summaryData.totalExpenses)}
           </p>
         </div>
         <div className="p-4 bg-gray-50 rounded-lg">
@@ -41,7 +93,7 @@ export const OverallSummary = () => {
             Net Income
           </h3>
           <p className="text-2xl font-bold text-blue-600 mt-1">
-            {formatCurrency(netIncome)}
+            {formatCurrency(summaryData.netIncome)}
           </p>
         </div>
       </div>
