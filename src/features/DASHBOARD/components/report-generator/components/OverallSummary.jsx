@@ -37,8 +37,7 @@ export const OverallSummary = () => {
         setIncomeError(null);
         try {
           const data = await getMonthlyIncome(dateRange);
-          // --- CONSOLE LOG ADDED ---
-          console.log("✅ Successfully fetched income data:", data);
+
           setIncomeData(data);
         } catch (err) {
           setIncomeError("Failed to fetch summary data.");
@@ -51,25 +50,10 @@ export const OverallSummary = () => {
     }
   }, [dateRange]);
 
-  // --- ADDED FOR DEBUGGING ---
-  // This effect will log the state of your data sources whenever they change.
-  useEffect(() => {
-    console.log("🧐 Data source check:", {
-      incomeData,
-      cashouts,
-    });
-  }, [incomeData, cashouts]);
-
   // Effect for calculating summary data when both income and expenses are fetched
   useEffect(() => {
     // Only calculate if both data sources have a valid value.
     if (incomeData && cashouts) {
-      console.log("✅ Both income and cashouts data are available.");
-      console.log("🚀 Calculating summary with received data...", {
-        incomeData,
-        cashouts,
-      });
-
       const totalRevenue = incomeData.totalNetIncome || 0;
 
       // Defensively calculate total expenses, ensuring cashouts is an array.
