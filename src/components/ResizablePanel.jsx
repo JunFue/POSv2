@@ -93,18 +93,18 @@ export const ResizablePanel = ({ children }) => {
       {!isPosVisible && (
         <button
           onClick={handleShowPos}
-          className="absolute z-20 top-4 left-4 p-2 bg-gray-700/50 rounded-full text-white hover:bg-teal-500 transition-all"
+          className="top-4 left-4 z-20 absolute bg-gray-700/50 hover:bg-teal-500 p-2 rounded-full text-white transition-all"
           aria-label="Show Point of Sale"
         >
           <FaAnglesRight size={20} />
         </button>
       )}
       <div
-        className="h-full flex-shrink-0 transition-all duration-500 ease-in-out"
+        className="flex-shrink-0 h-full transition-all duration-500 ease-in-out"
         style={{ width: isPosVisible ? `${posWidth}px` : "0px" }}
       >
         <div
-          className="w-full h-full transition-opacity duration-300 ease-in-out overflow-hidden"
+          className="w-full h-full overflow-hidden transition-opacity duration-300 ease-in-out"
           style={{ opacity: isPosVisible ? 1 : 0 }}
         >
           {children}

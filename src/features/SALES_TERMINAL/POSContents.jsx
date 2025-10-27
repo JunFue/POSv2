@@ -22,7 +22,8 @@ export function POSContents() {
   const [isShowAuth, setIsShowAuth] = useState(false);
 
   const { user } = useAuth();
-  const name = user.user_metadata?.fullName || user.email;
+  // FIX: Safely check if 'user' exists before accessing properties
+  const name = user ? user.user_metadata?.fullName || user.email : "";
   const handleDone = () => {
     counterFormRef.current?.completeTransaction();
   };
@@ -38,17 +39,17 @@ export function POSContents() {
   };
 
   return (
-    <div className="rounded-[20px] bg-background shadow-neumorphic p-3">
+    <div className="bg-background shadow-neumorphic p-3 rounded-[20px]">
       <header className="flex flex-col items-center mb-1">
-        <h1 className="sm:text-2xl lg:text-3xl 2xl:text-3xl font-bold text-head-text">
+        <h1 className="font-bold text-head-text sm:text-2xl lg:text-3xl 2xl:text-3xl">
           POINT OF SALE
         </h1>
         {user ? (
-          <p className="text-xs md:text-[16px] text-head-text font-bold">
+          <p className="font-bold text-head-text md:text-[16px] text-xs">
             Welcome, {name}!
           </p>
         ) : (
-          <p className="text-sm text-body-text">Please sign in.</p>
+          <p className="text-body-text text-sm">Please sign in.</p>
         )}
       </header>
 
@@ -58,7 +59,7 @@ export function POSContents() {
         ref={counterFormRef}
       />
 
-      <div className="grid grid-cols-3 gap-4 mt-6">
+      <div className="gap-4 grid grid-cols-3 mt-6">
         {/* --- 2. Pass the new handler to the NewCustomerBtn --- */}
         <NewCustomerBtn onClick={handleNewCustomer} />
         <AddToCartBtn onClick={handleAddToCart} />
